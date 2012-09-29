@@ -1,0 +1,237 @@
+/*
+
+google-analytics-async CSS Styles
+
+*/
+
+
+/* analytics-block */
+
+.analytics-block {
+    border-top: 1px #f0f0f0 solid;
+    margin: 5px 0px 5px 0px;
+    padding: 5px 0px 5px 0px;
+}
+
+#metabox_GA_data .analytics-block {
+    display: table-cell;
+    border-top: 0px;
+}
+
+.analytics-block .analytics-dates {
+    font-family: Arial,Helvetica,sans-serif;
+    font-size: 10px;
+    margin: 5px 0px 5px 0px;
+    clear: both;
+}
+
+
+.analytics-block .analytics-reports .report {
+    font-family: Arial,Helvetica,sans-serif;
+    text-align: center;
+    border-left: 1px #f0f0f0 solid;
+    float: left;
+    margin: 5px 5px 5px 0px;
+    padding: 0px 0px 0px 5px;
+}
+.analytics-block .analytics-reports .report:first-child {
+      border-left: 0px #f0f0f0 solid;
+}
+
+.analytics-block .analytics-reports .report .report-title {
+    font-size: 12px;
+}
+
+
+.analytics-block .analytics-reports .report .report-data {
+    font-size: 14px;
+    font-weight: bolder;
+}
+
+
+/* END analytics-block */
+
+
+.google-analytics-code-value {
+    width: 250px;
+}
+
+#ga_code_add_row {
+    padding: 0;
+}
+
+.google-analytics-remove-row,
+.google-analytics-remove-row span {
+    font-size: 10px;
+    font-weight: bold;
+    color: #666666;
+    cursor: pointer;
+    line-height: 16px;
+
+}
+
+.google-analytics-remove-row span {
+    color: #fff;
+}
+
+.google-analytics-remove-row:hover,
+.google-analytics-remove-row:hover span {
+    color: #FF0000;
+}
+
+
+#code_table tr td {
+    padding: 0px;
+}
+
+#google-analytics-async-tabs  .ui-state-default .beta {
+    font-style: italic;
+    color: yellow;
+    font-size: 9px;
+    line-height: 9px;
+}
+
+
+#google-analytics-async-tabs .ui-tabs-selected .beta {
+    color: blue;
+}
+
+
+.form_feeds table th {
+    font-weight: bold;
+    font-family: Georgia,"Times New Roman";
+}
+
+
+
+#google-analytics-async-tabs .ui-widget-header {
+    color: #ffffff;
+    font-weight: bold;
+    height: 36px;
+    padding: 0px 0px 1px 0px;
+    margin: 0;
+}
+
+
+
+#google-analytics-async-tabs .ui-state-hover,
+#google-analytics-async-tabs .ui-widget-content .ui-state-hover,
+#google-analytics-async-tabs .ui-state-focus,
+#google-analytics-async-tabs .ui-widget-content .ui-state-focus {
+    background: url("images/tab_bg_hover.png") repeat-x scroll 50% 50% #444444;
+    border: 1px solid #666666;
+    color: #FFFFFF;
+    font-weight: normal;
+    outline: medium none;
+}
+
+#google-analytics-async-tabs .ui-state-hover a {
+    color: #FFFFFF;
+    outline: medium none;
+    text-decoration: none;
+}
+
+#google-analytics-async-tabs .ui-state-default {
+    border: 1px solid #666666;
+    background: #555555
+    url(images/tab_bg.png) 50% 50% repeat-x;
+    font-weight: normal;
+    color: #ffffff;
+    outline: none;
+}
+
+#google-analytics-async-tabs .ui-corner-top {
+    -moz-border-radius-topleft: 4px;
+    -moz-border-radius-topright: 4px;
+}
+
+#google-analytics-async-tabs .ui-tabs-nav li {
+    margin: 5px 5px 0 0;
+}
+
+#google-analytics-async-tabs .ui-state-active {
+    border: 1px solid #666666;
+    background: #ffffff url(images/tab_blank.png) 50% 50% repeat-x !important;
+    font-weight: normal;
+    color: #fff;
+    outline: none;
+}
+
+#google-analytics-async-tabs .ui-state-active a {
+    color: #000 !important;
+}
+
+#google-analytics-async-tabs .ui-corner-bottom {
+    -moz-border-radius-bottomleft: 4px;
+    -moz-border-radius-bottomright: 4px;
+    -moz-border-radius-topright: 4px;
+}
+
+
+#google-analytics-async-tabs .ui-widget-content {
+    color: #fff;
+}
+
+
+#google-analytics-async-tabs .ui-tabs-panel {
+    background: none repeat scroll 0 0 #fff;
+    border: 1px solid #666666;
+/*    border-top: 0px solid #000;*/
+    display: block;
+    color: #000000;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 5px 9px 20px 9px;
+    margin: -1px 0 0;
+}
+
+
+
+#google-analytics-async-tabs .ui-tabs {
+    position: relative;
+    padding: .2em;
+    zoom: 1;
+} /* position: relative prevents IE scroll bug (element with position: relative inside container with overflow: auto appear as "fixed") */
+
+#google-analytics-async-tabs .ui-tabs .ui-tabs-nav li {
+    list-style: none;
+    float: left;
+    position: relative;
+    top: 1px;
+    border-bottom: 0 !important;
+    white-space: nowrap;
+}
+
+#google-analytics-async-tabs .ui-tabs .ui-tabs-nav li a {
+    float: left;
+    padding: .5em 1em;
+    text-decoration: none;
+}
+
+#google-analytics-async-tabs .ui-tabs .ui-tabs-nav li.ui-tabs-selected {
+    margin-bottom: 0;
+    padding-bottom: 1px;
+}
+
+#google-analytics-async-tabs .ui-tabs .ui-tabs-nav li.ui-tabs-selected a,
+#google-analytics-async-tabs .ui-tabs .ui-tabs-nav li.ui-state-disabled a,
+#google-analytics-async-tabs .ui-tabs .ui-tabs-nav li.ui-state-processing a {
+    cursor: text;
+    color: #000;
+}
+
+#google-analytics-async-tabs .ui-tabs .ui-tabs-nav li a,
+#google-analytics-async-tabs .ui-tabs.ui-tabs-collapsible .ui-tabs-nav li.ui-tabs-selected a {
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* first selector in group seems obsolete, but required to overcome bug in Opera applying cursor: text overall if defined elsewhere... */
+
+
+#google-analytics-async-tabs .ui-tabs .ui-tabs-hide {
+    display: none !important;
+}
+
+/* 36617-1346822406-au */

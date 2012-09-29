@@ -1,0 +1,309 @@
+# Translation of the WordPress plugin   by .
+# Copyright (C) 2012
+# This file is distributed under the same license as the  package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: My Blog Info Dashboard\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/my-blogs-info-dashboard\n"
+"POT-Creation-Date: 2012-06-14 09:18-0500\n"
+"PO-Revision-Date: 2012-06-14 10:21-0500\n"
+"Last-Translator: Paul Menard <paul@codehooligans.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: English\n"
+
+#: lib/class_embi_admin_pages.php:25
+msgid "My Account"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:31
+msgid "This Blog"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:37
+msgid "My Blogs"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:43
+msgid "Storage Space"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:49
+msgid "Pro Sites"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:81
+msgid "Right Now"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:129
+msgid "From the list below reorder the section to your preference. You can also hide sections by unsetting the 'Visible' checkbox. Changes made to the visibility and order are global to all your sites."
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:186
+msgid "Visible"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:264
+#: lib/class_embi_admin_pages.php:411
+msgid "Manage your profile"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:265
+msgid "Your profile"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:270
+msgid "Change Avatar"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:284
+msgid "Username"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:285
+msgid "Change password"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:289
+msgid "Display name"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:291
+msgid "Change display name"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:295
+msgid "Email"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:297
+msgid "Change"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:335
+msgid "Blogs"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:336
+msgid "You are a member of"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:336
+#, php-format
+msgid "%s blogs!"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:336
+msgid "Manage Blogs"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:339
+#: lib/class_embi_admin_pages.php:551
+msgid "Posts"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:340
+#, php-format
+msgid "Number of blogs needing posts reviewed: %d (%d total)"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:340
+msgid "Manage Posts"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:343
+#: lib/class_embi_admin_pages.php:575
+msgid "Comments"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:344
+#, php-format
+msgid "Number of blogs with pending comments: %d (%d total)"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:344
+msgid "Manage comments"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:359
+msgid "This blog is password protected."
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:360
+msgid "Only administrators of this blog are able to view it."
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:361
+msgid "Only registered users of this blog are able to view it."
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:362
+msgid "Only logged in users are able to view this blog."
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:363
+msgid "Block search engines from this blogs, but allow normal visitors to see it."
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:364
+msgid "Blog is visible to everyone!"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:374
+msgid "Title"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:380
+msgid "Tagline"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:386
+msgid "Theme"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:390
+msgid "Privacy"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:411
+msgid "Manage Blog Space"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:415
+msgid "Max Allowed"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:419
+msgid "Used"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:452
+#: lib/class_embi_admin_pages.php:457
+msgid "Upgrade to Pro!"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:466
+msgid "<strong>Never</strong>"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:468
+msgid "days"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:474
+msgid "Manage Pro Account"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:477
+msgid "Level"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:482
+msgid "Expiration date"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:533
+msgid "Close"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:533
+msgid "More info"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:553
+msgid "Published"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:557
+#: lib/class_embi_admin_pages.php:581
+msgid "Pending"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:561
+msgid "Draft"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:564
+#: lib/class_embi_admin_pages.php:588
+msgid "Manage"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:570
+#, php-format
+msgid "<b>%d</b> pending posts"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:577
+msgid "Approved"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:585
+msgid "Spam"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:594
+#, php-format
+msgid "<b>%d</b> pending comments"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:599
+msgid "Last Updated"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:619
+msgid "All users"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:621
+msgid "Users"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:635
+#: lib/class_embi_admin_pages.php:641
+#: lib/class_embi_admin_pages.php:648
+msgid "GB"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:637
+#: lib/class_embi_admin_pages.php:643
+#: lib/class_embi_admin_pages.php:650
+msgid "MB"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:668
+msgid "OK"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:669
+msgid "Cancel"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:676
+msgid "Show blogs with pending posts and comments"
+msgstr ""
+
+#: lib/class_embi_admin_pages.php:680
+msgid "Show all blogs"
+msgstr ""
+
+#: lib/forms/plugin_settings.php:2
+msgid "Settings"
+msgstr ""
+
+#: lib/forms/plugin_settings.php:13
+msgid "Save Changes"
+msgstr ""
+
+#: loader.php:36
+msgid "Please install the latest version of <a href=\"http://premium.wpmudev.org/project/update-notifications/\" title=\"Download Now &raquo;\">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href=\"http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/\">More information &raquo;</a>"
+msgstr ""
+
+#: loader.php:62
+msgid "There was an issue determining where Post Voting plugin is installed. Please reinstall."
+msgstr ""
+

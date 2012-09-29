@@ -1,0 +1,1 @@
+<?php _e('You must perform an analysis before doing link building.'); ?>

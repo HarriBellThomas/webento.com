@@ -1,0 +1,10 @@
+wp-config.php
+.DS_Store
+test/
+tmp/
+plesk-stat/
+picture_library/
+mt_images/
+img/
+css/
+blogs/
