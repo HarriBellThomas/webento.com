@@ -5,6 +5,15 @@ Change Log:
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 
+3.2 - 9/26/2012
+----------------------------------------------------------------------
+- Rewrite Dashboard and Listings pages to be more useful to free or single members
+- Fix numerous permission bugs and errors for free or single members
+- Show incompatible products in listings, just disabled
+- Redesigned the Support page
+- Much improved notification handling of the 133 theme pack
+- Added a filter to be able to exclude notifications of a specific plugin update
+
 3.1.5 - 8/9/2012
 ----------------------------------------------------------------------
 - Add no WPMUDEV_NO_AUTOACTIVATE define to be able to prevent activation in single site
@@ -116,4 +125,4 @@ Added option to disable admin notices.
 ----------------------------------------------------------------------
 Initial Release.
 
-36617-1345356352-au
+36617-1349924655-au

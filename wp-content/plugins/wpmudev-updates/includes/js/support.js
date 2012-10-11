@@ -1,4 +1,4 @@
-jQuery(document).ready(function($) {
+ jQuery(document).ready(function($) {
 	
 	$('#qa-submit').click(function() {
 		$('#qa-form').submit();
@@ -88,4 +88,72 @@ jQuery(document).ready(function($) {
 			$_triangle.toggleClass('ui-show-triangle');
 		}
 	});
+
+	// hide Q&A activity if there is none
+	if ($('.no-activity').length) {
+		$('#recent-qa-activity').hide();
+	}
+	// lightbox toggler
+	$('#tips').on('click', function(){
+		$('.overlay').height( $('#wpcontent').height() );
+		$('.overlay').show(1, function(){ $( this ).toggleClass( 'on' ); } );
+		return false;
+	});
+
+	$('.overlay').on('click', function(e){ 
+		$( this ).toggleClass( 'on' ).hide();
+	});
+
+
+	// handle container heights, raw js because fast & simple
+
+	(function(){
+		var isDisabled = document.getElementById( 'support-disabled' );
+
+		if ( isDisabled ) { 
+			document.getElementById( 'wpbody-content' ).style.paddingTop = 0;
+			processHeight( 'support-layer' );
+			window.onresize = function(){
+				processHeight( 'support-layer' );
+			}
+
+		} else {
+			processHeight( 'wpcontent' );
+			window.onresize = function(){
+				processHeight( 'wpcontent' );
+			}
+		}
+	})();
+
+	function processHeight( element ) {							// accepts ID string, as many agruments as needed
+		for ( var i = 0, j=arguments.length; i < j; i++ ) {
+
+			var el 		  = document.getElementById( arguments[i] ),
+				docHeight = getDocHeight(),
+				uaHeight  = $(window).height();
+
+			if ( el ) { 
+				if ( docHeight > uaHeight ){
+					el.removeAttribute('style');
+					docHeight = getDocHeight();
+					el.style.height = docHeight + 'px';
+				} else {
+					el.removeAttribute('style');
+					docHeight = getDocHeight();
+					el.style.height = uaHeight + 'px';
+				}
+			}
+		}
+
+		// get document height function
+		// credit to James Padolsey (http://james.padolsey.com/javascript/get-document-height-cross-browser/)
+		function getDocHeight() {
+		    var D = document;
+		    return Math.max(
+		        Math.max(D.body.scrollHeight, D.documentElement.scrollHeight),
+		        Math.max(D.body.offsetHeight, D.documentElement.offsetHeight),
+		        Math.max(D.body.clientHeight, D.documentElement.clientHeight)
+		    );
+		}
+	}
 });

@@ -1,6 +1,22 @@
-<?php
-	$profile = $this->get_profile();
-?>
+<?php if ($disabled) { ?> 
+	<section id="support-disabled">
+		<section class="contents clearfix">
+			<section class="layer" id="support-layer">
+				<section class="promotional">
+					<span class="tag-upgrade"></span>
+					<h3 class="support-msg"><span class="wpmudev-logo-small"></span>&nbsp; <?php _e('members get full access to the biggest &amp; best WordPress community on the web.', 'wpmudev') ?></h3>
+					<a class="btn" href="<?php echo apply_filters('wpmudev_join_url', 'http://premium.wpmudev.org/join/'); ?>">
+						<button class="cta"><?php _e('Find out more &raquo;', 'wpmudev') ?></button>
+					</a>
+					<?php if (!$this->get_apikey()) { ?> 
+					<p class="support-already-member"><a href="admin.php?page=wpmudev&clear_key=1"><?php _e('Already a member?', 'wpmudev') ?></a></p>
+					<?php } ?> 
+				</section>
+			</section>
+		</section>
+	</section>
+<?php } ?>
+
 <hr class="section-head-divider" />
 <div class="wrap grid_container">
 	<h1 class="section-header">
@@ -17,9 +33,10 @@
 	</div>
 </div>
 <div class="community-container grid_container">
+	
+	<?php if ($this->get_apikey() && $this->allowed_user()) { ?>
 	<div class="community-content">
 		
-		<?php  if (isset($profile['reputation']['overall']) && $this->allowed_user()) { ?>
 		<div class="community-reputation">
 			<h1><?php _e('Your reputation:', 'wpmudev'); ?></h1>
 			<?php  if (isset($profile['reputation']['overall']) && isset($profile['reputation']['unique_users'])) { ?>
@@ -60,12 +77,12 @@
 				<a href="http://premium.wpmudev.org/forums/profile/<?php echo $profile['profile']['user_name']; ?>/reputation" target="_blank" class="button"><i class="icon-list-alt icon-large"></i><?php _e('VIEW REPUTATION REPORT', 'wpmudev'); ?></a>
 			<?php } ?>
 			</div>
-		<?php } ?>
 		
 		<div class="community-quote">
 			<i><?php _e('Participate in our community discussions and earn reputation points. <b>1000 points</b> gets you a free lifetime <b>WPMU DEV</b> membership!', 'wpmudev'); ?></i>
 		</div>
 	</div>
+	
 	<div class="your-recent-topics">
 		<h1><?php _e('Recent topics started by you:', 'wpmudev'); ?></h1>
 		<table width="100%" class="your-recent-topics" border="0" cellpadding="0" cellspacing="0">
@@ -87,14 +104,18 @@
 					<td align="center"><?php echo $thread['user'];?><br /><span><?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $thread['timestamp']);?></span></td>
 					<td></td>
 				</tr>
-				<?php } else if (!$this->get_apikey()) { ?>
-					<tr><td></td><td align="center" colspan="3"><a href="admin.php?page=wpmudev"><?php _e("Enter your free API key to show your recent topics", 'wpmudev'); ?></a></td><td></td></tr>
 				<?php } else { ?>
 					<tr><td></td><td align="center" colspan="3"><?php _e("You haven't started any topics yet.", 'wpmudev'); ?></td><td></td></tr>
 				<?php } ?>
 			</tbody>
 		</table>
 	</div>
+	<?php } else { ?>
+	
+	<!-- PUT AN AD HERE ABOUT UPGRADING TO VIEW OUR COMMUNITY -->
+	
+	<?php } ?>
+	
 	<div class="most-popular-topics">
 		<h1><?php _e('Latest topics:', 'wpmudev'); ?></h1>
 		<?php $count = 1; if (@$profile['forum']['recent_threads']) foreach ($profile['forum']['recent_threads'] as $forum_id => $forum) { ?>

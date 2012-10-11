@@ -45,8 +45,8 @@ class WPMUDEV_Notifications_Output {
 				<div class="wpmudev-message wpdv-connect" id="message">
 
 						<div class="squish">
-							<h4><strong><?php _e( 'WPMU DEV is almost ready', 'wpmudev' ); ?></strong> &ndash; <?php _e( 'configure to enable all features!', 'wpmudev' ); ?>
-							<a id="api-add" class="button-primary" href="<?php echo $link; ?>"><i class="icon-pencil icon-large"></i> <?php _e( 'Enter your free API Key', 'wpmudev' ); ?></a>
+							<h4><strong><?php _e( 'Get started with WPMU DEV', 'wpmudev' ); ?></strong> &ndash; <?php _e("it's free, easy and will transform your WordPress experience.", 'wpmudev'); ?>
+							<a id="api-add" class="button-primary" href="<?php echo $link; ?>"><i class="icon-pencil icon-large"></i> <?php _e( 'Get Started', 'wpmudev' ); ?></a>
 							</h4>
 							<div class="clear"></div>
 						</div>
@@ -60,7 +60,7 @@ class WPMUDEV_Notifications_Output {
 	function admin_notice_output() {
 		global $wpmudev_un, $current_screen;
 
-		if ( !current_user_can('update_plugins') || !$wpmudev_un->get_apikey() || $current_screen->id == 'update-network' || $current_screen->id == 'update' )
+		if ( !current_user_can('update_plugins') || !$wpmudev_un->allowed_user() || !$wpmudev_un->get_apikey() || $current_screen->id == 'update-network' || $current_screen->id == 'update' )
 			return;
 		
 		//check delay
@@ -92,14 +92,14 @@ class WPMUDEV_Notifications_Output {
 				$msg = $data['single_notice']['msg'];
 				$id = $data['single_notice']['id'];
 				$class = 'with-button';
-				$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="https://premium.wpmudev.org/join/"><i class="icon-arrow-up icon-large"></i> ' . __( 'Upgrade Now', 'wpmudev' ) . '</a>';
+				$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="'.apply_filters('wpmudev_upgrade_url', 'https://premium.wpmudev.org/membership/').'"><i class="icon-arrow-up icon-large"></i> ' . __( 'Upgrade Now', 'wpmudev' ) . '</a>';
 			}
 		} else { //free member
 			if ( false == ($dismissed['id'] == $data['free_notice']['id'] && $dismissed['expire'] > time()) ) {
 				$msg = $data['free_notice']['msg'];
 				$id = $data['free_notice']['id'];
 				$class = 'with-button';
-				$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="https://premium.wpmudev.org/join/"><i class="icon-arrow-up icon-large"></i> ' . __( 'Signup Now', 'wpmudev' ) . '</a>';
+				$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="'.apply_filters('wpmudev_join_url', 'http://premium.wpmudev.org/join/').'"><i class="icon-arrow-up icon-large"></i> ' . __( 'Upgrade Now', 'wpmudev' ) . '</a>';
 			}
 		}
 
@@ -124,24 +124,28 @@ class WPMUDEV_Notifications_Output {
 			$local_projects = $wpmudev_un->get_local_projects();
 			if ( $dismissed_release != $data['latest_release'] && !isset($local_projects[$data['latest_release']]) ) { //if not dismissed or not installed
 				$project = $data['projects'][$data['latest_release']];
+				$info_url = ($project['type'] == 'theme') ? $wpmudev_un->themes_url . '#pid=' . $data['latest_release'] : $wpmudev_un->plugins_url . '#pid=' . $data['latest_release'];
 				?>
 				<div class="wpmudev-new" id="message">
 					<div class="dev-widget-content">
 						<h4><strong><?php _e('New WPMU DEV Release:', 'wpmudev'); ?></strong></h4>
 							<div class="dev-content-wrapper">
-								<a id="wdv-release-img" target="_blank" title="<?php _e('More Information &raquo;', 'wpmudev'); ?>" href="<?php echo $project['url']; ?>">
+								<a id="wdv-release-img" title="<?php _e('More Information &raquo;', 'wpmudev'); ?>" href="<?php echo $info_url; ?>">
 									<img src="<?php echo $project['thumbnail']; ?>" width="186" height="105" />
 								</a>
 								<h4 id="wdv-release-title"><?php echo esc_html($project['name']); ?></h4>
 								<div id="wdv-release-desc"><?php echo esc_html($project['short_description']); ?>
-									<div class="dev-cta-wrap">
-										<?php if ($url = $wpmudev_un->auto_install_url($data['latest_release'])) { ?>
-										<a id="wdv-release-install" class="button-primary" href="<?php echo $url; ?>"><i class="icon-download-alt icon-large"></i> <?php _e( 'INSTALL', 'wpmudev' ); ?></a>
-										<?php } else { ?>
-										<a id="wdv-release-install" target="_blank" class="button-primary" href="<?php echo esc_url($project['url']); ?>"><i class="icon-download-alt icon-large"></i> <?php _e( 'DOWNLOAD', 'wpmudev' ); ?></a>
-										<?php } ?>
-									
-										<a id="wdv-release-info" target="_blank" class="button-primary" href="<?php echo $project['url']; ?>"><?php _e( 'More Information &raquo;', 'wpmudev' ); ?></a>
+									<div class="dev-cta-wrap">									
+										<?php if (!$wpmudev_un->get_apikey()) { //no api key yet
+											?><a id="wdv-release-install" href="<?php echo $wpmudev_un->dashboard_url; ?>" class="button-primary button-disabled" title="<?php _e('Setup your WPMU DEV account to install', 'wpmudev'); ?>"><i class="icon-download-alt icon-large"></i> <?php _e('INSTALL', 'wpmudev'); ?></a><?php
+										} else if ($url = $wpmudev_un->auto_install_url($data['latest_release'])) {
+											?><a id="wdv-release-install" href="<?php echo $url; ?>" class="button-primary"><i class="icon-download-alt icon-large"></i> <?php _e('INSTALL', 'wpmudev'); ?></a><?php
+										} else if ($wpmudev_un->user_can_install($data['latest_release'])) { //has permission, but it's not autoinstallable
+											?><a id="wdv-release-install" href="<?php echo esc_url($project['url']); ?>" target="_blank" class="button-primary"><i class="icon-download icon-large"></i> <?php _e('DOWNLOAD', 'wpmudev'); ?></a><?php
+										} else { //needs to upgrade
+											?><a id="wdv-release-install" href="<?php echo apply_filters('wpmudev_project_upgrade_url', esc_url($project['url'] . '#signup'), $data['latest_release']); ?>" target="_blank" class="button-primary"><i class="icon-arrow-up icon-large"></i> <?php _e('Upgrade to Install', 'wpmudev'); ?></a><?php
+										} ?>
+										<a id="wdv-release-info" class="button-primary" href="<?php echo $info_url; ?>"><?php _e( 'More Information &raquo;', 'wpmudev' ); ?></a>
 									</div>
 								</div>
 							</div>

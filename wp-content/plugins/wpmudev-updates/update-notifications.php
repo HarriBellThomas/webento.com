@@ -2,9 +2,9 @@
 /*
 Plugin Name: WPMU DEV Dashboard
 Plugin URI: http://premium.wpmudev.org/project/wpmu-dev-dashboard/
-Description: Notifies the Admin or Super Admin of available updates for WPMU DEV plugins and themes, new releases, and special member only offers. Allows auto-upgrades and browsing and auto-install of supported themes/plugins. Required to be installed to use WPMU DEV products.
+Description: Brings the power of WPMU DEV direct to you, it'll revolutionize how you use WordPress, activate now!
 Author: Aaron Edwards (Incsub)
-Version: 3.1.5
+Version: 3.2
 Author URI: http://premium.wpmudev.org/
 Text Domain: wpmudev
 Domain Path: /includes/languages/
@@ -35,16 +35,21 @@ class WPMUDEV_Update_Notifications {
 	//---Config---------------------------------------------------------------//
 	//------------------------------------------------------------------------//
 
-	var $version = '3.1.5';
-
-	var $server_url = 'http://premium.wpmudev.org/wdp-un.php';
-
+	var $version = '3.2';
+	var $theme_pack = 128;
+	
+	var $server_url;
+	var $server_root;
 	var $plugin_dir;
 	var $plugin_url;
 	var $settings_url;
+	
 
 	function WPMUDEV_Update_Notifications() {
 		global $wp_version;
+
+		$this->server_root = defined('WPMUDEV_CUSTOM_API_SERVER') ? WPMUDEV_CUSTOM_API_SERVER : 'http://premium.wpmudev.org/';
+		$this->server_url = trailingslashit($this->server_root) . 'wdp-un.php';
 		
 		//------------------------------------------------------------------------//
 		//---Hook-----------------------------------------------------------------//
@@ -80,11 +85,21 @@ class WPMUDEV_Update_Notifications {
 		add_action('wp_ajax_wpmudev_get_project_details', array($this, 'ajax_get_project_details'));
 		add_action('wp_ajax_wpmudev_support_post', array($this, 'ajax_support_post'));
 		add_action('wp_ajax_wpmudev_hide_install_message', array($this, 'ajax_hide_install_message'));
+		add_action('wp_ajax_nopriv_wpmudev_refresh_updates', array($this, 'ajax_refresh_updates'));
+
+		// Form validation handlers
+		add_action('wp_ajax_wpmudev_validate_username', array($this, 'json_is_valid_username'));
+		add_action('wp_ajax_wpmudev_validate_email', array($this, 'json_is_valid_email'));
+		add_action('wp_ajax_wpmudev_validate_password', array($this, 'json_is_valid_password'));
 		
 		//moving all public hooks into a sep method so we can check for an allowed user
 		add_action( 'init', array( &$this, 'load_branded_hooks' ) );
 		
 		$this->plugin_url = plugins_url('', __FILE__);
+		
+		//load special code if included in package
+		if ( file_exists(dirname(__FILE__) . '/includes/custom-module.php') )
+			include_once( dirname(__FILE__) . '/includes/custom-module.php' );
 		
 		// Schedule update jobs
 		if (!wp_next_scheduled('wpmudev_scheduled_jobs')) {
@@ -97,6 +112,95 @@ class WPMUDEV_Update_Notifications {
 	//------------------------------------------------------------------------//
 	//---Functions------------------------------------------------------------//
 	//------------------------------------------------------------------------//
+
+	/**
+	 * Uses usermeta cache to store gravatar validity flag,
+	 * in order to tighten up outgoing requests.
+	 */
+	function current_user_has_dev_gravatar () {
+		global $current_user;
+		if ((int)get_user_meta($current_user->ID, '_wdp_un_has_gravatar', true)) return true; // Already cached.
+
+		$profile = $this->get_profile();
+		$has_gravatar = $this->_check_user_gravatar($profile['profile']['gravatar']);
+		if ($has_gravatar) update_user_meta($current_user->ID, '_wdp_un_has_gravatar', 1);
+		return $has_gravatar;
+	}
+	
+	private function _check_user_gravatar ($gravatar) {
+		// Extract clean gravatar request, short out if we fail
+		if (!preg_match_all('/src=[\'"](https?:\/\/.+\.gravatar.com\/avatar\/.+?\b)/', $gravatar, $parts)) return false;
+		$link = isset($parts[1][0]) ? $parts[1][0] : false;
+		if (!$link) return false;
+
+		// Construct a special, 404-fallback URL format,
+		// see https://en.gravatar.com/site/implement/images/
+		$link .= '?d=404';
+		$response = wp_remote_get($link,  array(
+			'timeout' => 15,
+			'user-agent' => 'UN Client/' . $this->version
+		));
+		if (wp_remote_retrieve_response_code($response) != 200) return false;
+		return true;
+	}
+
+	private function _validation_request($what, $value) {
+		$url = $this->server_url . '?action=' . $what . '_exists&' . $what . '=' . $value;
+		$response = wp_remote_get($url,  array(
+			'timeout' => 15,
+			'user-agent' => 'UN Client/' . $this->version
+		));
+		if (wp_remote_retrieve_response_code($response) != 200) return false;
+		return !(bool)$response['body'];
+	}
+
+	function json_is_valid_username () {
+		$valid = validate_username($_POST['value']);
+		if (!$valid) {
+			die(json_encode(array(
+				'status' => 1,
+				'message' => __('This is not a valid username', 'wpmudev'),
+			)));
+		}
+		$valid = $this->_validation_request('username', $_POST['value']);
+		if (!$valid) {
+			die(json_encode(array(
+				'status' => 1,
+				'message' => __('This username is already taken, please try a different one', 'wpmudev'),
+			)));
+		}
+		
+		die(json_encode(array('status' => 0)));
+	}
+
+	function json_is_valid_email () {
+		$valid = is_email($_POST['value']);
+		if (!$valid) {
+			die(json_encode(array(
+				'status' => 1,
+				'message' => __('This is not a valid email', 'wpmudev'),
+			)));
+		}
+		$valid = $this->_validation_request('email', $_POST['value']);
+		if (!$valid) {
+			die(json_encode(array(
+				'status' => 1,
+				'message' => __('This email is already registered', 'wpmudev'),
+			)));
+		}
+		die(json_encode(array('status' => 0)));
+	}
+
+	function json_is_valid_password () {
+		$valid = strlen($_POST['value']) > 4;
+		if (!$valid) {
+			die(json_encode(array(
+				'status' => 1,
+				'message' => __('Your password is too short', 'wpmudev'),
+			)));
+		}
+		die(json_encode(array('status' => 0)));
+	}
 	
 	function load_branded_hooks() {
 		if ( !is_admin() ) return false;
@@ -474,13 +578,22 @@ class WPMUDEV_Update_Notifications {
 
 					if ( isset($data['id']) && !empty($data['id']) ) {
 						$projects[$data['id']]['type'] = 'theme';
-						//if ( !isset($projects[$data['id']]['version']) || version_compare($projects[$data['id']]['version'], $data['version'], '>=') ) //TODO for themepack to show updates if one is lower
-						$projects[$data['id']]['version'] = $data['version'];
 						$projects[$data['id']]['filename'] = substr( $themes_file, 0, strpos( $themes_file, '/' ) );
 						
 						//keep record of all themes for 133 themepack
-						$local_themes[$themes_file]['id'] = $data['id'];
-						$local_themes[$themes_file]['filename'] = substr( $themes_file, 0, strpos( $themes_file, '/' ) );
+						if ($data['id'] == $this->theme_pack) {
+							$local_themes[$themes_file]['id'] = $data['id'];
+							$local_themes[$themes_file]['filename'] = substr( $themes_file, 0, strpos( $themes_file, '/' ) );
+							$local_themes[$themes_file]['version'] = $data['version'];
+							//increment 133 theme pack version to lowest in all of them
+							if ( isset($projects[$data['id']]['version']) && version_compare($data['version'], $projects[$data['id']]['version'], '<') ) {
+								$projects[$data['id']]['version'] = $data['version'];
+							} else if ( !isset($projects[$data['id']]['version']) ) {
+								$projects[$data['id']]['version'] = $data['version'];
+							}
+						} else {
+							$projects[$data['id']]['version'] = $data['version'];
+						}
 					}
 				}
 			}
@@ -558,6 +671,8 @@ class WPMUDEV_Update_Notifications {
 						} else {
 							$remote_version = $remote_project['version'];
 						}
+					} else if ( apply_filters('wpmudev_project_ignore_updates', false, $id) ) { //allows custom code to exclude certain projects from update notifications
+						$remote_version = $local_version;
 					} else {
 						$remote_version = $remote_project['version'];
 					}
@@ -592,7 +707,10 @@ class WPMUDEV_Update_Notifications {
 
 		if ( defined( 'WP_INSTALLING' ) )
 			return false;
-
+		
+		//reset flag if it's set
+		update_site_option('wdp_un_refresh_updates_flag', 0);
+		
 		if ( !is_array($local_projects) )
 			$local_projects = $this->get_projects();
 
@@ -722,7 +840,7 @@ class WPMUDEV_Update_Notifications {
 	}
 	
 	function get_updates() {
-		if ( false === ( $updates = get_site_transient( 'wpmudev_updates_data' ) ) ) {
+		if ( get_site_option('wdp_un_refresh_updates_flag') || false === ( $updates = get_site_transient( 'wpmudev_updates_data' ) ) ) {
 			return $this->refresh_updates();
 		}	
 		
@@ -806,7 +924,7 @@ class WPMUDEV_Update_Notifications {
 	
 	function install_theme_complete_actions($install_actions, $api, $stylesheet, $theme_info) {
 		if (strpos($api->download_link, $this->server_url) !== false) {
-			$install_actions['themes_page'] = '<a href="' . $this->themes_url . '&tab=themes" title="' . esc_attr(__('Return to WPMU DEV Themes', 'wpmudev')) . '" target="_parent">' . __('Return to WPMU DEV Themes', 'wpmudev') . '</a>';
+			$install_actions['themes_page'] = '<a href="' . $this->themes_url . '" title="' . esc_attr(__('Return to WPMU DEV Themes', 'wpmudev')) . '" target="_parent">' . __('Return to WPMU DEV Themes', 'wpmudev') . '</a>';
 		}
 		
 		return $install_actions;	
@@ -826,18 +944,6 @@ class WPMUDEV_Update_Notifications {
 		if ( !current_user_can( 'update_plugins' ) )
 			return;
 		
-		global $local_themes;
-		
-		if (!$local_themes) {
-			$local_themes = $this->get_local_themes();
-		}
-
-		if ( is_array($local_themes) && count($local_themes) ) {
-			foreach ( $local_themes as $id => $plugin ) {
-				remove_all_actions( 'after_theme_row_' . $plugin['filename'] );
-			}
-		}
-		
 		$updates = get_site_option('wdp_un_updates_available');
 		if ( is_array($updates) && count($updates) ) {
 			foreach ( $updates as $id => $plugin ) {
@@ -849,6 +955,17 @@ class WPMUDEV_Update_Notifications {
 						remove_all_actions( 'after_plugin_row_' . $plugin['filename'] );
 						add_action('after_plugin_row_' . $plugin['filename'], array( &$this, 'plugin_row'), 9, 2 );
 					}
+				}
+			}
+		}
+		
+		$local_themes = $this->get_local_themes();
+		if ( is_array($local_themes) && count($local_themes) ) {
+			foreach ( $local_themes as $id => $plugin ) {
+				remove_all_actions( 'after_theme_row_' . $plugin['filename'] );
+				//only add the notice if specific version is wrong
+				if ( isset($updates[$this->theme_pack]) && version_compare($plugin['version'], $updates[$this->theme_pack]['new_version'], '<') ) {
+					add_action('after_theme_row_' . $plugin['filename'], array( &$this, 'themepack_row'), 9, 2 );
 				}
 			}
 		}
@@ -884,40 +1001,37 @@ class WPMUDEV_Update_Notifications {
 
 	function filter_theme_count( $value ) {
 		
-		global $local_themes;
-
-		if (!$local_themes) {
-			$local_themes = $this->get_local_themes();
-		}
-
 		$updates = get_site_option('wdp_un_updates_available');
-
-		if ( is_array($local_themes) && count($local_themes) ) {
-			foreach ( $local_themes as $id => $plugin ) {
-				if (isset($updates[$plugin['id']]) && isset($updates[$plugin['id']]['new_version'])) {
-					$value->response[$plugin['filename']]['new_version'] = $updates[$plugin['id']]['new_version'];
-				} else if (isset($value) && isset($value->response) && isset($plugin['filename']) && isset($value->response[$plugin['filename']])) {
-					unset($value->response[$plugin['filename']]);
-				}
-			}
-		}
-
 		if ( is_array($updates) && count($updates) ) {
 			$api_key = $this->get_apikey();
-			foreach ( $updates as $id => $plugin ) {
-				if ( $plugin['type'] == 'theme' && $plugin['autoupdate'] != '2' ) {
+			foreach ( $updates as $id => $theme ) {
+				if ( $theme['type'] == 'theme' && $theme['autoupdate'] != '2' ) {
 					//build theme listing
-					$value->response[$plugin['filename']]['url'] = $plugin['url'];
-					$value->response[$plugin['filename']]['new_version'] = $plugin['new_version'];
+					$value->response[$theme['filename']]['url'] = $theme['url'];
+					$value->response[$theme['filename']]['new_version'] = $theme['new_version'];
 
-					if ($plugin['autoupdate'] == '1' && $this->allowed_user())
-						$value->response[$plugin['filename']]['package'] = $this->server_url . "?action=download&key=$api_key&pid=$id";
+					if ($theme['autoupdate'] == '1' && $this->allowed_user())
+						$value->response[$theme['filename']]['package'] = $this->server_url . "?action=download&key=$api_key&pid=$id";
 					else
-						$value->response[$plugin['filename']]['package'] = '';
+						$value->response[$theme['filename']]['package'] = '';
 				}
 			}
 		}
-
+		
+		//filter 133 theme pack themes from the list unless update is available
+		$local_themes = $this->get_local_themes();
+		if ( is_array($local_themes) && count($local_themes) ) {
+			foreach ( $local_themes as $id => $theme ) {
+				//add to count only if new version exists, otherwise remove
+				if (isset($updates[$theme['id']]) && isset($updates[$theme['id']]['new_version']) && version_compare($theme['version'], $updates[$theme['id']]['new_version'], '<')) {
+					$value->response[$theme['filename']]['new_version'] = $updates[$theme['id']]['new_version'];
+					$value->response[$theme['filename']]['package'] = '';
+				} else if (isset($value) && isset($value->response) && isset($theme['filename']) && isset($value->response[$theme['filename']])) {
+					unset($value->response[$theme['filename']]);
+				}
+			}
+		}
+		
 		return $value;
 	}
 
@@ -953,14 +1067,48 @@ class WPMUDEV_Update_Notifications {
 
 		if ( current_user_can('update_plugins') ) {
 			echo '<tr class="plugin-update-tr"><td colspan="3" class="plugin-update colspanchange"><div class="update-message">';
-			if ($autoupdate && $this->allowed_user())
+			if ($autoupdate && $this->user_can_install($project_id)) {
 				printf( __('There is a new version of %1$s available on WPMU DEV. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a> or <a href="%5$s">automatically update</a>.', 'wpmudev'), $plugin_name, esc_url($update_url), esc_attr($plugin_name), $version, esc_url($autoupdate_url) );
-			else
+			} else if ($this->user_can_install($project_id)) { //can only be manually installed
 				printf( __('There is a new version of %1$s available on WPMU DEV. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a> or <a href="%5$s" target="_blank" title="Download update from WPMU DEV">download update</a>.', 'wpmudev'), $plugin_name, esc_url($update_url), esc_attr($plugin_name), $version, esc_url($plugin_url) );
+			} else if ($this->allowed_user()) { //no permissions to update
+				printf( __('There is a new version of %1$s available on WPMU DEV. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a> or <a href="%5$s" target="_blank" title="Upgrade your WPMU DEV membership">upgrade to update</a>.', 'wpmudev'), $plugin_name, esc_url($update_url), esc_attr($plugin_name), $version, apply_filters('wpmudev_project_upgrade_url', esc_url($plugin_url . '#signup'), $project_id) );
+			} else {
+				printf( __('There is a new version of %1$s available on WPMU DEV. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a>.', 'wpmudev'), $plugin_name, esc_url($update_url), esc_attr($plugin_name), $version );
+			}
 		}
 		echo '</div></td></tr>';
 	}
+	
+	function themepack_row( $file, $plugin_data ) {
 
+		//get new version and update url
+		$updates = get_site_option('wdp_un_updates_available');
+		if ( isset($updates[$this->theme_pack]) ) {
+			$plugin = $updates[$this->theme_pack];
+			$project_id = $this->theme_pack;
+			$version = $plugin['new_version'];
+			$plugin_url = $plugin['url'];
+		} else {
+			return false;
+		}
+
+		$plugins_allowedtags = array('a' => array('href' => array(),'title' => array()),'abbr' => array('title' => array()),'acronym' => array('title' => array()),'code' => array(),'em' => array(),'strong' => array());
+		$plugin_name = wp_kses( $plugin_data['Name'], $plugins_allowedtags );
+
+		$update_url = $this->server_url . '?action=details&id=' . $project_id . '&TB_iframe=true&width=640&height=800';
+
+		if ( current_user_can('update_plugins') ) {
+			echo '<tr class="plugin-update-tr"><td colspan="3" class="plugin-update colspanchange"><div class="update-message">';
+			if ($this->user_can_install($project_id)) {
+				printf( __('There is a new version of %1$s available on WPMU DEV. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a> or <a href="%5$s" target="_blank" title="Download update from WPMU DEV">download update</a>.', 'wpmudev'), $plugin_name, esc_url($update_url), esc_attr($plugin_name), $version, esc_url($plugin_url) );
+			} else { //no permissions to update
+				printf( __('There is a new version of %1$s available on WPMU DEV. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a> or <a href="%5$s" target="_blank" title="Upgrade your WPMU DEV membership">upgrade to update</a>.', 'wpmudev'), $plugin_name, esc_url($update_url), esc_attr($plugin_name), $version, apply_filters('wpmudev_project_upgrade_url', esc_url($plugin_url . '#signup'), $project_id) );
+			}
+		}
+		echo '</div></td></tr>';
+	}
+	
 	function list_updates() {
 
 		$updates = get_site_option('wdp_un_updates_available');
@@ -998,14 +1146,21 @@ class WPMUDEV_Update_Notifications {
 		foreach ( (array) $updates as $id => $plugin) {
 			$screenshot = $plugin['thumbnail'];
 
-			if ( $this->allowed_user() && $plugin['autoupdate'] && $plugin['type'] == 'plugin' ) {
+			if ( $this->user_can_install($id) && $plugin['autoupdate'] && $plugin['type'] == 'plugin' ) {
 				$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-plugin&plugin=') . $plugin['filename'], 'upgrade-plugin_' . $plugin['filename']) . "' class='wdv-upgrade'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev')."</a>";
-			} else if ( $this->allowed_user() && $plugin['autoupdate'] && $plugin['type'] == 'theme' ) {
+			} else if ( $this->user_can_install($id) && $plugin['autoupdate'] && $plugin['type'] == 'theme' ) {
 				$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-theme&theme=') . $plugin['filename'], 'upgrade-theme_' . $plugin['filename']) . "' class='wdv-upgrade'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev')."</a>";
+			} else if ( $this->user_can_install($id) ) {
+				$upgrade_button_code = "<a href='" . esc_url($plugin['url']) . "' class='wdv-upgrade' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
+				$jquery .= "<script type='text/javascript'>jQuery(\"input:checkbox[value='".esc_attr($plugin['filename'])."']\").remove();</script>\n";
+			} else if ( $this->allowed_user() ) {
+				$upgrade_button_code = "<a href='" . apply_filters('wpmudev_project_upgrade_url', esc_url($plugin['url'] . '#signup'), $id) . "' class='wdv-upgrade' target='_blank'><i class='icon-arrow-up'></i> ".__('Upgrade to Update', 'wpmudev')."</a>";
+				$jquery .= "<script type='text/javascript'>jQuery(\"input:checkbox[value='".esc_attr($plugin['filename'])."']\").remove();</script>\n";
 			} else {
-				$upgrade_button_code = "<a href='" . $plugin['url'] . "' class='wdv-upgrade' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
+				$upgrade_button_code = "";
 				$jquery .= "<script type='text/javascript'>jQuery(\"input:checkbox[value='".esc_attr($plugin['filename'])."']\").remove();</script>\n";
 			}
+
 
 			echo "
 				<tr class='active'>
@@ -1021,6 +1176,13 @@ class WPMUDEV_Update_Notifications {
     </table>
     <br />
 		<?php
+		//disable checkboxes for 133 theme pack themes
+		$local_themes = $this->get_local_themes();
+		if ( is_array($local_themes) && count($local_themes) ) {
+			foreach ( $local_themes as $id => $theme ) {
+				$jquery .= "<script type='text/javascript'>jQuery(\"input:checkbox[value='".esc_attr($theme['filename'])."']\").remove();</script>\n";
+			}
+		}
 		echo $jquery;
 	}
 	
@@ -1089,9 +1251,9 @@ class WPMUDEV_Update_Notifications {
 	function admin_styles() {
 		// 3.1.2 - 2012-06-26 PaulM Convert image urls for ssl admin
 		if (is_ssl()) {
-			wp_enqueue_style( 'wpmudev-admin-google_fonts', 'https://fonts.googleapis.com/css?family=Lato:300,400,700,900,400italic%7CExo:200,400,700,700italic,400italic', false, $this->version);		
+			wp_enqueue_style( 'wpmudev-admin-google_fonts', 'https://fonts.googleapis.com/css?family=Lato:300,400,700,400italic', false, $this->version);		
 		} else {
-			wp_enqueue_style( 'wpmudev-admin-google_fonts', 'http://fonts.googleapis.com/css?family=Lato:300,400,700,900,400italic%7CExo:200,400,700,700italic,400italic', false, $this->version);					
+			wp_enqueue_style( 'wpmudev-admin-google_fonts', 'https://fonts.googleapis.com/css?family=Lato:300,400,700,400italic', false, $this->version);					
 		}
 		
 		wp_enqueue_style( 'wpmudev-admin-css', plugins_url( 'includes/css/admin.css' , __FILE__ ), array('wpmudev-admin-google_fonts'), $this->version);
@@ -1247,13 +1409,23 @@ class WPMUDEV_Update_Notifications {
 				&& isset($data['projects'][$project_id]['autoupdate'])
 				&& $data['projects'][$project_id]['autoupdate'] == 1
 				&& $api_key
-				&& isset($data['membership'])
-				&& $this->allowed_user() 
-				&& ((($data['membership'] == 'full' || $data['membership'] == $project_id) && (isset($data['downloads']) && $data['downloads'] == 'enabled')) || $data['projects'][$project_id]['paid'] == 'free') ) {
+				&& $this->user_can_install($project_id)
+				&& (isset($data['downloads']) && $data['downloads'] == 'enabled') ) {
 			if ($data['projects'][$project_id]['type'] == 'plugin')	
 				return wp_nonce_url(self_admin_url("update.php?action=install-plugin&plugin=wpmudev_install-$project_id"), "install-plugin_wpmudev_install-$project_id");
 			else if ($data['projects'][$project_id]['type'] == 'theme')
 				return wp_nonce_url(self_admin_url("update.php?action=install-theme&theme=wpmudev_install-$project_id"), "install-theme_wpmudev_install-$project_id");
+		}
+		return false;
+	}
+	
+	function user_can_install($project_id) {
+		$data = $this->get_updates();
+		$local_projects = $this->get_local_projects();
+		if ( isset($data['membership'])
+				&& $this->allowed_user() 
+				&& (($data['membership'] == 'full' || $data['membership'] == $project_id) || $data['projects'][$project_id]['paid'] == 'free' || $data['projects'][$project_id]['paid'] == 'lite') ) {
+			return true;
 		}
 		return false;
 	}
@@ -1461,12 +1633,12 @@ class WPMUDEV_Update_Notifications {
 			$msg = $data['single_notice']['msg'];
 			$id = $data['single_notice']['id'];
 			$class = 'with-button';
-			$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="https://premium.wpmudev.org/join/"><i class="icon-arrow-up icon-large"></i> ' . __( 'Upgrade Now', 'wpmudev' ) . '</a>';
+			$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="'.apply_filters('wpmudev_upgrade_url', 'https://premium.wpmudev.org/membership/').'"><i class="icon-arrow-up icon-large"></i> ' . __( 'Upgrade Now', 'wpmudev' ) . '</a>';
 		} else { //free member
 			$msg = $data['free_notice']['msg'];
 			$id = $data['free_notice']['id'];
 			$class = 'with-button';
-			$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="https://premium.wpmudev.org/join/"><i class="icon-arrow-up icon-large"></i> ' . __( 'Signup Now', 'wpmudev' ) . '</a>';
+			$button = '<a id="wdv-upgrade" class="button-primary" target="_blank" href="'.apply_filters('wpmudev_join_url', 'http://premium.wpmudev.org/join/').'"><i class="icon-arrow-up icon-large"></i> ' . __( 'Upgrade Now', 'wpmudev' ) . '</a>';
 		}
 
 		if ( isset($msg) ) {
@@ -1480,23 +1652,28 @@ class WPMUDEV_Update_Notifications {
 		//if latest release is set, has data, and not installed show notice
 		if ( current_user_can('install_plugins') && isset($data['latest_release']) && isset($data['projects'][$data['latest_release']]) && !isset($local_projects[$data['latest_release']]) ) {
 			$project = $data['projects'][$data['latest_release']];
+			$info_url = ($project['type'] == 'theme') ? $this->themes_url . '#pid=' . $data['latest_release'] : $this->plugins_url . '#pid=' . $data['latest_release'];
 			?>
 			<div id="wpdv-dash-release">
 			<h4><?php _e('Latest WPMU DEV Release:', 'wpmudev'); ?></h4>
 			<div>
-			<a id="wdv-release-img" target="_blank" title="<?php _e('More Information &raquo;', 'wpmudev'); ?>" href="<?php echo $project['url']; ?>">
+			<a id="wdv-release-img" title="<?php _e('More Information &raquo;', 'wpmudev'); ?>" href="<?php echo $info_url; ?>">
 				<img src="<?php echo $project['thumbnail']; ?>" width="186" height="105" />
 			</a>
 			<h4><?php echo esc_html($project['name']); ?></h4>
 			<?php echo esc_html($project['short_description']); ?>
 			
 				<div id="wdv-release-buttons">
-					<?php if ($url = $this->auto_install_url($data['latest_release'])) { ?>
-					<a id="wdv-release-install" class="button-primary" href="<?php echo $url; ?>"><i class="icon-download-alt icon-large"></i> <?php _e( 'INSTALL', 'wpmudev' ); ?></a>
-					<?php } else { ?>
-					<a id="wdv-release-install" target="_blank" class="button-primary" href="<?php echo esc_url($project['url']); ?>"><i class="icon-download-alt icon-large"></i> <?php _e( 'DOWNLOAD', 'wpmudev' ); ?></a>
-					<?php } ?>
-					<a id="wdv-release-info" target="_blank" class="button-primary" href="<?php echo esc_url($project['url']); ?>"><?php _e( 'More Information &raquo;', 'wpmudev' ); ?></a>
+					<?php if (!$this->get_apikey()) { //no api key yet
+						?><a id="wdv-release-install" href="<?php echo $this->dashboard_url; ?>" class="button-primary button-disabled" title="<?php _e('Setup your WPMU DEV account to install', 'wpmudev'); ?>"><i class="icon-download-alt icon-large"></i> <?php _e('INSTALL', 'wpmudev'); ?></a><?php
+					} else if ($url = $this->auto_install_url($data['latest_release'])) {
+						?><a id="wdv-release-install" href="<?php echo $url; ?>" class="button-primary"><i class="icon-download-alt icon-large"></i> <?php _e('INSTALL', 'wpmudev'); ?></a><?php
+					} else if ($this->user_can_install($data['latest_release'])) { //has permission, but it's not autoinstallable
+						?><a id="wdv-release-install" href="<?php echo esc_url($project['url']); ?>" target="_blank" class="button-primary"><i class="icon-download icon-large"></i> <?php _e('DOWNLOAD', 'wpmudev'); ?></a><?php
+					} else { //needs to upgrade
+						?><a id="wdv-release-install" href="<?php echo apply_filters('wpmudev_project_upgrade_url', esc_url($project['url'] . '#signup'), $data['latest_release']); ?>" target="_blank" class="button-primary"><i class="icon-arrow-up icon-large"></i> <?php _e('Upgrade to Install', 'wpmudev'); ?></a><?php
+					} ?>
+					<a id="wdv-release-info" class="button-primary" href="<?php echo $info_url; ?>"><?php _e( 'More Information &raquo;', 'wpmudev' ); ?></a>
 				</div>
 			</div>
 			
@@ -1547,8 +1724,8 @@ class WPMUDEV_Update_Notifications {
 			$this->refresh_updates();
 		}
 		
-		if ( isset($_POST['wpmudev_apikey']) ) {
-			update_site_option('wpmudev_apikey', trim($_POST['wpmudev_apikey']));
+		if ( isset($_REQUEST['set_apikey']) ) {
+			update_site_option('wpmudev_apikey', trim($_REQUEST['set_apikey']));
 			$result = $this->refresh_updates();
 			if ( empty($result['membership']) ) {
 				update_site_option('wpmudev_apikey', '');
@@ -1562,8 +1739,65 @@ class WPMUDEV_Update_Notifications {
 		
 		$data = $this->get_updates();
 		$profile = $this->get_profile();
+
+		echo '<div id="container" class="wrap">';
+
+		if (!$this->get_apikey()) {
+			
+			require_once( dirname(__FILE__) . '/includes/templates/dashboard-signup.php' );
+			
+		} else if (!$this->allowed_user()) {
+			
+			echo '<section id="profile" class="grid_container" style="height: 0px;"></section>';
+			
+		} else if ($data['membership'] == 'full') { //api key isset and full
+			
+			if ( isset($_REQUEST['set_apikey']) && isset($data['downloads']) && $data['downloads'] != 'enabled' ) {
+				?><div class="registered_error"><p><?php _e('You have reached your maximum enabled sites for automatic updates, one-click installations, and direct support through the WPMU DEV Dashboard plugin. You may <a href="http://premium.wpmudev.org/wp-admin/profile.php?page=wdpun">change which sites are enabled or upgrade to a higher membership level here &raquo;</a>', 'wpmudev'); ?></p></div><?php
+			}
+			require_once( dirname(__FILE__) . '/includes/templates/dashboard-full.php' );
+			
+		} else { // Free or single
+			// Set up template data
+			$free_projects = array('plugins' => array(), 'themes' => array());
+			$premium_projects = array('plugins' => array(), 'themes' => array());
+			foreach ($data['projects'] as $project) {
+				if ('free' == $project['paid'] || 'lite' == $project['paid']) {
+					if ('theme' == $project['type'] && count($free_projects['themes']) < 3) $free_projects['themes'][] = $project;
+					else if ('plugin' == $project['type'] && count($free_projects['plugins']) < 3) $free_projects['plugins'][] = $project;
+				} else {
+					if ('theme' == $project['type'] && count($premium_projects['themes']) < 10) $premium_projects['themes'][] = $project;
+					else if ('plugin' == $project['type'] && count($premium_projects['plugins']) < 10) $premium_projects['plugins'][] = $project;
+				}
+				if (
+					3 == count($free_projects['plugins']) && 3 == count($free_projects['themes'])
+					&&
+					10 == count($premium_projects['plugins']) && 10 == count($premium_projects['themes'])
+				) break;
+			}
+			if (is_numeric($data['membership'])) { 
+				//api key isset and single
+				if ( isset($_REQUEST['set_apikey']) && isset($data['downloads']) && $data['downloads'] != 'enabled' ) {
+					?><div class="registered_error"><p><?php _e('You have reached your maximum enabled sites for automatic updates, one-click installations, and direct support through the WPMU DEV Dashboard plugin. You may <a href="http://premium.wpmudev.org/wp-admin/profile.php?page=wdpun">change which sites are enabled or upgrade to a higher membership level here &raquo;</a>', 'wpmudev'); ?></p></div><?php
+				}
+				// Get paid project info
+				$paid_project_id = $data['membership'];
+				$paid_project = array();
+				$local_projects = $this->get_local_projects();
+				foreach ($data['projects'] as $project) {
+					if ($paid_project_id != $project['id']) continue;
+					$paid_project = $project;
+					break;
+				}
+				require_once( dirname(__FILE__) . '/includes/templates/dashboard-single.php' );
+			} else { 
+				//api key isset and free
+				require_once( dirname(__FILE__) . '/includes/templates/dashboard-free.php' );
+			}
+			
+		}
 		
-		require_once( dirname(__FILE__) . '/includes/templates/dashboard.php' );
+		echo '</div><!-- end of #container -->';
 	}
 	
 	function community_output() {
@@ -1573,7 +1807,15 @@ class WPMUDEV_Update_Notifications {
 			echo "<p>Nice Try...</p>";  //If accessed properly, this message doesn't appear.
 			return;
 		}
-
+		
+		$data = $this->get_updates();
+		$profile = $this->get_profile();
+		
+		$disabled = false;
+		if (!$this->get_apikey() || !$this->allowed_user() || !isset($data['membership']) || !$data['membership'] || $data['membership'] == 'free') {
+			$disabled = true;
+		}
+		
 		require_once( dirname(__FILE__) . '/includes/templates/community.php' );
 	}
 	
@@ -1591,6 +1833,17 @@ class WPMUDEV_Update_Notifications {
 		$local_projects = $this->get_local_projects();
 		$tags = $this->tags_data('plugin');
 
+		// If not a full member, rearrange so the free items come first
+		if (!(isset($data['membership']) && $data['membership'] == 'full')) {
+			$free = $other = array();
+			$free_status = array('lite', 'free');
+			foreach ($data['projects'] as $project) {
+				if (in_array($project['paid'], $free_status)) $free[] = $project;
+				else $other[] = $project;
+			}
+			$data['projects'] = array_merge($free, $other);
+		}
+
 		require_once( dirname(__FILE__) . '/includes/templates/listings.php' );
 	}
 	
@@ -1607,6 +1860,17 @@ class WPMUDEV_Update_Notifications {
 		$data = $this->get_updates();
 		$local_projects = $this->get_local_projects();
 		$tags = $this->tags_data('theme');
+
+		// If not a full member, rearrange so the free items come first
+		if (!(isset($data['membership']) && $data['membership'] == 'full')) {
+			$free = $other = array();
+			$free_status = array('lite', 'free');
+			foreach ($data['projects'] as $project) {
+				if (in_array($project['paid'], $free_status)) $free[] = $project;
+				else $other[] = $project;
+			}
+			$data['projects'] = array_merge($free, $other);
+		}
 		
 		require_once( dirname(__FILE__) . '/includes/templates/listings.php' );
 	}
@@ -1700,7 +1964,7 @@ class WPMUDEV_Update_Notifications {
 			die( json_encode( array( 'response' => 0, 'data' => __('You do not have permissions for this.', 'wpmudev') ) ) );
 		
 		//build GET url
-		$url = 'https://premium.wpmudev.org/forums/wdpun-api.php?';
+		$url = 'http://premium.wpmudev.org/forums/wdpun-api.php?';
 		$args = array();
 		foreach($_POST as $key => $value)
 			$args[] = $key . '=' . urlencode( stripslashes($value) );
@@ -1725,9 +1989,17 @@ class WPMUDEV_Update_Notifications {
 	/**
 	 * Handle install message hiding per-user.
 	 */
-	function ajax_hide_install_message () {
+	function ajax_hide_install_message() {
 		global $current_user;
-		update_user_meta($current_user->id, '_wpmudev_install_message', 1);
+		update_user_meta($current_user->ID, '_wpmudev_install_message', 1);
+		die;
+	}
+	
+	/**
+	 * Listener for WPMU DEV API server asking site to refresh data (like after checkout). Next admin page load will force a refresh
+	 */
+	function ajax_refresh_updates() {
+		update_site_option('wdp_un_refresh_updates_flag', 1);
 		die;
 	}
 

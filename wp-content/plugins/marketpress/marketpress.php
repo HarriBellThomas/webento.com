@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: MarketPress
-Version: 2.6.4
+Version: 2.7
 Plugin URI: http://premium.wpmudev.org/project/e-commerce
 Description: The complete WordPress ecommerce plugin - works perfectly with BuddyPress and Multisite too to create a social marketplace, where you can take a percentage! Activate the plugin, adjust your settings then add some products to your store.
 Author: Aaron Edwards (Incsub)
@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 class MarketPress {
 
-  var $version = '2.6.4';
+  var $version = '2.7';
   var $location;
   var $plugin_dir = '';
   var $plugin_url = '';
@@ -1659,7 +1659,7 @@ Thanks again!", 'mp')
       case "pricing":
         if (isset($meta["mp_price"]) && is_array($meta["mp_price"])) {
 	        foreach ($meta["mp_price"] as $key => $value) {
-						if ($meta["mp_is_sale"] && $meta["mp_sale_price"][$key]) {
+						if (isset($meta["mp_is_sale"]) && $meta["mp_is_sale"] && isset($meta["mp_sale_price"][$key])) {
 		          echo '<del>'.$this->format_currency('', $value).'</del> ';
 		          echo $this->format_currency('', $meta["mp_sale_price"][$key]) . '<br />';
 		        } else {
@@ -2203,7 +2203,84 @@ Thanks again!", 'mp')
     else
       return $price;
   }
+	
+	//returns the calculated price for shipping after tax. For display only.
+  function shipping_tax_price($shipping_price) {
 
+		if ( !$this->get_setting('tax->tax_shipping') || !$this->get_setting('tax->tax_inclusive') )
+			return $shipping_price;
+		
+    //get address
+    $meta = get_user_meta(get_current_user_id(), 'mp_shipping_info', true);
+
+    if (!isset($meta['state'])) {
+      $meta['state'] = '';
+    }
+    if (!isset($meta['country'])) {
+      $meta['country'] = '';
+    }
+
+    $state = isset($_SESSION['mp_shipping_info']['state']) ? $_SESSION['mp_shipping_info']['state'] : $meta['state'];
+    $country = isset($_SESSION['mp_shipping_info']['country']) ? $_SESSION['mp_shipping_info']['country'] : $meta['country'];
+
+		//if we've skipped the shipping page and no address is set, use base for tax calculation
+		if ($this->get_setting('tax->tax_inclusive') || $this->get_setting('shipping->method') == 'none') {
+			if (empty($country))
+				$country = $this->get_setting('base_country');
+			if (empty($state))
+				$state = $this->get_setting('base_province');
+		}
+
+    //check required fields
+    if ( empty($country) || $shipping_price <= 0 ) {
+      return false;
+    }
+
+    switch ($this->get_setting('base_country')) {
+			case 'US':
+			  //USA taxes are only for orders delivered inside the state
+			  if ($country == 'US' && $state == $this->get_setting('base_province'))
+			    $price = round(($shipping_price * $this->get_setting('tax->rate')), 2);
+			  break;
+
+			case 'CA':
+			  //Canada tax is for all orders in country, based on province shipped to. We're assuming the rate is a combination of GST/PST/etc.
+				if ( $country == 'CA' && array_key_exists($state, $this->canadian_provinces) ) {
+					if (!is_null($this->get_setting("tax->canada_rate->$state")))
+						$price = round(($shipping_price * $this->get_setting("tax->canada_rate->$state")), 2);
+					else //backwards compat with pre 2.2 if per province rates are not set
+						$price = round(($shipping_price * $this->get_setting('tax->rate')), 2);
+				}
+			  break;
+
+			case 'AU':
+			  //Australia taxes orders in country
+			  if ($country == 'AU')
+			    $price = round(($shipping_price * $this->get_setting('tax->rate')), 2);
+			  break;
+
+			default:
+			  //EU countries charge VAT within the EU
+			  if ( in_array($this->get_setting('base_country'), $this->eu_countries) ) {
+			    if (in_array($country, $this->eu_countries))
+			      $price = round(($shipping_price * $this->get_setting('tax->rate')), 2);
+			  } else {
+			    //all other countries use the tax outside preference
+			    if ($this->get_setting('tax->tax_outside') || (!$this->get_setting('tax->tax_outside') && $country == $this->get_setting('base_country')))
+			      $price = round(($shipping_price * $this->get_setting('tax->rate')), 2);
+			  }
+			  break;
+    }
+    if (empty($price))
+			$price = 0;
+		
+    $price = apply_filters( 'mp_shipping_tax_price', $price, $shipping_price, $country, $state );
+		
+		$price += $shipping_price;
+		
+    return $price;
+  }
+	
   //returns the calculated price for taxes based on a bunch of foreign tax laws.
   function tax_price($format = false, $cart = false) {
 
@@ -2225,7 +2302,7 @@ Thanks again!", 'mp')
     $country = isset($_SESSION['mp_shipping_info']['country']) ? $_SESSION['mp_shipping_info']['country'] : $meta['country'];
 
 		//if we've skipped the shipping page and no address is set, use base for tax calculation
-		if ($this->download_only_cart($cart) || $this->get_setting('tax->tax_inclusive')) {
+		if ($this->download_only_cart($cart) || $this->get_setting('tax->tax_inclusive') || $this->get_setting('shipping->method') == 'none') {
 			if (empty($country))
 				$country = $this->get_setting('base_country');
 			if (empty($state))
@@ -2678,7 +2755,7 @@ Thanks again!", 'mp')
     		$this->cart_checkout_error( __('Please enter a valid Email Address.', 'mp'), 'email');
 
 			//only require these fields if not a download only cart
-			if (!$this->download_only_cart($this->get_cart_contents())) {
+			if (!$this->download_only_cart($this->get_cart_contents()) && $this->get_setting('shipping->method') != 'none') {
 
 				if (empty($_POST['name']))
 					$this->cart_checkout_error( __('Please enter your Full Name.', 'mp'), 'name');
@@ -3231,7 +3308,7 @@ Thanks again!", 'mp')
 
 		// Keep up to 12MB in memory, if becomes bigger write to temp file
     $file = fopen('php://temp/maxmemory:'. (12*1024*1024), 'r+');
-		fputcsv( $file, array('order_id', 'status', 'received_date', 'paid_date', 'shipped_date', 'tax', 'shipping', 'total', 'coupon_discount', 'coupon_code', 'item_count', 'email', 'name', 'address1', 'address2', 'city', 'state', 'zipcode', 'country', 'phone', 'shipping_method', 'shipping_method_option', 'special_instructions', 'gateway', 'gateway_method', 'payment_currency', 'transaction_id' ) );
+		fputcsv( $file, array('order_id', 'status', 'received_date', 'paid_date', 'shipped_date', 'tax', 'shipping', 'total', 'coupon_discount', 'coupon_code', 'item_count', 'items', 'email', 'name', 'address1', 'address2', 'city', 'state', 'zipcode', 'country', 'phone', 'shipping_method', 'shipping_method_option', 'special_instructions', 'gateway', 'gateway_method', 'payment_currency', 'transaction_id' ) );
 
 		//loop through orders and add rows
 		foreach ($orders as $order) {
@@ -3253,6 +3330,39 @@ Thanks again!", 'mp')
 			$fields['coupon_discount'] = @$order->mp_discount_info['discount'];
 			$fields['coupon_code'] = @$order->mp_discount_info['code'];
 			$fields['item_count'] = $order->mp_order_items;
+			//items
+			if (is_array($order->mp_cart_info) && count($order->mp_cart_info)) {
+				foreach ($order->mp_cart_info as $product_id => $variations) {
+					foreach ($variations as $variation => $data) {
+						if (!empty($fields['items']))
+							$fields['items'] .= "\r\n";
+						if (!empty($data['SKU']))
+							$fields['items'] .= '[' . $data['SKU'] . '] ';
+						$fields['items'] .= $data['name'] . ': ' . number_format_i18n($data['quantity']) . ' * ' . number_format_i18n($data['price'], 2) . ' ' . $order->mp_payment_info['currency'];
+						/*
+						$cf_key = $bid .':'. $product_id .':'. $variation;
+						if (isset($order->mp_shipping_info['mp_custom_fields'][$cf_key])) {
+							$cf_items = $order->mp_shipping_info['mp_custom_fields'][$cf_key];
+		
+							$mp_custom_field_label = get_post_meta($product_id, 'mp_custom_field_label', true);
+							if (isset($mp_custom_field_label[$variation]))
+								$label_text = esc_attr($mp_custom_field_label[$variation]);
+							else
+								$label_text = __('Product Personalization', 'mp');
+		
+							$fields['items'] .= "\r\n\t" . $label_text  .": ";
+							foreach($cf_items as $idx => $cf_item) {
+								$item_cnt = intval($idx)+1;
+								$fields['items'] .= $cf_item;
+							}
+						}
+						*/
+					}
+				}
+			} else {
+				$fields['items'] = 'N/A';
+			}
+
 			$fields['email'] = @$order->mp_shipping_info['email'];
 			$fields['name'] = @$order->mp_shipping_info['name'];
 			$fields['address1'] = @$order->mp_shipping_info['address1'];
@@ -3264,7 +3374,7 @@ Thanks again!", 'mp')
 			$fields['phone'] = @$order->mp_shipping_info['phone'];
 			$fields['shipping_method'] = @$order->mp_shipping_info['shipping_option'];
 			$fields['shipping_method_option'] = @$order->mp_shipping_info['shipping_sub_option'];
-			$fields['special_instructions'] = @$order->mp_shipping_info['email'];
+			$fields['special_instructions'] = @$order->mp_shipping_info['special_instructions'];
 			$fields['gateway'] = @$order->mp_payment_info['gateway_private_name'];
 			$fields['gateway_method'] = @$order->mp_payment_info['method'];
 			$fields['payment_currency'] = @$order->mp_payment_info['currency'];
@@ -3318,16 +3428,22 @@ Thanks again!", 'mp')
 
       case 'paid':
         //update paid time, can't be adjusted as we don't want to loose gateway info
-        if (!get_post_meta($order->ID, 'mp_paid_time', true))
+        if (!get_post_meta($order->ID, 'mp_paid_time', true)) {
           update_post_meta($order->ID, 'mp_paid_time', time());
+          do_action( 'mp_order_paid', $order );
+        }
         break;
 
       case 'shipped':
         //update paid time if paid step was skipped
-        if (!get_post_meta($order->ID, 'mp_paid_time', true))
+        if (!get_post_meta($order->ID, 'mp_paid_time', true)) {
           update_post_meta($order->ID, 'mp_paid_time', time());
+          do_action( 'mp_order_paid', $order );
+        }
+
         //update shipped time, can be adjusted
         update_post_meta($order->ID, 'mp_shipped_time', time());
+        do_action( 'mp_order_shipped', $order );
 
         //send email
 				$this->order_shipped_notification($order->ID);
@@ -3335,13 +3451,20 @@ Thanks again!", 'mp')
 
       case 'closed':
         //update paid time if paid step was skipped
-        if (!get_post_meta($order->ID, 'mp_paid_time', true))
+        if (!get_post_meta($order->ID, 'mp_paid_time', true)) {
           update_post_meta($order->ID, 'mp_paid_time', time());
+          do_action( 'mp_order_paid', $order );
+        }
+
         //update shipped time if shipped step was skipped
-        if (!get_post_meta($order->ID, 'mp_shipped_time', true))
+        if (!get_post_meta($order->ID, 'mp_shipped_time', true)) {
           update_post_meta($order->ID, 'mp_shipped_time', time());
+          do_action( 'mp_order_shipped', $order );
+        }
+
         //update closed
         update_post_meta($order->ID, 'mp_closed_time', time());
+        do_action( 'mp_order_closed', $order );
         break;
 
     }
@@ -3358,10 +3481,6 @@ Thanks again!", 'mp')
 
 	//checks if a given cart is only downloadable products
 	function download_only_cart($cart) {
-		//always show shipping fields with global cart. TODO - make aware of global carts
-		if ($this->global_cart)
-			return false;
-
 		foreach ((array)$cart as $product_id => $variations) {
 			foreach ((array)$variations as $variation => $data) {
 				if (!is_array($data['download']))
@@ -3880,7 +3999,7 @@ Thanks again!", 'mp')
 
     //// Shipping Info
 
-		if (is_array($order->mp_cart_info) && $this->download_only_cart($order->mp_cart_info)) { //if the cart is only digital products
+		if ((is_array($order->mp_cart_info) && $this->download_only_cart($order->mp_cart_info)) || $this->get_setting('shipping->method') == 'none') { //if the cart is only digital products
 			$shipping_info = __('No shipping required for this order.', 'mp');
 		} else {
 			$shipping_info = __('Full Name:', 'mp') . ' ' . $order->mp_shipping_info['name'];
@@ -3888,11 +4007,11 @@ Thanks again!", 'mp')
 			if ($order->mp_shipping_info['address2'])
 				$shipping_info .= "\n" . __('Address 2:', 'mp') . ' ' . $order->mp_shipping_info['address2'];
 			$shipping_info .= "\n" . __('City:', 'mp') . ' ' . $order->mp_shipping_info['city'];
-			if ($order->mp_shipping_info['state'])
+			if (!empty($order->mp_shipping_info['state']))
 				$shipping_info .= "\n" . __('State/Province/Region:', 'mp') . ' ' . $order->mp_shipping_info['state'];
 			$shipping_info .= "\n" . __('Postal/Zip Code:', 'mp') . ' ' . $order->mp_shipping_info['zip'];
 			$shipping_info .= "\n" . __('Country:', 'mp') . ' ' . $order->mp_shipping_info['country'];
-			if ($order->mp_shipping_info['phone'])
+			if (!empty($order->mp_shipping_info['phone']))
 				$shipping_info .= "\n" . __('Phone Number:', 'mp') . ' ' . $order->mp_shipping_info['phone'];
 
 			// If actually shipped show method, else customer's shipping choice.
@@ -3901,11 +4020,14 @@ Thanks again!", 'mp')
 			elseif (! empty($order->mp_shipping_info['shipping_option']) )
 				$shipping_info .= "\n" . __('Shipping Method:', 'mp') . ' ' . strtoupper($order->mp_shipping_info['shipping_option']) . ' ' .$order->mp_shipping_info['shipping_sub_option'] ;
 
-			if ($order->mp_shipping_info['tracking_num'])
+			if (!empty($order->mp_shipping_info['tracking_num']))
 				$shipping_info .= "\n" . __('Tracking Number:', 'mp') . ' ' . $order->mp_shipping_info['tracking_num'];
 		}
-
-		if ($order->mp_order_notes)
+		
+		if (!empty($order->mp_shipping_info['special_instructions']))
+			$shipping_info .= "\n" . __('Special Instructions:', 'mp') . ' ' . $order->mp_shipping_info['special_instructions'];
+		
+		if (!empty($order->mp_order_notes))
       $order_notes = __('Order Notes:', 'mp') . "\n" . $order->mp_order_notes;
 
     //// Payment Info
@@ -4106,7 +4228,7 @@ Notification Preferences: %s', 'mp');
   function product_excerpt($excerpt, $content, $product_id) {
     $excerpt_more = ' <a class="mp_product_more_link" href="' . get_permalink($product_id) . '">' .  __('More Info &raquo;', 'mp') . '</a>';
     if ($excerpt) {
-      return $excerpt . $excerpt_more;
+      return apply_filters('get_the_excerpt', $excerpt) . $excerpt_more;
     } else {
   		$text = strip_shortcodes( $content );
   		//$text = apply_filters('the_content', $text);
@@ -4197,6 +4319,41 @@ Notification Preferences: %s', 'mp');
 		  $js .= '_gaq.push(["_trackTrans"]);
 			</script>
 			';
+			
+			//add info for subblog if our GA plugin is installed
+			if (class_exists('Google_Analytics_Async')) {
+				
+				$js = '<script type="text/javascript">
+					_gaq.push(["b._addTrans",
+						"'.esc_attr($order->post_title).'",                  // order ID - required
+						"'.esc_attr(get_bloginfo('blogname')).'",            // affiliation or store name
+						"'.$order->mp_order_total.'",                        // total - required
+						"'.$order->mp_tax_total.'",                          // tax
+						"'.$order->mp_shipping_total.'",                     // shipping
+						"'.esc_attr($order->mp_shipping_info['city']).'",    // city
+						"'.esc_attr($order->mp_shipping_info['state']).'",   // state or province
+						"'.esc_attr($order->mp_shipping_info['country']).'"  // country
+					]);';
+
+				if (is_array($order->mp_cart_info) && count($order->mp_cart_info)) {
+					foreach ($order->mp_cart_info as $product_id => $variations) {
+						foreach ($variations as $variation => $data) {
+							$sku = !empty($data['SKU']) ? esc_attr($data['SKU']) : $product_id;
+							$js .= '_gaq.push(["b._addItem",
+								"'.esc_attr($order->post_title).'", // order ID - necessary to associate item with transaction
+								"'.$sku.'",                         // SKU/code - required
+								"'.esc_attr($data['name']).'",      // product name
+								"",                                 // category
+								"'.$data['price'].'",               // unit price - required
+								"'.$data['quantity'].'"             // quantity - required
+							]);';
+						}
+					}
+				}
+				$js .= '_gaq.push(["b._trackTrans"]);
+				</script>
+				';
+			}
 
 		}
 
@@ -5914,9 +6071,6 @@ Notification Preferences: %s', 'mp');
 
           echo '<div class="updated fade"><p>'.__('Settings saved.', 'mp').'</p></div>';
         }
-
-        //strip slashes
-        $settings['email'] = array_map('stripslashes', (array)$settings['email']);
         ?>
         <div class="icon32"><img src="<?php echo $this->plugin_url . 'images/messages.png'; ?>" /></div>
         <h2><?php _e('Messages Settings', 'mp'); ?></h2>
@@ -5934,7 +6088,7 @@ Notification Preferences: %s', 'mp');
         				<td>
 								<?php $store_email = $this->get_setting('store_email') ? $this->get_setting('store_email') : get_option("admin_email"); ?>
         				<span class="description"><?php _e('The email address that new order notifications are sent to and received from.', 'mp') ?></span><br />
-                <input name="mp[store_email]" value="<?php echo esc_attr($store_email); ?>" maxlength="150" size="50" />
+                <input type="text" name="mp[store_email]" value="<?php echo esc_attr($store_email); ?>" maxlength="150" size="50" />
                 </td>
                 </tr>
                 <tr>
@@ -5942,7 +6096,7 @@ Notification Preferences: %s', 'mp');
         				<td>
         				<span class="description"><?php _e('The email text sent to your customer to confirm a new order. These codes will be replaced with order details: CUSTOMERNAME, ORDERID, ORDERINFO, SHIPPINGINFO, PAYMENTINFO, TOTAL, TRACKINGURL, ORDERNOTES. No HTML allowed.', 'mp') ?></span><br />
                 <label><?php _e('Subject:', 'mp'); ?><br />
-                <input class="mp_emails_sub" name="mp[email][new_order_subject]" value="<?php echo esc_attr($this->get_setting('email->new_order_subject')); ?>" maxlength="150" /></label><br />
+                <input type="text" class="mp_emails_sub" name="mp[email][new_order_subject]" value="<?php echo esc_attr($this->get_setting('email->new_order_subject')); ?>" maxlength="150" /></label><br />
                 <label><?php _e('Text:', 'mp'); ?><br />
                 <textarea class="mp_emails_txt" name="mp[email][new_order_txt]"><?php echo esc_textarea($this->get_setting('email->new_order_txt')); ?></textarea>
                 </label>
@@ -5953,7 +6107,7 @@ Notification Preferences: %s', 'mp');
         				<td>
         				<span class="description"><?php _e('The email text sent to your customer when you mark an order as "Shipped". These codes will be replaced with order details: CUSTOMERNAME, ORDERID, ORDERINFO, SHIPPINGINFO, PAYMENTINFO, TOTAL, TRACKINGURL, ORDERNOTES. No HTML allowed.', 'mp') ?></span><br />
                 <label><?php _e('Subject:', 'mp'); ?><br />
-                <input class="mp_emails_sub" name="mp[email][shipped_order_subject]" value="<?php echo esc_attr($this->get_setting('email->shipped_order_subject')); ?>" maxlength="150" /></label><br />
+                <input type="text" class="mp_emails_sub" name="mp[email][shipped_order_subject]" value="<?php echo esc_attr($this->get_setting('email->shipped_order_subject')); ?>" maxlength="150" /></label><br />
                 <label><?php _e('Text:', 'mp'); ?><br />
                 <textarea class="mp_emails_txt" name="mp[email][shipped_order_txt]"><?php echo esc_textarea($this->get_setting('email->shipped_order_txt')); ?></textarea>
                 </label>

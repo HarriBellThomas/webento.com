@@ -20,6 +20,9 @@ if ( $this->get_apikey() && $this->allowed_user() && ($data['membership'] == 'fu
 	?><div class="error fade"><p><?php _e('You have reached your maximum enabled sites for automatic updates. You may <a href="http://premium.wpmudev.org/wp-admin/profile.php?page=wdpun">change which sites are enabled or upgrade to a higher membership level here &raquo;</a>', 'wpmudev'); ?></p></div><?php
 	$allow_auto = false;
 }
+if (!$this->get_apikey()) { ?>
+	<div class="error fade"><p><?php printf(__('Please <a href="%s">create a free account or enter your details</a> to enable automatic updates.', 'wpmudev'), $this->dashboard_url); ?></p></div>
+<?php }
 
 if (!$this->allowed_user()) {
 	$allow_auto = false;
@@ -97,6 +100,8 @@ switch( $tab ) {
 						} else {
 							$projects[$type][$local_id]['remote_version'] = $remote_projects[$local_id]['version'];
 						}
+					} else if ( apply_filters('wpmudev_project_ignore_updates', false, $local_id) ) { //allows custom code to exclude certain projects from update notifications
+						$projects[$type][$local_id]['remote_version'] = $local_project['version'];
 					} else {
 						$projects[$type][$local_id]['remote_version'] = $remote_projects[$local_id]['version'];
 					}
@@ -127,14 +132,16 @@ switch( $tab ) {
 				$local_version = $project['local_version'];
 				$remote_version = $project['remote_version'];
 
-				if ( $project['autoupdate'] && $project['type'] == 'plugin' ) {
+				if ( $project['autoupdate'] && $project['type'] == 'plugin' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-plugin&plugin=') . $project['filename'], 'upgrade-plugin_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev').'</a>';
 					$form_fields[] = '<input type="hidden" value="'.$project['filename'].'" name="checked[]">';
-				} else if ( $project['autoupdate'] && $project['type'] == 'theme' ) {
+				} else if ( $project['autoupdate'] && $project['type'] == 'theme' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-theme&theme=') . $project['filename'], 'upgrade-theme_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev').'</a><input type="hidden" value="'.$project['filename'].'" name="checked[]">';
 					$form_fields[] = '<input type="hidden" value="'.$project['filename'].'" name="checked[]">';
+				} else if ($this->user_can_install($project_id)) {
+					$upgrade_button_code = "<a href='" . esc_url($project['url']) . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
 				} else {
-					$upgrade_button_code = "<a href='" . $project['url'] . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
+					$upgrade_button_code = "<a href='" . apply_filters('wpmudev_project_upgrade_url', esc_url($project['url'] . '#signup'), $project_id) . "' class='button-secondary' target='_blank'><i class='icon-arrow-up'></i> ".__('Upgrade to Update', 'wpmudev')."</a>";
 				}
 
 				$upgrade_button = (version_compare($remote_version, $local_version, '>')) ? $upgrade_button_code : '';
@@ -196,14 +203,16 @@ switch( $tab ) {
 				$local_version = $project['local_version'];
 				$remote_version = $project['remote_version'];
 
-				if ( $project['autoupdate'] && $project['type'] == 'plugin' ) {
+				if ( $project['autoupdate'] && $project['type'] == 'plugin' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-plugin&plugin=') . $project['filename'], 'upgrade-plugin_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev').'</a>';
 					$form_fields[] = '<input type="hidden" value="'.$project['filename'].'" name="checked[]">';
-				} else if ( $project['autoupdate'] && $project['type'] == 'theme' ) {
+				} else if ( $project['autoupdate'] && $project['type'] == 'theme' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-theme&theme=') . $project['filename'], 'upgrade-theme_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev').'</a><input type="hidden" value="'.$project['filename'].'" name="checked[]">';
 					$form_fields[] = '<input type="hidden" value="'.$project['filename'].'" name="checked[]">';
+				} else if ($this->user_can_install($project_id)) {
+					$upgrade_button_code = "<a href='" . esc_url($project['url']) . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
 				} else {
-					$upgrade_button_code = "<a href='" . $project['url'] . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
+					$upgrade_button_code = "<a href='" . apply_filters('wpmudev_project_upgrade_url', esc_url($project['url'] . '#signup'), $project_id) . "' class='button-secondary' target='_blank'><i class='icon-arrow-up'></i> ".__('Upgrade to Update', 'wpmudev')."</a>";
 				}
 
 				$upgrade_button = (version_compare($remote_version, $local_version, '>')) ? $upgrade_button_code : '';
@@ -335,13 +344,16 @@ switch( $tab ) {
 
 				$check = (version_compare($remote_version, $local_version, '>')) ? "style='background-color:#EFF7FF;'" : '';
 
-				if ( $project['autoupdate'] && $project['type'] == 'plugin' )
+				if ( $project['autoupdate'] && $project['type'] == 'plugin' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-plugin&plugin=') . $project['filename'], 'upgrade-plugin_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev')."</a>";
-				else if ( $project['autoupdate'] && $project['type'] == 'theme' )
+				} else if ( $project['autoupdate'] && $project['type'] == 'theme' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-theme&theme=') . $project['filename'], 'upgrade-theme_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev')."</a>";
-				else
-					$upgrade_button_code = "<a href='" . $project['url'] . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
-
+				} else if ($this->user_can_install($project_id)) {
+					$upgrade_button_code = "<a href='" . esc_url($project['url']) . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
+				} else {
+					$upgrade_button_code = "<a href='" . apply_filters('wpmudev_project_upgrade_url', esc_url($project['url'] . '#signup'), $project_id) . "' class='button-secondary' target='_blank'><i class='icon-arrow-up'></i> ".__('Upgrade to Update', 'wpmudev')."</a>";
+				}
+				
 				$upgrade_button = (version_compare($remote_version, $local_version, '>')) ? $upgrade_button_code : '';
 
 				$screenshot = $project['thumbnail'];
@@ -385,13 +397,16 @@ switch( $tab ) {
 
 				$check = (version_compare($remote_version, $local_version, '>')) ? "style='background-color:#EFF7FF;'" : '';
 
-				if ( $project['autoupdate'] && $project['type'] == 'plugin' )
+				if ( $project['autoupdate'] && $project['type'] == 'plugin' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-plugin&plugin=') . $project['filename'], 'upgrade-plugin_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev')."</a>";
-				else if ( $project['autoupdate'] && $project['type'] == 'theme' )
+				} else if ( $project['autoupdate'] && $project['type'] == 'theme' && $this->user_can_install($project_id) ) {
 					$upgrade_button_code = "<a href='" . wp_nonce_url( $this->self_admin_url('update.php?action=upgrade-theme&theme=') . $project['filename'], 'upgrade-theme_' . $project['filename']) . "' class='button-secondary'><i class='icon-upload-alt'></i> ".__('Auto Update', 'wpmudev')."</a>";
-				else
-					$upgrade_button_code = "<a href='" . $project['url'] . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."&raquo;</a>";
-
+				} else if ($this->user_can_install($project_id)) {
+					$upgrade_button_code = "<a href='" . esc_url($project['url']) . "' class='button-secondary' target='_blank'><i class='icon-download-alt'></i> ".__('Download Update', 'wpmudev')."</a>";
+				} else {
+					$upgrade_button_code = "<a href='" . apply_filters('wpmudev_project_upgrade_url', esc_url($project['url'] . '#signup'), $project_id) . "' class='button-secondary' target='_blank'><i class='icon-arrow-up'></i> ".__('Upgrade to Update', 'wpmudev')."</a>";
+				}
+				
 				$upgrade_button = (version_compare($remote_version, $local_version, '>')) ? $upgrade_button_code : '';
 
 				$screenshot = $project['thumbnail'];

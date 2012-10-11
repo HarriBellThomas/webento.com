@@ -14,4 +14,19 @@ jQuery(document).ready(function($) {
 		$(this).parents("form").submit();
 		return false;
 	});
+	// handle container heights
+	function processHeight() {
+		var browserHeight = document.body.offsetHeight,
+		        wpcontent = document.getElementById('wpcontent'),
+		  wpcontentHeight = wpcontent.offsetHeight;
+		
+		if ( wpcontentHeight < browserHeight ) {
+			wpcontent.style.height = browserHeight + 'px';
+		}
+	}
+	
+	processHeight();
+	window.onresize = function(){
+		processHeight();
+	}
 });

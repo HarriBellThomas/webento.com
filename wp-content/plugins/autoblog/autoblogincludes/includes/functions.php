@@ -76,6 +76,30 @@ function delete_autoblog_option($key) {
 
 }
 
+function clear_autoblog_logs( $startat = 25, $number = 100 ) {
+
+	global $wpdb;
+
+	if(defined( 'AUTOBLOG_GLOBAL' ) && AUTOBLOG_GLOBAL == true) {
+		$sql = $wpdb->prepare( "SELECT meta_id FROM {$wpdb->sitemeta} WHERE site_id = %d AND meta_key LIKE %s ORDER BY meta_id DESC LIMIT %d, %d", $wpdb->siteid, "autoblog_log_%", $startat, $number );
+		$ids = $wpdb->get_col( $sql );
+
+		if(!empty($ids)) {
+			$sql2 = $this->db->prepare( "DELETE FROM {$wpdb->sitemeta} WHERE site_id = %d AND meta_id IN (" . implode(',', $ids) . ")", $wpdb->siteid);
+			$wpdb->query( $sql2 );
+		}
+	} else {
+		$sql = $wpdb->prepare( "SELECT option_id FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_id DESC LIMIT %d, %d", "autoblog_log_%", $startat, $number );
+		$ids = $wpdb->get_col( $sql );
+
+		if(!empty($ids)) {
+			$sql2 = $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_id IN (" . implode(',', $ids) . ")" );
+			$wpdb->query( $sql2 );
+		}
+	}
+
+}
+
 function autoblog_db_prefix(&$wpdb, $table) {
 
 	if( defined('AUTOBLOG_GLOBAL') && AUTOBLOG_GLOBAL == true ) {
@@ -270,5 +294,33 @@ function autoblog_time2str($ts)
 
 		return $abc->test_the_feed($id, $details);
 
+	}
+
+	/**
+	 * Build Latest SimplePie object based on RSS or Atom feed from URL.
+	 *
+	 * @since 2.8
+	 *
+	 * @param string $url URL to retrieve feed
+	 * @return WP_Error|SimplePie WP_Error object on failure or SimplePie object on success
+	 */
+	function fetch_autoblog_feed($url) {
+
+		// Include the latest simplepie class
+		require_once( autoblog_dir('autoblogincludes/external/autoloader.php') );
+
+		$feed = new SimplePie();
+		$feed->set_feed_url($url);
+		//$feed->set_cache_class('WP_Feed_Cache');
+		//$feed->set_file_class('WP_SimplePie_File');
+		//$feed->set_cache_duration(apply_filters('wp_feed_cache_transient_lifetime', 43200, $url));
+		do_action_ref_array( 'wp_feed_options', array( &$feed, $url ) );
+		$feed->init();
+		$feed->handle_content_type();
+
+		if ( $feed->error() )
+			return new WP_Error('simplepie-error', $feed->error());
+
+		return $feed;
 	}
 ?>

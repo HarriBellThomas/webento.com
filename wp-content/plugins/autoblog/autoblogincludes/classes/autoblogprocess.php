@@ -66,8 +66,9 @@ class autoblogcron {
 		$this->__construct();
 	}
 
-	function feed_cache($ignore = false, $ignoreurl = false) {
-		return (int) 300;
+	function feed_cache($cacheperiod = false, $url = false) {
+
+		return (int) AUTOBLOG_SIMPLEPIE_CACHE_TIMELIMIT;
 	}
 
 	function add_time_period( $periods ) {
@@ -172,6 +173,9 @@ class autoblogcron {
 						);
 
 		update_autoblog_option('autoblog_log_' . $thetime, $msgs);
+
+		// Remove any old entries so we only keep the most recent 25
+		clear_autoblog_logs();
 
 	}
 
@@ -400,6 +404,11 @@ class autoblogcron {
 
 		for ($x = 0; $x < $max; $x++) {
 			$item = $feed->get_item($x);
+
+			if(!is_object($item)) {
+				// Smomething has gone wrong with this post item so we'll ignore it and try the next one instead
+				continue;
+			}
 
 			// Switch to the correct blog
 			if(!empty($ablog['blog']) && function_exists('switch_to_blog')) {
@@ -657,6 +666,11 @@ class autoblogcron {
 
 		for ($x = 0; $x < $max; $x++) {
 			$item = $feed->get_item($x);
+
+			if(!is_object($item)) {
+				// Smomething has gone wrong with this post item so we'll ignore it and try the next one instead
+				continue;
+			}
 
 			// Switch to the correct blog
 			if(!empty($ablog['blog']) && function_exists('switch_to_blog')) {

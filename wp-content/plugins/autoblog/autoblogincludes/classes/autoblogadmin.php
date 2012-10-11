@@ -33,7 +33,7 @@ class autoblogpremium {
 
 		add_action('load-toplevel_page_autoblog', array(&$this, 'add_admin_header_autoblog'));
 		add_action('load-autoblog_page_autoblog_admin', array(&$this, 'add_admin_header_autoblog_admin'));
-		add_action('load-autoblog_page_autoblog_options', array(&$this, 'add_admin_header_autoblog_options'));
+		add_action('load-autoblog_page_autoblog_settings', array(&$this, 'add_admin_header_autoblog_settings'));
 		add_action('load-autoblog_page_autoblog_addons', array(&$this, 'add_admin_header_autoblog_addons'));
 
 		if(function_exists('is_multisite') && is_multisite()) {
@@ -124,13 +124,24 @@ class autoblogpremium {
 
 	}
 
-	function add_update_check() {
+	function update_settings_page() {
+
+		if(isset($_POST['action']) && $_POST['action'] == 'updatesettings') {
+
+			check_admin_referer('update-autoblog-settings');
+
+			if($_POST['debugmode'] == 'yes') {
+				update_autoblog_option('autoblog_debug', true);
+			} else {
+				delete_autoblog_option('autoblog_debug');
+			}
+
+			wp_safe_redirect( add_query_arg('msg', 1, wp_get_referer()) );
+		}
 
 	}
 
 	function add_admin_header_autoblog() {
-
-		$this->add_update_check();
 
 		wp_enqueue_script('flot_js', autoblog_url('autoblogincludes/js/jquery.flot.min.js'), array('jquery'));
 
@@ -154,8 +165,6 @@ class autoblogpremium {
 
 	function add_admin_header_autoblog_admin() {
 
-		$this->add_update_check();
-
 		wp_enqueue_style( 'autoblogadmincss', autoblog_url('autoblogincludes/styles/autoblog.css'), array(), $this->build );
 		wp_enqueue_script( 'autoblogadminjs', autoblog_url('autoblogincludes/js/autoblogadmin.js'), array('jquery'), $this->build );
 
@@ -166,28 +175,15 @@ class autoblogpremium {
 		$this->update_admin_page();
 	}
 
-	function add_admin_header_autoblog_options() {
+	function add_admin_header_autoblog_settings() {
 
 		global $action, $page;
 
 		wp_reset_vars( array('action', 'page') );
 
-		$this->add_update_check();
-
 		wp_enqueue_style( 'autoblogadmincss', autoblog_url('autoblogincludes/styles/autoblog.css'), array(), $this->build );
 
-		if(isset($_POST['action']) && $_POST['action'] == 'updateoptions') {
-
-			check_admin_referer('update-autoblog-options');
-
-			if($_POST['debugmode'] == 'yes') {
-				update_autoblog_option('autoblog_debug', true);
-			} else {
-				delete_autoblog_option('autoblog_debug');
-			}
-
-			wp_safe_redirect( add_query_arg('msg', 1, wp_get_referer()) );
-		}
+		$this->update_settings_page();
 
 	}
 
@@ -196,8 +192,6 @@ class autoblogpremium {
 		global $action, $page;
 
 		wp_reset_vars( array('action', 'page') );
-
-		$this->add_update_check();
 
 		$this->handle_addons_panel_updates();
 
@@ -420,6 +414,9 @@ class autoblogpremium {
 			do_action('autoblog_site_menu');
 		}
 
+		// Add the new options menu
+		//add_submenu_page('autoblog', __('Settings','autoblogtext'), __('Settings','autoblogtext'), 'manage_options', "autoblog_settings", array(&$this,'handle_settings_page'));
+
 		do_action('autoblog_global_menu');
 
 	}
@@ -478,16 +475,6 @@ class autoblogpremium {
 			</div>
 		</div>
 		<?php
-
-		// Get some columns to remove - as a tidy up
-		$sql2 = $this->db->prepare( "SELECT meta_id FROM {$this->db->sitemeta} WHERE site_id = %d AND meta_key LIKE %s ORDER BY meta_id DESC LIMIT 25, 100", $this->db->siteid, "autoblog_log_%");
-		$ids = $this->db->get_col( $sql2 );
-
-		if(!empty($ids)) {
-			$sql3 = $this->db->prepare( "DELETE FROM {$this->db->sitemeta} WHERE site_id = %d AND meta_id IN (" . implode(',', $ids) . ")", $this->db->siteid);
-			$this->db->query( $sql3 );
-		}
-
 
 	}
 
@@ -576,7 +563,7 @@ class autoblogpremium {
 			$table['posttype'] = 'post';
 		}
 
-		echo '<div class="postbox" id="ab-' . $details->feed_id . '">';
+		echo '<div class="postbox autoblogeditbox" id="ab-' . $details->feed_id . '">';
 
 		echo '<h3 class="hndle"><span>' . __('Feed : ','autoblogtext') . esc_html(stripslashes($table['title'])) . '</span></h3>';
 		echo '<div class="inside">';
@@ -1065,9 +1052,9 @@ class autoblogpremium {
 		global $blog_id;
 
 		if(empty($key)) {
-			echo '<div class="postbox blanktable" id="blanktable" style="display: none;">';
+			echo '<div class="postbox blanktable autoblogeditbox" id="blanktable" style="display: none;">';
 		} else {
-			echo '<div class="postbox" id="ab-' . $key . '">';
+			echo '<div class="postbox autoblogeditbox" id="ab-' . $key . '">';
 		}
 
 
@@ -1640,7 +1627,7 @@ class autoblogpremium {
 
 		// Show the heading
 		echo '<div class="icon32" id="icon-edit"><br/></div>';
-		echo "<h2>" . __('Auto Blog Feeds','autoblogtext') . "</h2>";
+		echo "<h2>" . __('Auto Blog Feeds','autoblogtext') . '<a class="add-new-h2" href="admin.php?page=' . $page . '&action=add">' . __('Add New','membership') . '</a></h2>';
 
 		echo "<br/>";
 
@@ -2170,7 +2157,7 @@ class autoblogpremium {
 
 	}
 
-	function handle_options_page() {
+	function handle_settings_page() {
 
 		global $action, $page;
 
@@ -2179,8 +2166,17 @@ class autoblogpremium {
 
 		?>
 		<div class='wrap nosubsub'>
+
+			<?php /*
+			<h3 class="nav-tab-wrapper">
+				<a href="admin.php?page=branding&amp;tab=dashboard" class="nav-tab nav-tab-active"><?php _e('General','autoblogtext'); ?></a>
+				<a href="admin.php?page=branding&amp;tab=images" class="nav-tab"><?php _e('Time Limits','autoblogtext'); ?></a>
+			</h3>
+			*/
+			?>
+
 			<div class="icon32" id="icon-options-general"><br></div>
-			<h2><?php _e('Edit Options','autoblogtext'); ?></h2>
+			<h2><?php _e('Autoblog Settings','autoblogtext'); ?></h2>
 
 			<?php
 			if ( isset($_GET['msg']) ) {
@@ -2192,10 +2188,10 @@ class autoblogpremium {
 			<form action='?page=<?php echo $page; ?>' method='post'>
 
 				<input type='hidden' name='page' value='<?php echo $page; ?>' />
-				<input type='hidden' name='action' value='updateoptions' />
+				<input type='hidden' name='action' value='updatesettings' />
 
 				<?php
-					wp_nonce_field('update-autoblog-options');
+					wp_nonce_field('update-autoblog-settings');
 				?>
 
 				<div class="postbox">

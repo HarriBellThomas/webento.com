@@ -1,5 +1,21 @@
 jQuery(function($) { // DOM READY WRAPPER
 	wpmudev.init();
+	// handle container heights
+
+	function processHeight() {
+		var browserHeight = document.body.offsetHeight,
+		        wpcontent = document.getElementById('wpcontent'),
+		  wpcontentHeight = wpcontent.offsetHeight;
+		
+		if ( wpcontentHeight < browserHeight ) {
+			wpcontent.style.height = browserHeight + 'px';
+		}
+	}
+	
+	processHeight();
+	window.onresize = function(){
+		processHeight();
+	}
 });
 
 /* ===========================

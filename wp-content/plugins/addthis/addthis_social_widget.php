@@ -23,7 +23,7 @@
 * Plugin Name: AddThis Social Bookmarking Widget
 * Plugin URI: http://www.addthis.com
 * Description: Help your visitor promote your site! The AddThis Social Bookmarking Widget allows any visitor to bookmark your site easily with many popular services. Sign up for an AddThis.com account to see how your visitors are sharing your content--which services they're using for sharing, which content is shared the most, and more. It's all free--even the pretty charts and graphs.
-* Version: 2.5.0
+* Version: 2.5.1
 *
 * Author: The AddThis Team
 * Author URI: http://www.addthis.com/blog
@@ -33,8 +33,8 @@ else return;
 
 
 // Setup our shared resources early 
-// addthis_addjs.php is a standard class shared by the various AddThis plugins to make it easy for us to include our bootstrapping JavaScript only once.
-add_action('init', 'addthis_early', 1);
+// addthis_addjs.php is a standard class shared by the various AddThis plugins to make it easy for us to include our bootstrapping JavaScript only once. Priority should be lowest for Share plugin.
+add_action('init', 'addthis_early', 0);
 function addthis_early(){
     global $addthis_addjs;
     if (! isset($addthis_addjs)){
@@ -46,7 +46,8 @@ function addthis_early(){
 
 
 define( 'addthis_style_default' , 'fb_tw_p1_sc');
-define( 'ADDTHIS_PLUGIN_VERSION', '2.5.0');
+define( 'ADDTHIS_PLUGIN_VERSION' , '2.5.1');
+define( 'ADDTHIS_PRODUCT_VERSION' , 'wpp-2.5.1');
 define( 'ADDTHIS_ATVERSION', '300');
 define( 'ADDTHIS_ATVERSION_MANUAL_UPDATE', -1);
 define( 'ADDTHIS_ATVERSION_AUTO_UPDATE', 0);
@@ -74,6 +75,9 @@ $addthis_styles = array(
                       'bookmark-small' => array('img'=>'sm-bookmark-en.gif', 'w'=>83, 'h'=>16),
                       'plus' => array('img'=>'sm-plus.gif', 'w'=>16, 'h'=>16)
                     );
+$addthis_options = get_option('addthis_settings');
+$atversion = array_key_exists('atversion_reverted', $addthis_options) && $addthis_options['atversion_reverted'] == 1 ? $addthis_options['atversion'] : ADDTHIS_ATVERSION;
+
 $addthis_new_styles = array(
 
     'fb_tw_p1_sc' => array( 'src' => '<div class="addthis_toolbox addthis_default_style " %s  ><a class="addthis_button_facebook_like" fb:like:layout="button_count"></a><a class="addthis_button_tweet"></a><a class="addthis_button_google_plusone" g:plusone:size="medium"></a><a class="addthis_counter addthis_pill_style"></a></div>' , 'img' => 'fb-tw-p1-sc.jpg' , 'name' => 'Like, Tweet, +1, Share', 'above' => '', 'below' => ''
@@ -1438,7 +1442,7 @@ function addthis_output_script($return = false, $justConfig = false )
     
     $script = "\n<!-- AddThis Button Begin -->\n"
              .'<script type="text/javascript">'
-             ."var addthis_product = 'wpp-2.5.0';\n";
+             ."var addthis_product = '".ADDTHIS_PRODUCT_VERSION."';\n";
 
 
     $pub = (isset($options['profile'])) ? $options['profile'] : false ;
@@ -1491,8 +1495,8 @@ function addthis_output_script($return = false, $justConfig = false )
         $addthis_config['ui_508_compliant'] = true;
 
     $addthis_config = apply_filters('addthis_config_js_var', $addthis_config);
-    
-    $script = merge_config_with_json_config($script, $addthis_config, $options['addthis_config_json']);
+    $addthis_config_json = array_key_exists('addthis_config_json', $options) ? $options['addthis_config_json'] : '';
+    $script = merge_config_with_json_config($script, $addthis_config, $addthis_config_json);
     
     
     if (isset($options['addthis_options']) && strlen($options['addthis_options']) != 0)
@@ -1529,7 +1533,7 @@ function addthis_output_script($return = false, $justConfig = false )
 
         $return .= "\n";
         
-        $return = merge_config_with_json_config($return, $addthis_config, $options['addthis_config_json']);
+        $return = merge_config_with_json_config($return, $addthis_config, $addthis_config_json);
 
         $return .= "\n";
 
@@ -1608,7 +1612,7 @@ function addthis_social_widget($content, $onSidebar = false, $url = null, $title
     $content .= "\n<!-- AddThis Button BEGIN -->\n"
                 .'<script type="text/javascript">'
                 ."\n//<!--\n"
-                ."var addthis_product = 'wpp-2.5.0';\n";
+                ."var addthis_product = '".ADDTHIS_PRODUCT_VERSION."';\n";
 
 
     if (strlen($addthis_settings['customization'])) 

@@ -5,6 +5,15 @@
 		<table cellpadding="0" cellspacing="0" border="0">
 			<tbody>
 				<tr>
+				<?php if ('full' != $data['membership']) { ?>
+					<td width="20%">
+						<span class="free_projects">
+							<input type="checkbox" id="toggle-free-projects" />
+							&nbsp;
+							<label for="toggle-free-projects"><?php _e('Free only', 'wpmudev'); ?></label>
+						</span>
+					</td>
+				<?php } ?>
 					<td width="25%">
 						<label><?php _e('Sort:', 'wpmudev'); ?> 
 						<select id="sort_projects">
@@ -16,16 +25,7 @@
 						</select>
 						</label>
 					</td>
-					<td width="25%">
-						<label><?php _e('Filter by Tag:', 'wpmudev'); ?> 
-						<select id="filter_tags">
-							<option value=""><?php _e('-- All Tags --', 'wpmudev');?></option>
-						<?php foreach ($tags as $key => $tag) { ?>
-							<option value="<?php echo $key; ?>"><?php echo $tag['name']; ?> (<?php echo number_format_i18n($tag['count']); ?>)</option>
-						<?php } ?>
-						</select>
-						</label>
-					</td>
+					
 					<td width="25%">
 						<label><?php _e('Instant Search:', 'wpmudev'); ?>
 						<input type="text" id="filter_projects" placeholder="<?php _e('Search', 'wpmudev'); ?>" /><a href="#" id="clear_search" title="<?php _e('Clear Search', 'wpmudev'); ?>" class="search-btn"><i class="icon-remove-sign icon-large"></i></a>
@@ -47,7 +47,7 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 ?>
 
 <?php if (!$this->get_apikey()) { ?>
-	<div class="registered_error"><p><?php printf(__('Please, <a href="%s">set your API key</a> to enable one-click downloads and installation.', 'wpmudev'), $this->dashboard_url); ?></p></div>
+	<div class="registered_error"><p><?php printf(__('Please <a href="%s">create a free account or enter your details</a> to enable one-click installations.', 'wpmudev'), $this->dashboard_url); ?></p></div>
 <?php } ?>
 
 <div style="display:none" id="_installed-placeholder"><span href="#" class="button"><i class="icon-ok icon-large"></i><?php echo (is_multisite() || $page_type == 'theme' || defined('WPMUDEV_NO_AUTOACTIVATE')) ? __('INSTALLED', 'wpmudev') : __('INSTALLED & ACTIVATED', 'wpmudev'); ?></span></div>
@@ -85,9 +85,11 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 		<p><?php _e('You can set up one-click installations by adding these lines to your <code>wp-config.php</code> file and customizing:', 'wpmudev'); ?></p>
 		<code>define('FTP_USER', 'username');</code><br />
 		<code>define('FTP_PASS', 'password');</code><br />
-		<code>define('FTP_HOST', 'ftp.example.org');</code>
+		<code>define('FTP_HOST', '<?php echo preg_replace('/www\./', '', parse_url(admin_url(), PHP_URL_HOST)); ?>');</code>
 		<br /><br />
-		<a href="http://codex.wordpress.org/Editing_wp-config.php#WordPress_Upgrade_Constants" target="_blank" class="_install_setup-info"><i class='icon-info-sign'></i> <?php _e('More information', 'wpmudev'); ?></a>
+		<a href="http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/configuring-automatic-updates/" target="_blank" class="_install_setup-info"><i class='icon-info-sign'></i> <?php _e('More information', 'wpmudev'); ?></a>
+		<br /><br />
+		<a href="#" class="button manual_install_setup_done"><i class="icon-ok icon-large"></i><?php _e('Done', 'wpmudev'); ?></a>
 	</div>
 <?php } ?>
 
@@ -98,11 +100,14 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 		<ul data-page_type="<?php echo $page_type; ?>">
 		<?php if (isset($data['projects']) && is_array($data['projects'])) foreach ($data['projects'] as $project) { ?>
 			<?php
+			$incompatible = false;
 			if ($page_type != $project['type']) continue;
 			//skip multisite only products if not compatible
-			if ($project['requires'] == 'ms' && !is_multisite()) continue;
+			if ($project['requires'] == 'ms' && !is_multisite())
+				$incompatible = __('Requires Multisite', 'wpmudev');
 			//skip buddypress only products if not active
-			if ($project['requires'] == 'bp' && !defined( 'BP_VERSION' )) continue;
+			if ($project['requires'] == 'bp' && !defined( 'BP_VERSION' ))
+				$incompatible = __('Requires BuddyPress', 'wpmudev');
 			//skip lite products if full member
 			if (isset($data['membership']) && $data['membership'] == 'full' && $project['paid'] == 'lite') continue;
 			
@@ -121,8 +126,19 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 					: ($this->_install_message_is_hidden() ? '' : 'install_setup')
 				;
 			}
+			
+			$listing_class = '';
+			if ($installed) $listing_class .= ' installed';
+			if ($incompatible) $listing_class .= ' incompatible';
 			?>
-			<li class="listing-item" title="<?php _e('More Info &raquo;', 'wpmudev'); ?>" data-project_id="<?php echo $project['id']; ?>" data-released="<?php echo $project['released']; ?>" data-updated="<?php echo $project['updated']; ?>" data-downloads="<?php echo $project['downloads']; ?>" data-popularity="<?php echo $project['popularity']; ?>">
+			<li class="listing-item<?php echo $listing_class; ?>" title="<?php _e('More Info &raquo;', 'wpmudev'); ?>" 
+				data-project_id="<?php echo $project['id']; ?>" 
+				data-released="<?php echo $project['released']; ?>" 
+				data-updated="<?php echo $project['updated']; ?>" 
+				data-downloads="<?php echo $project['downloads']; ?>" 
+				data-popularity="<?php echo $project['popularity']; ?>" 
+				data-paid="<?php echo esc_attr($project['paid']); ?>"
+			>
 				<div class="listing">
 					<img src="<?php echo $project['thumbnail']; ?>" alt="<?php echo esc_attr($project['name']); ?>" width="100%">
 					<h1><?php echo $project['name']; ?></h1>
@@ -142,11 +158,17 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 					<span class="target">
 					<?php
 					if ($installed) {
-						?><span href="#" class="button"><i class="icon-ok icon-large"></i><?php _e('INSTALLED', 'wpmudev'); ?></span><?php
+						?><span class="button button-installed"><i class="icon-ok icon-large"></i><?php _e('INSTALLED', 'wpmudev'); ?></span><?php
+					} else if ($incompatible) {
+						?><span class="button-incompatible"><i class="icon-remove-sign icon-large"></i><?php echo $incompatible; ?></span><?php
+					} else if (!$this->get_apikey()) { //no api key yet
+						?><a href="<?php echo $this->dashboard_url; ?>" class="button button-disabled" title="<?php _e('Setup your WPMU DEV account to install', 'wpmudev'); ?>"><i class="icon-download-alt icon-large"></i><?php _e('INSTALL', 'wpmudev'); ?></a><?php
 					} else if ($url = $this->auto_install_url($project['id'])) {
 						?><a href="<?php echo $url; ?>" data-downloading="<?php esc_attr_e(__('DOWNLOADING...', 'wpmudev')); ?>" data-installing="<?php esc_attr_e(__('INSTALLING...', 'wpmudev')); ?>" class="button <?php echo $action_class; ?>"><i class="icon-download-alt icon-large"></i><?php _e('INSTALL', 'wpmudev'); ?></a><?php
-					} else {
+					} else if ($this->user_can_install($project['id'])) { //has permission, but it's not autoinstallable
 						?><a href="<?php echo esc_url($project['url']); ?>" target="_blank" class="button"><i class="icon-download icon-large"></i><?php _e('DOWNLOAD', 'wpmudev'); ?></a><?php
+					} else { //needs to upgrade
+						?><a href="<?php echo apply_filters('wpmudev_project_upgrade_url', esc_url($project['url'] . '#signup'), (int)$project['id']); ?>" target="_blank" class="button"><i class="icon-arrow-up icon-large"></i><?php _e('UPGRADE TO INSTALL', 'wpmudev'); ?></a><?php
 					}
 					?>
 					</span>

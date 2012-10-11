@@ -69,6 +69,46 @@ jQuery(function($) { // DOM READY WRAPPER
 		tmp.search = scope || '?page=wpmudev-plugins';
 		window.location = tmp;
 	});
+
+	// DASHBOARD API-KEY FORMS, handlers to toggle between 'create acc' & 'log-in'
+	if ($('body').hasClass('toplevel_page_wpmudev')) {
+		$('#already-member').on('click', function(){
+			$('#api-signup').slideUp(600);
+			$('#api-login').slideDown(750);
+			return false;
+		});
+		$('#not-member').on('click', function(){
+			$('#api-login').slideUp(600);
+			$('#api-signup').slideDown(750);
+			return false;
+		});
+	}
+
+	// js fix to fill out height of #wpcontent (so that we don't get white background)
+	function processHeight() {
+		var browserHeight = document.body.offsetHeight,
+		        wpcontent = document.getElementById('wpcontent'),
+		  wpcontentHeight = wpcontent.offsetHeight;
+		
+		if ( wpcontentHeight < browserHeight ) {
+			wpcontent.style.height = browserHeight + 'px';
+		}
+	}
+
+	$('.layer').height($('.premium-content').height());
+	
+	processHeight();
+	window.onresize = function(){
+		processHeight();
+	}
+
+	// <button class="cta" data-href="..."  /> clicks
+	$("button.cta[data-href]").on("click", function () {
+		var href = $(this).attr("data-href");
+		if (href) window.location = href;
+		return false;
+	});
+
 }); // END OF DOM WRAPPER
 
 
@@ -94,21 +134,26 @@ var wpmudev = {
 			l   = arg.length,
 			i   = 0;
 		for (i; i < l; i++) {
-			jQuery(arg[i]).on('mouseenter', 'tr', function() {
-				var w = jQuery(this).width(),
-					h = jQuery(this).height();
-				jQuery(this).next().find('div.reason').css({
-					'top'     : -1,
-					'left'    : 0,
-					'width'   : w,
-					'display' : 'block'
-				});
+			var $parent = jQuery(arg[i]);
+			$parent
+				.on('mouseenter', 'tr:not(.hiddenrow)', function() {
+					var $this = jQuery(this),
+						w = $this.width(),
+						h = $this.height()
+					;
+					$parent.find(".reason").css("display", "none");
+					$this.next().find('div.reason').css({
+						'top'     : -1,
+						'left'    : 0,
+						'width'   : w,
+						'display' : 'block'
+					});
 
-			}).on('mouseleave', 'tr', function() {
-				jQuery(this).next().find('div.reason').css({
-					'display': 'none'
-				});
-			});
+				})
+				.on('mouseleave', 'tr.hiddenrow', function() {
+					jQuery(this).find('div.reason').css('display', 'none');
+				})
+			;
 		}
 	},
 
@@ -208,12 +253,114 @@ var wpmudev = {
 		});
 	},
 
+	"validate": function (what, $src) {
+		wpmudev.validation_pending($src);
+		if (!$src.val()) return wpmudev.clear_validation($src);
+		return jQuery.post(ajaxurl, {
+			"action": "wpmudev_validate_" + what,
+			"value": $src.val(),
+		}, function (data) {
+			if ("status" in data && parseInt(data.status) == 0) return wpmudev.validation_ok($src);
+			wpmudev.validation_failure(data.message, $src);
+		}, 'json');
+	},
+
+	"validate_username": function () { wpmudev.validate("username", jQuery("#user_name")); },
+
+	"validate_email": function () { wpmudev.validate("email", jQuery("#email_addr")); },
+
+	"validate_password": function () { wpmudev.validate("password", jQuery("#password")); },
+
+	"validation_ok": function ($el) {
+		var $validation = $el.nextAll(".validation");
+		if (!$validation.length) return false;
+		$validation
+			.removeClass("error")
+			.addClass("ok")
+			.html('<span class="icon-ok"></span>')
+			.show()
+		;
+	},
+
+	"validation_failure": function (text, $el) {
+		var $validation = $el.nextAll(".validation");
+		if (!$validation.length) return false;
+		$validation
+			.removeClass("ok")
+			.addClass("error")
+			.html('<span class="icon-remove-sign"></span>' + text)
+			.show()
+		;
+	},
+
+	"validation_pending": function ($el) {
+		wpmudev.clear_validation();
+		var $validation = $el.nextAll(".validation");
+		$validation
+			.html('Waiting...')
+			.show()
+		;
+	},
+
+	"clear_validation": function ($el) {
+		$el = $el && $el.nextAll ? $el : jQuery(this);
+		var $validation = $el.nextAll(".validation");
+		if (!$validation.length) return false;
+		$validation
+			.removeClass("error").removeClass("ok")
+			.html('')
+			.hide()
+		;
+	},
+
+	"setup_validation": function () {
+		jQuery(".validation").removeClass("error").hide();
+		jQuery("#user_name")
+			.on("blur", this.validate_username)
+			.on("focus", this.clear_validation)
+		;
+		jQuery("#email_addr")
+			.on("blur", this.validate_email)
+			.on("focus", this.clear_validation)
+		;
+		jQuery("#password")
+			.on("blur", this.validate_password)
+			.on("focus", this.clear_validation)
+		;
+		// Form submission validation
+		jQuery("#api-signup").on("submit", function () {
+			var safe_to_proceed = true; // Assume best case scenario
+			var elements = [
+				{"type": "username", "source": jQuery("#user_name")},
+				{"type": "email", "source": jQuery("#email_addr")},
+				{"type": "password", "source": jQuery("#password")}
+			];
+			var promises = [];
+			jQuery.each(elements, function () {
+				var $validation = this.source.nextAll(".validation");
+				if (!$validation.is(".ok")) {
+					safe_to_proceed = false;
+					if (!$validation.is(".error")) {
+						var promise = wpmudev.validate(this.type, this.source);
+						if ("object" == typeof promise) promises.push(promise);
+					}
+				}
+			});
+			if (promises.length) jQuery.when.apply(null, promises).done(function () {
+				jQuery("#api-signup").submit();
+			});
+			return safe_to_proceed;
+		});
+	},
+
 	init: function() {
 		this.layoutCalculations();
 		this.tooltip(jQuery('.tooltip'));
-		this.expandOnHover(jQuery('table.hoverExpand'));
+		this.expandOnHover('table.hoverExpand');
 		this.updatesPanel.init();
 		this.collapsableElements();
 		this.hoverToExpand();
+
+		this.setup_validation();
 	}
 }; // end WPMU DEV obj

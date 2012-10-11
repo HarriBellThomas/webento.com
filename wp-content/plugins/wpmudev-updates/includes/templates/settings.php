@@ -60,13 +60,13 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 		</span>
 	</div>
 	<div id="subscription-info"><h3><?php echo $profile['profile']['subscription']; ?></h3></div>
-		<br /><a class="button" href="https://premium.wpmudev.org/membership/"><i class="icon-edit icon-large"></i><?php _e('MODIFY MEMBERSHIP', 'wpmudev') ?></a>
+		<br /><a class="button" href="<?php echo apply_filters('wpmudev_modify_url', 'https://premium.wpmudev.org/membership/'); ?>"><i class="icon-edit icon-large"></i><?php _e('MODIFY MEMBERSHIP', 'wpmudev') ?></a>
 	</div>
 	<div class="clear"></div>
 	<?php } ?>
 	
 	<?php if ( !$this->get_apikey() ) { ?>
-	<h3><?php _e('Please enter your API Key to enable settings:', 'wpmudev') ?>
+	<h3><?php _e('Please create a free account to get an API key and enable settings:', 'wpmudev') ?>
 		<small>
 			&nbsp;&nbsp;<a href="<?php echo $this->dashboard_url; ?>" title="<?php _e('Add your API key', 'wpmudev') ?>"><?php _e('ADD', 'wpmudev') ?> <i class="icon-pencil icon-large"></i></a>
 		</small>

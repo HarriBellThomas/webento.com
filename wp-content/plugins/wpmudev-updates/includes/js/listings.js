@@ -116,6 +116,25 @@ var devlistings = {
 		
 		return false;
 	},
+
+	"toggle_paid_projects": function () {
+		var $paid = $('li.listing-item[data-paid!="free"]').filter('[data-paid!="lite"]');
+		if ($paid.is(":visible")) {
+			$paid.hide();
+			$(".free_projects").each(function () {
+				var $me = $(this);
+				$me.find("input").attr("checked", true).end();
+			});
+		} else {
+			$paid.show();
+			$(".free_projects").each(function () {
+				var $me = $(this);
+				$me.find("input").attr("checked", false).end();
+			});
+		}
+		devlistings.update_results_count();
+		return false;
+	},
 	
 	"sort_projects": function () {
 		var sort = $("#sort_projects").val();
@@ -196,7 +215,14 @@ var devlistings = {
 					.trigger('change')
 				;
 			});
-		}		
+		}
+
+		var paid = hash.match(/paid=(.*)/);
+		if (paid && 2 == paid.length) {
+			$(window).load(function () {
+				devlistings.toggle_paid_projects();
+			});
+		}
 		
 	},
 	
@@ -421,6 +447,8 @@ $(document).ready(function() {
 		return false;
 	});
 	devlistings.tooltip($('.tooltip'));
+
+	$("#toggle-free-projects").on("change", devlistings.toggle_paid_projects);
 	
 	// ONLY ACTIVATE SUGGESTIVE SEARCH IF PLACAHOLDER VARS ARE DEFINED
 	if ((typeof suggestedProjects) !== 'undefined') {
@@ -500,6 +528,10 @@ $(document).ready(function() {
 	$("a.button.install_theme").on('click', devlistings.install_theme);
 	$("a._install_setup-close").on('click', devlistings.install_setup_close);
 	$("#_install_hide_msg").on('change', devlistings.hide_install_message);
+	$("a.manual_install_setup_done").on('click', function () {
+		window.location.reload();
+		return false;
+	});
 	
 	$(".target")
 		.on("mouseover", ".tooltip", function () {
