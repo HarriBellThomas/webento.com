@@ -1,7 +1,7 @@
 <div class="wrap">
 	<h2><?php _e('Easy Wizard settings','wdeb'); ?></h2>
 
-<?php if (WP_NETWORK_ADMIN) { ?>
+<?php if (defined('WP_NETWORK_ADMIN') && WP_NETWORK_ADMIN) { ?>
 	<form action="settings.php" method="post" enctype="multipart/form-data">
 <?php } else { ?>
 	<form action="options.php" method="post" enctype="multipart/form-data">
@@ -45,6 +45,9 @@
 }
 .wdeb_step .wdeb_step_actions {
 	float: right;
+}
+#wdeb_step_edit_dialog {
+	padding: 10px 20px;
 }
 </style>
 <script type="text/javascript">
@@ -95,6 +98,7 @@ $(".wdeb_step_edit").click(function () {
 	$("#wdeb_step_edit_dialog_help").val($help.val());
 
 	$("#wdeb_step_edit_dialog").dialog({
+		"dialogClass": "wp-dialog",
 		"title": $title.val(),
 		"modal": true,
 		"width": 600,

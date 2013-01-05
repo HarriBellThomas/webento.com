@@ -5,6 +5,32 @@ Change Log:
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 
+2.6.3 - 2012-12-08
+----------------------------------------------------------------------
+- Fix for Google Maps library loading race condition.
+
+2.6.2 - 2012-11-13
+----------------------------------------------------------------------
+- Editor paging for maps.
+- Added public transit transportation mode.
+- Added `current_post` query.
+- Added advanced mode zoom settings.
+- Deprecated external dialog styles.
+
+2.6.1 - 2012-10-19
+----------------------------------------------------------------------
+- Fix for legacy root URL support.
+
+2.6 - 2012-10-18
+----------------------------------------------------------------------
+- Added Google Places support add-on.
+- Added "Where am I?" add-on.
+- Added Nearby Facebook Friends add-on.
+- Added geotagging add-ons for WordPress and BuddyPress.
+- Added auto-generated maps marker hiding add-on.
+- Added discard old map option for auto-generated maps.
+- Exposed more hooks and events for interaction.
+
 2.5.6 - 2012-08-16
 ----------------------------------------------------------------------
 - Applying the new limit define as default.
@@ -110,4 +136,4 @@ Change Log:
 - Panoramio images overlay
 - Saving maps in Street View
 
-36617-1345356343-au
+36617-1355162075-au

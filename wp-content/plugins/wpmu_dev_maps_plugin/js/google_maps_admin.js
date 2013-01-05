@@ -37,7 +37,7 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 		data.show_images = ("show_images" in data) ? data.show_images : 0; 
 
 		data.snapping = ("snapping" in data.defaults) ? parseInt(data.defaults.snapping) : 1; 
-
+		
 		data.show_panoramio_overlay = ("show_panoramio_overlay" in data) ? parseInt(data.show_panoramio_overlay) : 0; 
 		data.panoramio_overlay_tag = ("panoramio_overlay_tag" in data) ? data.panoramio_overlay_tag : ''; 
 		
@@ -218,11 +218,11 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 					'<div><fieldset>' +
 						'<legend>' + l10nStrings.map_alignment + '</legend>' +
 						'<input type="radio" id="agm_map_alignment_left" name="ama" class="agm_map_alignment_element" value="left" />' +
-							'<label for="agm_map_alignment_left"><img src="' + _agm_root_url + '/img/system/left.png" />' + l10nStrings.map_alignment_left + '</label><br/>' +
+							'<label for="agm_map_alignment_left"><img src="' + _agm.root_url + '/img/system/left.png" />' + l10nStrings.map_alignment_left + '</label><br/>' +
 						'<input type="radio" id="agm_map_alignment_center" name="ama" class="agm_map_alignment_element" value="center" />' +
-							'<label for="agm_map_alignment_center"><img src="' + _agm_root_url + '/img/system/center.png" />' + l10nStrings.map_alignment_center + '</label><br/>' +
+							'<label for="agm_map_alignment_center"><img src="' + _agm.root_url + '/img/system/center.png" />' + l10nStrings.map_alignment_center + '</label><br/>' +
 						'<input type="radio" id="agm_map_alignment_right" name="ama" class="agm_map_alignment_element" value="right" />' +
-							'<label for="agm_map_alignment_right"><img src="' + _agm_root_url + '/img/system/right.png" />' + l10nStrings.map_alignment_right + '</label><br/>' +
+							'<label for="agm_map_alignment_right"><img src="' + _agm.root_url + '/img/system/right.png" />' + l10nStrings.map_alignment_right + '</label><br/>' +
 					'</fieldset></div>' +
 				'</fieldset>' +
 				'<p class="agm_less_important">Global defaults are configured in Settings &gt; WPMU DEV Maps</p>' +
@@ -265,6 +265,7 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 		$(document).trigger('agm_google_maps-admin-map_resized', [$container, data]);
 		
 		$('#agm_mh_options').dialog({
+			"dialogClass": 'wp-dialog',
 			"autoOpen": false,
 			"title": l10nStrings.options,
 			"width": 600,
@@ -353,6 +354,7 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 	};
 	
 	var togglePanoramioLayer = function () {
+		if (typeof google.maps.panoramio !== 'object') return false;
 		if ($('#agm_map_show_panoramio_overlay').is(':checked')) {
 			var tag = $('#agm_map_panoramio_overlay_tag').val();
 			_panoramioLayer = new google.maps.panoramio.PanoramioLayer();
@@ -397,7 +399,7 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 	
 	var addNewMarker = function (title, pos, body, icon) {
 		body = body || '';
-		icon = icon ? (_agm_root_url + '/img/' + icon) : (_agm_root_url + '/img/system/marker.png');
+		icon = icon ? (_agm.root_url + '/img/' + icon) : (_agm.root_url + '/img/system/marker.png');
 		var markerPosition = _markers.length;
 		map.setCenter(pos);
 		var marker = new google.maps.Marker({
@@ -431,10 +433,13 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 		}
 		marker._agmBody = body;
 		_markers[markerPosition] = marker;
+		$(document).trigger('agm_google_maps-admin-marker_added', [marker, map]);
+		map._agm_add_marker(marker);
 		updateMarkersListDisplay();
 	};
 	
 	var createInfoContent = function (title, body, icon, markerPosition) {
+		icon = icon.toString();
 		return '<div class="agm_mh_info_content">' +
 			'<a href="#" class="agm_mh_info_icon_switch"><img agm:marker_id="' + markerPosition + '" src="' + icon + '" /><br /><small>Icon</small></a>' +
 			'<div class="agm_mh_info_text">' +
@@ -453,7 +458,9 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 		var $me = $(this);
 		var id = extractMarkerId($me.attr('href'));
 		marker = _markers.splice(id, 1);
+		$(document).trigger('agm_google_maps-admin-marker_removed', [marker[0]]);
 		marker[0].setMap(null);
+		map._agm_remove_marker(id);
 		updateMarkersListDisplay();
 		return false;
 	};
@@ -494,7 +501,7 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 		$.post(ajaxurl, {"action": "agm_list_icons"}, function (data) {
 			var html = '';
 			$.each(data, function (idx, el) {
-				html += '<a class="agm_new_icon" href="#"><img src="' + _agm_root_url + '/img/' + el + '" /></a> ';
+				html += '<a class="agm_new_icon" href="#"><img src="' + _agm.root_url + '/img/' + el + '" /></a> ';
 			});
 			$parent.html(html);
 			$(".agm_new_icon").click(function () {
@@ -543,7 +550,8 @@ AgmMapHandler = function (selector, data, allowInsertion) {
 		populateDefaults();
 		createMarkup();
 		map = new google.maps.Map($("#map_preview").get(0), {
-			"zoom": parseInt(data.zoom),
+			"zoom": parseInt(data.zoom) ? parseInt(data.zoom) : 1,
+			"minZoom": 1,
 			"center": new google.maps.LatLng(40.7171, -74.0039), // New York
 			"mapTypeId": google.maps.MapTypeId[data.map_type]
 		});

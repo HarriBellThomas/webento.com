@@ -1,11 +1,11 @@
 === Lockdown WP Admin ===
 Contributors: sean212
-Donate link: http://talkingwithsean.com/donate/
-Link: http://talkingwithsean.com/2011/01/lockdown-wp-admin/
-Tags: security, wp-admin, login, hide login, rename login, http auth, 404, lockdown, talkingwithsean, secure
+Donate link: http://seanfisher.co/donate/
+Link: http://seanfisher.co/lockdown-wp-admin/
+Tags: security, wp-admin, login, hide login, rename login, http auth, 404, lockdown, srtfisher, secure
 Requires at least: 3.0
-Tested up to: 3.2
-Stable tag: 1.8
+Tested up to: 3.4.2
+Stable tag: 1.9
 
 This plugin will lockdown WP Admin. It can hide wp-admin and wp-login as well as add HTTP auth to the login system. It can change the login URL.
 
@@ -80,3 +80,6 @@ You can create a .txt file named 'disable_auth.txt' in your wp-content/plugins/l
 = 1.8 =
 * Finally discovered why so many users had HTTP auth errors. Fixed it to support almost 80% of hosts out there.
 * If you still have problems, shoot me an email.
+
+= 1.9 =
+A very late update, sorry! Worked to fix many issues with the admin bar and the "get_current_screen()" error. If you still see issues, please contact me!

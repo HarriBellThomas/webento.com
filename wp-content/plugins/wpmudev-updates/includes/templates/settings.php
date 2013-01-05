@@ -25,7 +25,7 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 }
 ?>
 <hr class="section-head-divider" />
-<div class="wrap grid_container">
+<div class="wrap grid_container wpmudev-dash">
 <h1 class="section-header"><i class="icon-cogs"></i><?php _e('Manage', 'wpmudev') ?></h1>
 
 <?php if ( $users = $this->get_allowed_users() ) { ?>
@@ -60,7 +60,7 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 		</span>
 	</div>
 	<div id="subscription-info"><h3><?php echo $profile['profile']['subscription']; ?></h3></div>
-		<br /><a class="button" href="<?php echo apply_filters('wpmudev_modify_url', 'https://premium.wpmudev.org/membership/'); ?>"><i class="icon-edit icon-large"></i><?php _e('MODIFY MEMBERSHIP', 'wpmudev') ?></a>
+		<br /><a class="wpmu-button icon" href="<?php echo apply_filters('wpmudev_modify_url', 'https://premium.wpmudev.org/membership/'); ?>"><i class="icon-edit icon-large"></i><?php _e('MODIFY MEMBERSHIP', 'wpmudev') ?></a>
 	</div>
 	<div class="clear"></div>
 	<?php } ?>
@@ -84,7 +84,7 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 					<td width="30.6%">
 						<?php
 							$disable = '';
-							if ( ($data['membership'] != 'full' && !is_numeric($data['membership'])) || !$this->allowed_user())
+							if ( !isset($data['membership']) || ($data['membership'] != 'full' && !is_numeric($data['membership'])) || !$this->allowed_user())
 								$disable = ' disabled="disabled"';
 							$checked = (get_site_option('wdp_un_hide_upgrades')) ? 1 : 0;
 						?>
@@ -97,7 +97,7 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 					<td width="30.6%" valign="top">
 						<?php
 							$disable = '';
-							if ( $data['membership'] != 'full' || !$this->allowed_user() )
+							if ( !isset($data['membership']) || $data['membership'] != 'full' || !$this->allowed_user() )
 								$disable = ' disabled="disabled"';
 							$checked = (get_site_option('wdp_un_hide_releases')) ? 1 : 0;
 						?>
@@ -113,7 +113,7 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 					<td>
 						<?php
 							$disable = '';
-							if ( $data['membership'] != 'full' || !$this->allowed_user() )
+							if ( !isset($data['membership']) || $data['membership'] != 'full' || !$this->allowed_user() )
 								$disable = ' disabled="disabled"';
 							$checked = (get_site_option('wdp_un_hide_notices')) ? 1 : 0;
 						?>
@@ -128,7 +128,7 @@ if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['
 			</tbody>
 		</table>
 		<p class="submit">
-			<input type="submit" class="button-primary" name="Submit" value="<?php _e('SAVE CHANGES', 'wpmudev') ?>" />
+			<input type="submit" class="wpmu-button" name="Submit" value="<?php _e('SAVE CHANGES', 'wpmudev') ?>" />
 		</p>
 	</div>
 

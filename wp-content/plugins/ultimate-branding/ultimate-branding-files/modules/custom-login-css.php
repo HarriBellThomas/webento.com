@@ -25,7 +25,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-class custom_login_css {
+class ub_custom_login_css {
 
 	function __construct() {
 
@@ -35,7 +35,7 @@ class custom_login_css {
 		add_action('login_head', array(&$this, 'custom_login_css_output'), 99);
 	}
 
-	function custom_login_css() {
+	function ub_custom_login_css() {
 		$this->__construct();
 	}
 
@@ -97,6 +97,6 @@ class custom_login_css {
 
 }
 
-$ub_custom_login_css = new custom_login_css();
+$ub_custom_login_css = new ub_custom_login_css();
 
 ?>

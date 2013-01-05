@@ -28,7 +28,7 @@
 					<span class="tag-upgrade"></span>
 					<h3 class="support-msg"><span class="wpmudev-logo-small"></span>&nbsp; <?php _e('members get unlimited, comprehensive support for <br/>all our products and any <br />WordPress related Queries', 'wpmudev') ?></h3>
 					<a class="btn" href="<?php echo apply_filters('wpmudev_join_url', 'http://premium.wpmudev.org/join/'); ?>">
-						<button class="cta"><?php _e('Find out more &raquo;', 'wpmudev') ?></button>
+						<button class="wpmu-button"><?php _e('Find out more &raquo;', 'wpmudev') ?></button>
 					</a>
 					<?php if (!$this->get_apikey()) { ?> 
 					<p class="support-already-member"><a href="admin.php?page=wpmudev&clear_key=1"><?php _e('Already a member?', 'wpmudev') ?></a></p>
@@ -41,7 +41,7 @@
 <?php } ?>
 
 <hr class="section-head-divider" />
-<section class="support-wrap">
+<section class="support-wrap wpmudev-dash">
 	<div class="wrap grid_container">
 		<h1 class="section-header">
 			<i class="icon-question-sign"></i><?php _e('Support', 'wpmudev') ?>
@@ -75,27 +75,26 @@
 					</legend>
 
 					<ol>
+						<?php if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['membership'])) && isset($data['downloads']) && $data['downloads'] != 'enabled' ) { ?>
+							<div class="error fade"><p><?php _e('You have reached your maximum enabled sites for direct dashboard support. You may <a href="http://premium.wpmudev.org/wp-admin/profile.php?page=wdpun">change which sites are enabled or upgrade to a higher membership level here &raquo;</a>', 'wpmudev'); ?></p></div>
+						<?php } else if (!$this->allowed_user()) {
+							$user_info = get_userdata( get_site_option('wdp_un_limit_to_user') );
+						?>
+							<div class="error fade"><p><?php printf(__('Only the admin user "%s" has access to WPMU DEV support.', 'wpmudev'), $user_info->display_name); ?></p></div>
+						<?php } ?>
+					
+						<div id="error_topic" style="1display:none;" class="error fade">
+							<p><i class="icon-warning-sign icon-large"></i> <?php _e('Please enter your question title.', 'wpmudev'); ?></p>
+						</div>
+						<div id="error_ajax" style="display:none;" class="error fade">
+							<p><i class="icon-warning-sign icon-large"></i> <?php _e('There was a problem posting your support question:', 'wpmudev'); ?></p>
+						</div>
 						<li>
-							<?php if ( $this->get_apikey() && ($data['membership'] == 'full' || is_numeric($data['membership'])) && isset($data['downloads']) && $data['downloads'] != 'enabled' ) { ?>
-								<div class="error fade"><p><?php _e('You have reached your maximum enabled sites for direct dashboard support. You may <a href="http://premium.wpmudev.org/wp-admin/profile.php?page=wdpun">change which sites are enabled or upgrade to a higher membership level here &raquo;</a>', 'wpmudev'); ?></p></div>
-							<?php } else if (!$this->allowed_user()) {
-								$user_info = get_userdata( get_site_option('wdp_un_limit_to_user') );
-							?>
-								<div class="error fade"><p><?php printf(__('Only the admin user "%s" has access to WPMU DEV support.', 'wpmudev'), $user_info->display_name); ?></p></div>
-							<?php } ?>
-						
-							<div id="error_topic" style="display:none;" class="error fade">
-								<p><i class="icon-warning-sign icon-large"></i> <?php _e('Please enter your question title.', 'wpmudev'); ?></p>
-							</div>
-							<div id="error_ajax" style="display:none;" class="error fade">
-								<p><i class="icon-warning-sign icon-large"></i> <?php _e('There was a problem posting your support question:', 'wpmudev'); ?></p>
-							</div>
 							<div class="wrap"><label for="topic"><?php _e('What\'s your question or topic?<br /> Be specific please :)', 'wpmudev') ?></label></div>
 							<input type="text" name="topic" id="topic" />
 						</li>
-
-						<li>
-							<div id="error_project" style="display:none;" class="error fade"><p><i class="icon-warning-sign icon-large"></i> <?php _e('Please select what you need support for.', 'wpmudev'); ?></p></div>
+						<div id="error_project" style="display:none;" class="error fade"><p><i class="icon-warning-sign icon-large"></i> <?php _e('Please select what you need support for.', 'wpmudev'); ?></p></div>
+						<li class="select">
 							<select id="q-and-a" name="project_id">
 								<option value=""><?php _e('Select an Installed Product:', 'wpmudev') ?></option>
 								<?php
@@ -128,9 +127,9 @@
 								</optgroup>
 							</select>
 						</li>
-
+						
+						<div id="error_content" style="display:none;" class="error fade"><p><i class="icon-warning-sign icon-large"></i> <?php _e('Please enter your support question.', 'wpmudev'); ?></p></div>
 						<li>
-							<div id="error_content" style="display:none;" class="error fade"><p><i class="icon-warning-sign icon-large"></i> <?php _e('Please enter your support question.', 'wpmudev'); ?></p></div>
 							<div class="wrap"><label for="post_content"><?php _e('Ok, go for it...', 'wpmudev') ?></label></div>
 							<textarea rows="20" id="post_content" name="post_content"></textarea>
 						</li>
@@ -142,11 +141,11 @@
 							<input type="checkbox" id="notify-me" checked="checked" value="1" name="stt_checkbox"<?php echo $disabled; ?> />
 							
 							<?php if ($disabled) { ?>
-								<a class="button"><i class="icon-play-circle icon-large"></i><?php _e("Post your question", 'wpmudev') ?></a>
+								<a class="wpmu-button icon"><i class="icon-play-circle icon-large"></i><?php _e("Post your question", 'wpmudev') ?></a>
 							<?php } else { ?>
-								<a id="qa-submit" class="button"><i class="icon-play-circle icon-large"></i><?php _e("Post your question", 'wpmudev') ?></a>
+								<a id="qa-submit" class="wpmu-button icon"><i class="icon-play-circle icon-large"></i><?php _e("Post your question", 'wpmudev') ?></a>
 							<?php } ?>
-								<span id="qa-posting" class="button" style="display:none;"><img src="<?php echo $spinner; ?>" /> <?php _e("Posting question...", 'wpmudev') ?></span>
+								<span id="qa-posting" class="wpmu-button icon" style="display:none;"><img src="<?php echo $spinner; ?>" /> <?php _e("Posting question...", 'wpmudev') ?></span>
 						</li>
 					</ol>
 				</fieldset>

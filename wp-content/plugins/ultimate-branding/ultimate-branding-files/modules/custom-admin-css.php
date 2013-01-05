@@ -25,7 +25,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-class custom_admin_css {
+class ub_custom_admin_css {
 
 	function __construct() {
 
@@ -35,7 +35,7 @@ class custom_admin_css {
 		add_action('admin_head', array(&$this, 'custom_admin_css_output'), 99);
 	}
 
-	function custom_admin_css() {
+	function ub_custom_admin_css() {
 		$this->__construct();
 	}
 
@@ -99,6 +99,6 @@ class custom_admin_css {
 
 }
 
-$ub_custom_admin_css = new custom_admin_css();
+$ub_custom_admin_css = new ub_custom_admin_css();
 
 ?>

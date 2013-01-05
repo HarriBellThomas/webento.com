@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 
-class global_footer_content {
+class ub_global_footer_content {
 
 	var $global_footer_content_settings_page;
 	var $global_footer_content_settings_page_long;
@@ -41,7 +41,7 @@ class global_footer_content {
 		add_action('wp_footer', array(&$this, 'global_footer_content_output'));
 	}
 
-	function global_footer_content() {
+	function ub_global_footer_content() {
 		$this->__construct();
 	}
 
@@ -104,6 +104,6 @@ class global_footer_content {
 
 }
 
-$ub_globalfootertext = new global_footer_content();
+$ub_globalfootertext = new ub_global_footer_content();
 
 

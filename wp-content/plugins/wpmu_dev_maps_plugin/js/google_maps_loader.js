@@ -14,21 +14,30 @@ var _agmMapIsLoaded = false;
  */
 function agmInitialize () {
 	_agmMapIsLoaded = true;
+	if ("undefined" != typeof google.maps.Map._agm_get_markers) return true;
+	google.maps.Map.prototype._agm_markers = [];
+	google.maps.Map.prototype._agm_get_markers = function () { return this._agm_markers; }
+	google.maps.Map.prototype._agm_clear_markers = function () { this._agm_markers = []; }
+	google.maps.Map.prototype._agm_add_marker = function (mrk) { this._agm_markers.push(mrk); }
+	google.maps.Map.prototype._agm_remove_marker = function (idx) { this._agm_markers.splice(idx, 1); }
 }
 
 /**
  * Handles the actual loading of Google Maps API.
  */
 function loadGoogleMaps () {
-	var protocol = '';
-	var language = '';
+	if (typeof google === 'object' && typeof google.maps === 'object') return agmInitialize(); // We're loaded and ready - albeit from a different source.
+	var protocol = '',
+		language = '',
+		script = document.createElement("script"),
+		libs = _agm.libraries.join(",")
+	;
 	try { protocol = document.location.protocol; } catch (e) { protocol = 'http:'; }
 	if (typeof(_agmLanguage) != "undefined") {
 		try { language = '&language=' + _agmLanguage; } catch (e) { language = ''; }
 	}
-	var script = document.createElement("script");
 	script.type = "text/javascript";
-	script.src = protocol + "//maps.google.com/maps/api/js?v=3&libraries=panoramio&sensor=false" + language + "&callback=agmInitialize";
+	script.src = protocol + "//maps.google.com/maps/api/js?v=3&libraries=" + libs + "&sensor=false" + language + "&callback=agmInitialize";
 	document.body.appendChild(script);
 }
 

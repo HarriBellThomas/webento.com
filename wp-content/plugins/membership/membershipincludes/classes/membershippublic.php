@@ -45,7 +45,7 @@ if(!class_exists('membershippublic')) {
 
 			// Register
 			add_filter('register', array(&$this, 'override_register') );
-			
+
 			// Ultimate Facebook Compatibility
 			add_filter( 'wdfb_registration_redirect_url', array(&$this, 'wdfb_registration_redirect_url') );
 
@@ -54,17 +54,17 @@ if(!class_exists('membershippublic')) {
 			add_filter( 'membership_not_level_shortcodes', array(&$this, 'build_not_level_shortcode_list' ) );
 
 		}
-		
+
 		function wdfb_registration_redirect_url($url) {
 			global $M_options;
 			$url = get_permalink($M_options['registration_page']);
 			return $url;
 		}
-		
+
 		function membershippublic() {
 			$this->__construct();
 		}
-		
+
 		function load_textdomain() {
 
 			$locale = apply_filters( 'membership_locale', get_locale() );
@@ -241,11 +241,11 @@ if(!class_exists('membershippublic')) {
 				$member = new M_Membership($user->ID);
 
 				if($member->is_member()) {
-					$key = get_usermeta($user->ID, '_membership_key');
+					$key = get_user_meta($user->ID, '_membership_key');
 
 					if(empty($key)) {
 						$key = md5($user->ID . $user->user_pass . time());
-						update_usermeta($user->ID, '_membership_key', $key);
+						update_user_meta($user->ID, '_membership_key', $key);
 					}
 
 					if(!empty($key)) {
@@ -382,6 +382,8 @@ if(!class_exists('membershippublic')) {
 					}
 				}
 			}
+
+			do_action('membership-add-shortcodes');
 
 			// Set the initialisation status
 			$initialised = true;
@@ -727,20 +729,45 @@ if(!class_exists('membershippublic')) {
 
 			// Set up the level shortcodes here
 			$shortcodes = apply_filters('membership_level_shortcodes', array() );
-			if(!empty($shortcodes)) {
-				$id = array_search( $code, $shortcodes );
+			$notshortcodes = apply_filters('membership_not_level_shortcodes', array() );
 
-				if($id !== false) {
-					// we have found a level so we need to check if it has a custom protected message, otherwise we'll just output the default main on
-					$level = new M_Level( $id );
-					$message = $level->get_meta( 'level_protectedcontent' );
-					if(!empty($message)) {
-						return stripslashes($message);
+			$code = strtolower( $code );
+
+			if( substr( $code, 0, 4 ) !== "not-" ) {
+				if(!empty($shortcodes)) {
+					// search positive shortcodes first
+					$id = array_search( $code, $shortcodes );
+					if($id !== false) {
+						// we have found a level so we need to check if it has a custom protected message, otherwise we'll just output the default main on
+						$level = new M_Level( $id );
+						$message = $level->get_meta( 'level_protectedcontent' );
+						if(!empty($message)) {
+							return stripslashes($message);
+						}
+					}
+				}
+			} else {
+				if(!empty($notshortcodes)) {
+					// search positive shortcodes first
+					$id = array_search( $code, $notshortcodes );
+					if($id !== false) {
+						// we have found a level so we need to check if it has a custom protected message, otherwise we'll just output the default main on
+						$level = new M_Level( $id );
+						$message = $level->get_meta( 'level_protectedcontent' );
+						if(!empty($message)) {
+							return stripslashes($message);
+						}
 					}
 				}
 			}
+
 			// If we are here then we have no custom message, or the shortcode wasn't found so just output the standard message
-			return stripslashes($M_options['shortcodemessage']);
+			if(isset($M_options['shortcodemessage'])) {
+				return stripslashes($M_options['shortcodemessage']);
+			} else {
+				return '';
+			}
+
 
 		}
 
@@ -968,13 +995,13 @@ if(!class_exists('membershippublic')) {
 			}
 
 			//post_type] => nav_menu_item
-			if($wp_query->query_vars['post_type'] == 'nav_menu_item') {
+			if(isset($wp_query->query_vars['post_type']) && $wp_query->query_vars['post_type'] == 'nav_menu_item') {
 				// we've started looking at menus - implement bad bit of code until find a better method
 				define('M_REACHED_MENU', 'yup');
 			}
 
 			// If still here then we need to redirect to the no-access page
-			if(!empty($M_options['nocontent_page']) && $wp_query->queried_object_id != $M_options['nocontent_page'] && !defined('M_REACHED_MENU')) {
+			if(!empty($M_options['nocontent_page']) && isset($wp_query->queried_object_id) && $wp_query->queried_object_id != $M_options['nocontent_page'] && !defined('M_REACHED_MENU')) {
 				// grab the content form the no content page
 				$url = get_permalink( (int) $M_options['nocontent_page'] );
 
@@ -1378,7 +1405,7 @@ if(!class_exists('membershippublic')) {
 			return $content;
 		}
 
-		function output_registeruser( $errormessages = false ) {
+		function output_registeruser( $error = false ) {
 
 			global $wp_query, $M_options, $bp;
 
@@ -1416,6 +1443,10 @@ if(!class_exists('membershippublic')) {
 				}
 			} else {
 				$member = new M_Membership( $user_id );
+			}
+
+			if(empty($error)) {
+				$error = '';
 			}
 
 			$content = apply_filters('membership_subscription_form_payment_before_content', '', $error);
@@ -1465,7 +1496,7 @@ if(!class_exists('membershippublic')) {
 											break;
 
 				case 'validatepage1':	// Page 1 of the form has been submitted - validate
-									include_once(ABSPATH . WPINC . '/registration.php');
+									//include_once(ABSPATH . WPINC . '/registration.php');
 
 									$required = array(	'user_login' => __('Username', 'membership'),
 														'user_email' => __('Email address','membership'),
@@ -1519,7 +1550,7 @@ if(!class_exists('membershippublic')) {
 												'user_password' => $_POST['password'],
 												'remember' => true
 											);
-											$is_ssl = ($_SERVER['https'] == 'on' ? true : false);
+											$is_ssl = (isset($_SERVER['https']) && $_SERVER['https'] == 'on' ? true : false);
 											$user = wp_signon( $creds, $is_ssl );
 
 											if( has_action('membership_susbcription_form_registration_notification') ) {
@@ -1564,7 +1595,7 @@ if(!class_exists('membershippublic')) {
 				case 'validatepage1bp':
 									global $bp;
 
-									include_once(ABSPATH . WPINC . '/registration.php');
+									//include_once(ABSPATH . WPINC . '/registration.php');
 
 									$required = array(	'signup_username' => __('Username', 'membership'),
 														'signup_email' => __('Email address','membership'),
@@ -1651,15 +1682,15 @@ if(!class_exists('membershippublic')) {
 												$member->deactivate();
 											}
 											$creds = array(
-												'user_login' => $_POST['user_login'],
-												'user_password' => $_POST['password'],
+												'user_login' => $_POST['signup_username'],
+												'user_password' => $_POST['signup_password'],
 												'remember' => true
 											);
 											$is_ssl = ($_SERVER['https'] == 'on' ? true : false);
 											$user = wp_signon( $creds, $is_ssl );
 
 											if( has_action('membership_susbcription_form_registration_notification') ) {
-												do_action('membership_susbcription_form_registration_notification', $user_id, $_POST['password']);
+												do_action('membership_susbcription_form_registration_notification', $user_id, $_POST['signup_password']);
 											} else {
 												wp_new_user_notification($user_id, $_POST['signup_password']);
 											}
@@ -2024,8 +2055,14 @@ if(!class_exists('membershippublic')) {
 																$gateway = $_POST['gateway'];
 																// Join the new subscription
 																$member->create_subscription($sub_id, $gateway);
+																do_action('membership_payment_subscr_signup', $user_id, $sub_id);
 																// Timestamp the update
 																update_user_meta( $user_id, '_membership_last_upgraded', time());
+
+																// Added another redirect to the same url because the show_no_access filters
+																// have already run on the "parse_request" action (Cole)
+																wp_redirect(M_get_subscription_permalink());
+																exit;
 															}
 														} else {
 															// check if a custom is posted and of so then process the user
@@ -2037,8 +2074,14 @@ if(!class_exists('membershippublic')) {
 																	// Join the new subscription
 																	$member = new M_Membership( $user_id );
 																	$member->create_subscription($sub_id, $gateway);
+																	do_action('membership_payment_subscr_signup', $user_id, $sub_id);
 																	// Timestamp the update
 																	update_user_meta( $user_id, '_membership_last_upgraded', time());
+
+																	// Added another redirect to the same url because the show_no_access filters
+																	// have already run on the "parse_request" action (Cole)
+																	wp_redirect(M_get_subscription_permalink());
+																	exit;
 																}
 															}
 														}
@@ -2097,8 +2140,9 @@ if(!class_exists('membershippublic')) {
 					if($post->ID == $M_options['registrationcompleted_page']) {
 
 						// Handle any updates passed
-						$page = addslashes($_REQUEST['action']);
-						if(empty($page)) {
+						if(isset($_REQUEST['action']) && !empty($_REQUEST['action'])) {
+							$page = addslashes($_REQUEST['action']);
+						} else {
 							$page = 'renewform';
 						}
 
@@ -2114,8 +2158,14 @@ if(!class_exists('membershippublic')) {
 																$gateway = $_POST['gateway'];
 																// Join the new subscription
 																$member->create_subscription($sub_id, $gateway);
+																do_action('membership_payment_subscr_signup', $user_id, $sub_id);
 																// Timestamp the update
 																update_user_meta( $user_id, '_membership_last_upgraded', time());
+
+																// Added another redirect to the same url because the show_no_access filters
+																// have already run on the "parse_request" action (Cole)
+																wp_redirect(M_get_returnurl_permalink());
+																exit;
 															}
 
 														} else {
@@ -2127,8 +2177,14 @@ if(!class_exists('membershippublic')) {
 																	// Join the new subscription
 																	$member = new M_Membership( $user_id );
 																	$member->create_subscription($sub_id, $gateway);
+																	do_action('membership_payment_subscr_signup', $user_id, $sub_id);
 																	// Timestamp the update
 																	update_user_meta( $user_id, '_membership_last_upgraded', time());
+
+																	// Added another redirect to the same url because the show_no_access filters
+																	// have already run on the "parse_request" action (Cole)
+																	wp_redirect(M_get_returnurl_permalink());
+																	exit;
 																}
 															}
 														}
@@ -2262,7 +2318,7 @@ if(!class_exists('membershippublic')) {
 
 		function queue_user( $user_login, $user_pass, $user_email, $user_meta = '' ) {
 
-			$sql = $this->db->prepare( "INSERT INTO {$this->user_queue} (user_login, user_pass, user_email, user_timestamp, user_meta) VALUES " );
+			$sql = "INSERT INTO {$this->user_queue} (user_login, user_pass, user_email, user_timestamp, user_meta) VALUES ";
 			$sql .= $this->db->prepare( "( %s, %s, %s, %d, %s )", $user_login, wp_hash_password( $user_pass ), $user_email, time(), serialize($user_meta) );
 			$sql .= $this->db->prepare( " ON DUPLICATE KEY UPDATE user_timestamp = %d", time());
 
@@ -2286,7 +2342,7 @@ if(!class_exists('membershippublic')) {
 
 			$orderby[] = 'id ASC';
 
-			$sql = $this->db->prepare( "SELECT * FROM {$this->subscriptions}");
+			$sql = "SELECT * FROM {$this->subscriptions}";
 
 			if(!empty($where)) {
 				$sql .= " WHERE " . implode(' AND ', $where);
@@ -2309,7 +2365,7 @@ if(!class_exists('membershippublic')) {
 
 			$orderby[] = 'id ASC';
 
-			$sql = $this->db->prepare( "SELECT * FROM {$this->membership_levels}");
+			$sql = "SELECT * FROM {$this->membership_levels}";
 
 			if(!empty($where)) {
 				$sql .= " WHERE " . implode(' AND ', $where);
@@ -2359,7 +2415,6 @@ if(!class_exists('membershippublic')) {
 			return $shortcodes;
 
 		}
-
 
 	}
 

@@ -248,7 +248,7 @@ var devlistings = {
 		$.post(ajaxurl, {
 			"action": "wpmudev_hide_install_message"
 		}, function (data) {
-			$("a.button.install_setup").removeClass("install_setup").off('click', devlistings.install_setup);
+			$("a.wpmu-button.install_setup").removeClass("install_setup").off('click', devlistings.install_setup);
 		});
 	},
 	
@@ -521,11 +521,11 @@ $(document).ready(function() {
 		return false;
 	});
 	
-	$("a.button.install_and_activate_plugin").on('click', devlistings.install_and_activate_plugin);
-	$("a.button.install_plugin").on('click', devlistings.install_plugin);
-	$("a.button.install_setup").on('click', devlistings.install_setup);
-	$("a.button.install_instructions").on('click', devlistings.install_instructions);
-	$("a.button.install_theme").on('click', devlistings.install_theme);
+	$("a.wpmu-button.install_and_activate_plugin").on('click', devlistings.install_and_activate_plugin);
+	$("a.wpmu-button.install_plugin").on('click', devlistings.install_plugin);
+	$("a.wpmu-button.install_setup").on('click', devlistings.install_setup);
+	$("a.wpmu-button.install_instructions").on('click', devlistings.install_instructions);
+	$("a.wpmu-button.install_theme").on('click', devlistings.install_theme);
 	$("a._install_setup-close").on('click', devlistings.install_setup_close);
 	$("#_install_hide_msg").on('change', devlistings.hide_install_message);
 	$("a.manual_install_setup_done").on('click', function () {

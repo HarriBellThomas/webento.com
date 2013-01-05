@@ -62,6 +62,24 @@ class AgmMapModel {
 	}
 
 	/**
+	 * Fetches maps associated with current WP post - singular one, even on archive pages.
+	 *
+	 * @return mixed Maps array on success, false on failure
+	 */
+	function get_current_post_maps () {
+		global $post;
+		$table = $this->get_table_name();
+		$posts = array($post);
+		$where_string = $this->prepare_query_string($posts);
+		if (!$where_string) return false;
+		$maps = $this->wpdb->get_results("SELECT * FROM {$table} {$where_string}", ARRAY_A);
+		if (is_array($maps)) foreach ($maps as $k=>$v) {
+			$maps[$k] = $this->prepare_map($v);
+		}
+		return $maps;
+	}
+
+	/**
 	 * Fetches all maps associated with any posts.
 	 *
 	 * @return mixed Maps array on success, false on failure
@@ -109,7 +127,7 @@ class AgmMapModel {
 	function get_custom_maps ($query) {
 		$table = $this->get_table_name();
 		$wpq = new Wp_Query($query);
-		$posts = $wpq->get_posts();
+		$posts = $wpq->posts ? $wpq->posts : array();//get_posts();
 		$where_string = $this->prepare_query_string($posts);
 		if (!$where_string) return false;
 		$maps = $this->wpdb->get_results("SELECT * FROM {$table} {$where_string}", ARRAY_A);
@@ -276,11 +294,28 @@ class AgmMapModel {
 	/**
 	 * Fetches a list of existing maps ids/titles.
 	 *
+	 * @param int $page (optional) Page to retrieve
+	 * @param int $limit (optional) Upper limit to fetch
 	 * @return mixed Map id/title array on success, false on failure
 	 */
-	function get_maps () {
+	function get_maps ($page=false, $limit=false) {
+		$paged = false;
+		if ($limit >= 0) {
+			$builtin_limit = defined('AGM_GET_MAPS_LIMIT') && AGM_GET_MAPS_LIMIT ? AGM_GET_MAPS_LIMIT: 50;
+			$limit = apply_filters('agm_google_maps-get_maps-limit',
+				($limit ? $limit : $builtin_limit)
+			);
+			$start = $page ? $page * $limit : 0;
+			$stop = $limit;
+			$paged = "LIMIT {$start}, {$stop}";
+		}
 		$table = $this->get_table_name();
-		return $this->wpdb->get_results("SELECT id, title FROM {$table}", ARRAY_A);
+		return $this->wpdb->get_results("SELECT id, title FROM {$table} {$paged}", ARRAY_A);
+	}
+
+	function get_maps_total () {
+		$table = $this->get_table_name();
+		return $this->wpdb->get_var("SELECT COUNT(*) FROM {$table}");
 	}
 
 	/**
@@ -320,7 +355,7 @@ class AgmMapModel {
 	 * @return mixed Id on success, false on failure
 	 */
 	function save_map ($data) {
-		$id = (int)$data['id'];
+		$id = isset($data['id']) ? (int)$data['id'] : false;
 		$table = $this->get_table_name();
 		$data = $this->prepare_for_save($data);
 		$ret = false;
@@ -447,22 +482,22 @@ class AgmMapModel {
 		$post_ids = is_array(@$data['post_ids']) ? array_unique($data['post_ids']) : array();
 		// Pack options
 		$map_options = array (
-			"height" => $data['height'],
-			"width" => $data['width'],
-			"zoom" => $data['zoom'],
-			"map_type" => strtoupper($data['map_type']),
-			"map_alignment" => strtolower($data['map_alignment']),
-			"show_map" => (int)$data['show_map'],
-			"show_posts" => (int)$data['show_posts'],
-			"show_markers" => (int)$data['show_markers'],
-			"show_images" => (int)$data['show_images'],
-			"image_size" => $data['image_size'],
-			"image_limit" => (int)$data['image_limit'],
-			"show_panoramio_overlay" => (int)$data['show_panoramio_overlay'],
-			"panoramio_overlay_tag" => $data['panoramio_overlay_tag'],
-			"street_view" => $data['street_view'],
-			"street_view_pos" => $data['street_view_pos'],
-			"street_view_pov" => $data['street_view_pov'],
+			"height" => @$data['height'],
+			"width" => @$data['width'],
+			"zoom" => @$data['zoom'],
+			"map_type" => strtoupper(@$data['map_type']),
+			"map_alignment" => strtolower(@$data['map_alignment']),
+			"show_map" => (int)@$data['show_map'],
+			"show_posts" => (int)@$data['show_posts'],
+			"show_markers" => (int)@$data['show_markers'],
+			"show_images" => (int)@$data['show_images'],
+			"image_size" => @$data['image_size'],
+			"image_limit" => (int)@$data['image_limit'],
+			"show_panoramio_overlay" => (int)@$data['show_panoramio_overlay'],
+			"panoramio_overlay_tag" => @$data['panoramio_overlay_tag'],
+			"street_view" => @$data['street_view'],
+			"street_view_pos" => @$data['street_view_pos'],
+			"street_view_pov" => @$data['street_view_pov'],
 		);
 
 		$data['title'] = apply_filters('agm_google_maps-prepare_for_save-title', $data['title'], $data);
@@ -555,13 +590,8 @@ class AgmMapModel {
 	 * @access private
 	 */
 	function _address_to_marker ($address) {
-		$urladd = rawurlencode($address);
-		$url = "http://maps.google.com/maps/api/geocode/json?address={$urladd}&sensor=false";
-		$result = wp_remote_get($url);
-		$json = json_decode($result['body']);
-
-		if (!$json) return false;
-		$result = $json->results[0];
+		$result = $this->geocode_address($address);
+		if (!$result) return false;
 
 		return array(
 			'title' => $address,
@@ -580,13 +610,13 @@ class AgmMapModel {
 	 * @access private
 	 */
 	function _position_to_marker ($lat, $lon) {
-		$urladd = rawurlencode($address);
 		$url = "http://maps.google.com/maps/api/geocode/json?latlng={$lat},{$lon}&sensor=false";
 		$result = wp_remote_get($url);
 		$json = json_decode($result['body']);
 
 		if (!$json) return false;
-		$result = $json->results[0];
+		$result = (isset($json->results) && isset($json->results[0])) ? $json->results[0] : false;
+		if (!$result) return false;
 
 		return array(
 			'title' => $result->formatted_address,
@@ -597,6 +627,49 @@ class AgmMapModel {
 				$result->geometry->location->lng
 			),
 		);
+	}
+
+	/**
+	 * Algorithm adapted from http://janmatuschek.de/LatitudeLongitudeBoundingCoordinates
+	 */
+	public function find_bounding_coordinates ($lat, $lng, $distance) {
+		$rad_dist = $distance / 6371000;
+		$rad_lat = deg2rad($lat);
+		$rad_lng = deg2rad($lng);
+
+		$min_lat = $rad_lat - $rad_dist;
+		$max_lat = $rad_lat + $rad_dist;
+
+		if ($min_lat > deg2rad(-90) && $max_lat < deg2rad(90)) {
+			$delta_lng = asin(sin($rad_dist) / cos($rad_lat));
+			$min_lng = $rad_lng - $delta_lng;
+			if ($min_lng < deg2rad(-180)) $min_lng += 2 * E_PI;
+			$max_lng = $rad_lng + $delta_lng;
+			if ($max_lng > deg2rad(180)) $max_lng -= 2 * E_PI;
+		} else {
+			// a pole is within the distance
+			$min_lat = Math.max($min_lat, deg2rad(-90));
+			$max_lat = Math.min($max_lat, deg2rad(90));
+			$min_lng = deg2rad(-180);
+			$max_lng = deg2rad(180);
+		}
+
+		$min_lat = rad2deg($min_lat);
+		$min_lng = rad2deg($min_lng);
+		
+		$max_lat = rad2deg($max_lat);
+		$max_lng = rad2deg($max_lng);
+		return array($min_lat, $max_lat, $min_lng, $max_lng);
+	}
+
+	public function geocode_address ($address) {
+		$urladd = rawurlencode($address);
+		$url = "http://maps.google.com/maps/api/geocode/json?address={$urladd}&sensor=false";
+		$result = wp_remote_get($url);
+		$json = json_decode($result['body']);
+
+		if (!$json) return false;
+		return $json->results[0];
 	}
 }
 
@@ -620,4 +693,20 @@ function agm_array_multi_unique ($array) {
 	}
 
 	return $ret;
+}
+
+/**
+ * Positive values helper, used for getting positive values in
+ * shortcode parsing.
+ */
+function agm_positive_values () {
+	return array('yes', 'true', 'on');
+}
+
+/**
+ * Negative values helper, used for getting negative values in
+ * shortcode parsing.
+ */
+function agm_negative_values () {
+	return array('no', 'false', 'off');
 }

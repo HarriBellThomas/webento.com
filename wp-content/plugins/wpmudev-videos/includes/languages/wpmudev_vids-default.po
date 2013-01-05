@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wpmudev-videos\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-17 10:28-0600\n"
-"PO-Revision-Date: 2011-10-17 10:29-0600\n"
+"POT-Creation-Date: 2012-10-29 15:46-0600\n"
+"PO-Revision-Date: 2012-10-29 15:46-0600\n"
 "Last-Translator: Aaron Edwards\n"
 "Language-Team: Incsub\n"
 "MIME-Version: 1.0\n"
@@ -67,7 +67,7 @@ msgid "Comments"
 msgstr ""
 
 #: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:71
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:233
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:254
 msgid "Dashboard"
 msgstr ""
 
@@ -80,241 +80,255 @@ msgid "Editing Images"
 msgstr ""
 
 #: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:74
-msgid "Editing Links"
-msgstr ""
-
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:75
 msgid "Editing Text"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:76
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:75
 msgid "Excerpts"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:77
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:76
 msgid "Featured Images"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:78
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:77
 msgid "Hyperlinks"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:79
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:78
 msgid "Image Editor - Cropping and Scaling"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:80
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:79
 msgid "Image Editor - Flip, Undo, Redo"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:81
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:80
 msgid "Image Editor"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:82
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:81
 msgid "Link Categories"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:83
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:82
 msgid "Lists"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:84
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:112
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:83
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:111
 msgid "Media Library"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:85
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:84
 msgid "oEmbed"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:86
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:85
 msgid "Pasting From Word"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:87
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:86
 msgid "QuickPress"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:88
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:87
 msgid "Replacing an Image"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:89
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:88
 msgid "Restoring a Page"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:90
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:89
 msgid "Restoring a Post"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:91
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:90
 msgid "Tags"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:92
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:91
 msgid "The Toolbar"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:93
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:92
 msgid "Trashing a Page"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:94
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:93
 msgid "Trashing a Post"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:95
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:94
 msgid "Managing Widgets"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:96
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:95
 msgid "Creating and Managing Custom Navigation Menus"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:97
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:96
 msgid "Switching Themes"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:102
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:101
 msgid "The Dashboard"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:104
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:103
 msgid "Posts"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:106
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:105
 msgid "Pages"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:108
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:107
 msgid "The Visual Editor"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:110
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:109
 msgid "Working With Images"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:114
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:113
 msgid "Appearance"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:116
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:115
 msgid "Organizing Content"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:118
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:117
 msgid "Managing Links"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:120
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:119
 msgid "Managing Comments"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:152
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:154
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:151
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:153
 msgid "WPMU DEV Videos"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:194
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:212
 msgid "Settings saved."
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:199
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:217
+msgid "Displaying support videos in the admin area of sites is incompatible with your <a href=\"settings.php?page=domainmapping_options\">domain mapping settings</a>. Administration mapping must be set to \"original domain\" to display videos in the admin area."
+msgstr ""
+
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:220
 msgid "WPMU DEV Video Settings"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:205
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:226
 msgid "Display Settings"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:209
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:230
 msgid "Register This Domain"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:214
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:235
 #, php-format
 msgid "Please register this domain \"%s\" below: "
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:217
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:238
 msgid "Already Registered!"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:222
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:243
 msgid "Add Videos to Contextual Help"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:224
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:245
 msgid "Yes"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:225
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:246
 msgid "No"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:226
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:247
 msgid "This will add the appropriate video tutorials to the help dropdowns on WordPress admin screens."
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:230
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:251
 msgid "Menu Location"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:234
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:255
 msgid "Top Level"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:236
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:257
 msgid "Support System Plugin"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:238
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:259
 msgid "No Menu"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:240
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:261
 msgid "What part of the admin menu should the video tutorial page be added?"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:244
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:265
 msgid "Menu Title"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:246
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:267
 msgid "Video Tutorials"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:247
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:268
 msgid "Sets the menu title for the video tutorial page."
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:251
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:272
 msgid "Hide Videos"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:253
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:274
 msgid "Check any videos here that you want to hide from users:"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:265
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:286
 msgid "Save Changes"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:271
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:292
 msgid "Shortcodes"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:273
-msgid "These shortcodes allow you to easiliy embed video tutorials in posts and pages on your sites. Simply type or paste them into your post or page content where you would like them to appear. Also properly handles SSL protected pages."
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:294
+msgid "These shortcodes allow you to easiliy embed video tutorials in posts and pages on your sites. Simply type or paste them into your post or page content where you would like them to appear. Also properly handles SSL protected pages. You may also pass \"width\" and/or \"height\" arguments to customize the size of the videos."
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:324
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:305
+msgid "Group Shortcodes"
+msgstr ""
+
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:305
+msgid "These shortcodes allow you to embed a whole group of videos at a time."
+msgstr ""
+
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:356
 msgid "Select a Video Tutorial"
 msgstr ""
 
-#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/wpmudev-videos.php:375
-msgid "Please install the latest version of <a href=\"http://premium.wpmudev.org/project/update-notifications/\" title=\"Download Now &raquo;\">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href=\"http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/\">More information &raquo;</a>"
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/includes/wpmudev-dash-notification.php:57
+#, php-format
+msgid "Easily get updates, support, and one-click WPMU DEV plugin/theme installations right from in your dashboard - <strong><a href=\"%s\" title=\"Install Now &raquo;\">install the free WPMU DEV Dashboard plugin</a></strong>. &nbsp;&nbsp;&nbsp;<small><a href=\"http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/\">(find out more)</a></small>"
+msgstr ""
+
+#: /Users/aaron2/Documents/WPMU-Test/wp-content/plugins/wpmudev-videos/includes/wpmudev-dash-notification.php:61
+#, php-format
+msgid "Updates, Support, Premium Plugins, Community - <strong><a href=\"%s\" title=\"Activate Now &raquo;\">activate the WPMU DEV Dashboard plugin now</a></strong>."
 msgstr ""
 

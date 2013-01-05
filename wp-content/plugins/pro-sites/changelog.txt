@@ -5,6 +5,17 @@ Change Log:
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 
+3.3.3 - 12/11/2012 - Aaron Edwards
+----------------------------------------------------------------------
+- WP 3.5 compatibility for XML-RPC module (no Atom, different hooks)
+- Merge Premium Themes page into normal themes list
+- New MarketPress Global Products Filter module
+- Don't show ads in RSS feeds
+- Add in hook for affiliate payments on bulk upgrades
+- Add Japan locale to paypal list
+- Fix db errors in upgrade/install script
+- Fix bug in upload quota messages advertising wrong level
+
 3.3.2 - 9/04/2012 - Aaron Edwards
 ----------------------------------------------------------------------
 - Fix error when deleting sites with Stripe gateway active
@@ -336,4 +347,4 @@ Change Log:
 ----------------------------------------------------------------------
 - Initial Release.
 
-36617-1346822426-au
+36617-1357168672-au

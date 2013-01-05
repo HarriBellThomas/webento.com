@@ -318,7 +318,7 @@ class autoblogpremium {
 	function ajax__getblogauthorlist() {
 		$bid = addslashes($_GET['id']);
 		if($bid != "") {
-			$blogusers = get_users_of_blog( $bid );
+			$blogusers = get_users( 'blog_id=' . $bid ); //get_users_of_blog( $bid );
 			$bu = array();
 			foreach($blogusers as $key => $buser) {
 				$bu[] = array('user_id' => $buser->user_id, 'user_login' => $buser->user_login);
@@ -444,7 +444,11 @@ class autoblogpremium {
 
 	function dashboard_report() {
 
-		$sql = $this->db->prepare( "SELECT * FROM {$this->db->sitemeta} WHERE site_id = %d AND meta_key LIKE %s ORDER BY meta_id DESC LIMIT 0, 25", $this->db->siteid, "autoblog_log_%");
+		if(is_multisite() && function_exists('is_plugin_active_for_network') && is_plugin_active_for_network('autoblog/autoblogpremium.php') && defined( 'AUTOBLOG_GLOBAL' ) && AUTOBLOG_GLOBAL == true) {
+			$sql = $this->db->prepare( "SELECT * FROM {$this->db->sitemeta} WHERE site_id = %d AND meta_key LIKE %s ORDER BY meta_id DESC LIMIT 0, 25", $this->db->siteid, "autoblog_log_%");
+		} else {
+			$sql = $this->db->prepare( "SELECT * FROM {$this->db->options} WHERE option_name LIKE %s ORDER BY option_id DESC LIMIT 0, 25", "autoblog_log_%");
+		}
 
 		$logs = $this->db->get_results( $sql );
 
@@ -455,7 +459,11 @@ class autoblogpremium {
 				<?php
 				if(!empty($logs)) {
 					foreach($logs as $log) {
-						$val = unserialize($log->meta_value);
+						if(is_multisite() && function_exists('is_plugin_active_for_network') && is_plugin_active_for_network('autoblog/autoblogpremium.php') && defined( 'AUTOBLOG_GLOBAL' ) && AUTOBLOG_GLOBAL == true) {
+							$val = unserialize($log->meta_value);
+						} else {
+							$val = unserialize($log->option_value);
+						}
 						echo "<p>";
 						echo "<strong>" . date('Y-m-d \a\t H:i', (int) $val['timestamp']) . "</strong><br/>";
 						if(!empty($val['log'])) {
@@ -706,7 +714,7 @@ class autoblogpremium {
 
 		echo "<tr class='spacer'><td colspan='2' class='spacer'><span>" . __('Author details','autoblogtext') . "</span></td></tr>\n";
 
-		$blogusers = get_users_of_blog( $table['blog'] );
+		$blogusers = get_users( 'blog_id=' . $table['blog'] ); //get_users_of_blog( $table['blog'] );
 
 		echo "<tr>";
 		echo "<td valign='top' class='heading'>";
@@ -715,12 +723,16 @@ class autoblogpremium {
 		echo "<td valign='top' class=''>";
 
 		echo "<select name='abtble[author]' class='field author'>";
-		echo "<option value='0'"; echo  ($table['author'] == '0') ? " selected='selected'" : ""; echo ">" . __('Use feed author','autoblogtext') . "</option>";
+		echo "<option value='0'"; echo  (!isset($table['author']) || $table['author'] == '0') ? " selected='selected'" : ""; echo ">" . __('Use feed author','autoblogtext') . "</option>";
 
-		if($blogusers) {
+		if(!empty($blogusers)) {
 			foreach($blogusers as $bloguser) {
-				echo "<option value='" . $bloguser->user_id . "'"; echo ($table['author'] == $bloguser->user_id) ? " selected='selected'" : ""; echo ">";
-				echo $bloguser->user_login;
+				echo "<option value='" . $bloguser->ID . "'"; echo (isset($table['author']) && $table['author'] == $bloguser->ID) ? " selected='selected'" : ""; echo ">";
+				if(method_exists( $bloguser, 'get' )) {
+					echo $bloguser->get('user_login');
+				} elseif(isset($bloguser->user_login)) {
+					echo $bloguser->user_login;
+				}
 				echo "</option>";
 			}
 		}
@@ -739,10 +751,14 @@ class autoblogpremium {
 
 		echo "<select name='abtble[altauthor]' class='field altauthor'>";
 		reset($blogusers);
-		if($blogusers) {
+		if(!empty($blogusers)) {
 			foreach($blogusers as $bloguser) {
-				echo "<option value='" . $bloguser->user_id . "'"; echo ($table['altauthor'] == $bloguser->user_id) ? " selected='selected'" : ""; echo ">";
-				echo $bloguser->user_login;
+				echo "<option value='" . $bloguser->ID . "'"; echo (isset($table['author']) && $table['altauthor'] == $bloguser->ID) ? " selected='selected'" : ""; echo ">";
+				if(method_exists( $bloguser, 'get' )) {
+					echo $bloguser->get('user_login');
+				} elseif(isset($bloguser->user_login)) {
+					echo $bloguser->user_login;
+				}
 				echo "</option>";
 			}
 		}
@@ -779,7 +795,7 @@ class autoblogpremium {
 			echo "<option value='categories' " . selected(esc_attr(stripslashes($table['feedcatsare'])), 'categories') . ">" . __('categories', 'autoblogtext') . "</option>";
 			echo "</select>";
 			echo "&nbsp;<input type='checkbox' name='abtble[originalcategories]' class='case field' value='1' ";
-			if($table['originalcategories'] == '1') echo " checked='checked'";
+			if(isset($table['originalcategories'])  && $table['originalcategories'] == '1') echo " checked='checked'";
 			echo "/>&nbsp;<span>" . __('Add any that do not exist.','autoblogtext') . "</span>" . $this->_tips->add_tip(  __('Create any tags or categories that are needed.', 'autoblogtext') );
 
 			echo "</td>";
@@ -882,7 +898,7 @@ class autoblogpremium {
 		echo "<input type='text' name='abtble[source]' value='" . esc_attr(stripslashes($table['source'])) . "' class='long source field' />" . $this->_tips->add_tip(  __('If you want to link back to original source, enter a phrase to use here.', 'autoblogtext') );
 		echo "<br/>";
 		echo "<input type='checkbox' name='abtble[nofollow]' value='1' ";
-		if($table['nofollow'] == '1') echo "checked='checked' ";
+		if(isset($table['nofollow']) && $table['nofollow'] == '1') echo "checked='checked' ";
 		echo "/>&nbsp;<span>" . __('Ensure this link is a nofollow one','autoblogtext') . "</span>";
 		echo "</td>";
 		echo "</tr>\n";
@@ -924,7 +940,7 @@ class autoblogpremium {
 
 		// New fields
 
-		$startfrom = $table['startfrom'];
+		$startfrom = (isset($table['startfrom'])) ? $table['startfrom'] : '';
 
 		echo "<tr>";
 		echo "<td valign='top' class='heading'>";
@@ -965,7 +981,7 @@ class autoblogpremium {
 		echo "</td>";
 		echo "</tr>\n";
 
-		$endon = $table['endon'];
+		$endon = (isset($table['endon'])) ? $table['endon'] : '';
 
 		echo "<tr>";
 		echo "<td valign='top' class='heading'>";
@@ -1037,7 +1053,7 @@ class autoblogpremium {
 		echo "&nbsp;";
 		echo "&nbsp;";
 		echo "&nbsp;";
-		echo '<input class="button-primary delete save" type="submit" name="save" value="' . __('Update feed', 'autoblogtext') . '" />';
+		echo '<input class="button-primary delete save" type="submit" name="save" value="' . __('Update feed', 'autoblogtext') . '" style="margin-right: 10px;" />';
 		echo '</div>';
 		echo '</div>';
 
@@ -1149,7 +1165,9 @@ class autoblogpremium {
 		echo "<select name='abtble[posttype]' class='field'>";
 		foreach ($post_types as $key => $post_type ) {
 			echo "<option value='" . $key . "'";
-			echo $table['posttype'] == $key ? " selected='selected'" : "";
+			if( isset($table['posttype']) && $table['posttype'] == $key ) {
+				echo " selected='selected'";
+			}
 			echo ">" . $post_type->name . "</option>";
 		}
 		echo "</select>" . $this->_tips->add_tip( __('Select the post type the imported posts will have in the blog.','autoblogtext') );
@@ -1192,7 +1210,7 @@ class autoblogpremium {
 
 		echo "<tr class='spacer'><td colspan='2' class='spacer'><span>" . __('Author details','autoblogtext') . "</span></td></tr>";
 
-		$blogusers = get_users_of_blog( $blog_id );
+		$blogusers = get_users( 'blog_id=' . $blog_id ); //get_users_of_blog( $blog_id );
 
 		echo "<tr>";
 		echo "<td valign='top' class='heading'>";
@@ -1203,10 +1221,14 @@ class autoblogpremium {
 		echo "<select name='abtble[author]' class='field author'>";
 		echo "<option value='0'>" . __('Use feed author','autoblogtext') . "</option>";
 
-		if($blogusers) {
+		if(!empty($blogusers)) {
 			foreach($blogusers as $bloguser) {
-				echo "<option value='" . $bloguser->user_id . "'>";
-				echo $bloguser->user_login;
+				echo "<option value='" . $bloguser->ID . "'"; echo ">";
+				if(method_exists( $bloguser, 'get' )) {
+					echo $bloguser->get('user_login');
+				} elseif(isset($bloguser->user_login)) {
+					echo $bloguser->user_login;
+				}
 				echo "</option>";
 			}
 		}
@@ -1225,10 +1247,14 @@ class autoblogpremium {
 
 		echo "<select name='abtble[altauthor]' class='field altauthor'>";
 		reset($blogusers);
-		if($blogusers) {
+		if(!empty($blogusers)) {
 			foreach($blogusers as $bloguser) {
-				echo "<option value='" . $bloguser->user_id . "'>";
-				echo $bloguser->user_login;
+				echo "<option value='" . $bloguser->ID . "'"; echo ">";
+				if(method_exists( $bloguser, 'get' )) {
+					echo $bloguser->get('user_login');
+				} elseif(isset($bloguser->user_login)) {
+					echo $bloguser->user_login;
+				}
 				echo "</option>";
 			}
 		}
@@ -1504,12 +1530,12 @@ class autoblogpremium {
 
 		if(function_exists('is_multisite') && is_multisite()) {
 			if(function_exists('is_plugin_active_for_network') && is_plugin_active_for_network('autoblog/autoblogpremium.php') && is_network_admin()) {
-				$sql = $this->db->prepare( "SELECT * FROM {$this->autoblog} WHERE site_id IN (" . implode(',', $sites) . ") ORDER BY nextcheck ASC" );
+				$sql = $this->db->prepare( "SELECT * FROM {$this->autoblog} WHERE site_id IN (" . implode(',', $sites) . ") ORDER BY nextcheck ASC", '' );
 			} else {
-				$sql = $this->db->prepare( "SELECT * FROM {$this->autoblog} WHERE site_id IN (" . implode(',', $sites) . ") AND blog_id IN (" . implode(',', $blogs) . ") ORDER BY nextcheck ASC" );
+				$sql = $this->db->prepare( "SELECT * FROM {$this->autoblog} WHERE site_id IN (" . implode(',', $sites) . ") AND blog_id IN (" . implode(',', $blogs) . ") ORDER BY nextcheck ASC", '' );
 			}
 		} else {
-			$sql = $this->db->prepare( "SELECT * FROM {$this->autoblog} WHERE site_id IN (" . implode(',', $sites) . ") AND blog_id IN (" . implode(',', $blogs) . ") ORDER BY nextcheck ASC" );
+			$sql = $this->db->prepare( "SELECT * FROM {$this->autoblog} WHERE site_id IN (" . implode(',', $sites) . ") AND blog_id IN (" . implode(',', $blogs) . ") ORDER BY nextcheck ASC", '' );
 		}
 
 		$results = $this->db->get_results($sql);
@@ -1620,6 +1646,8 @@ class autoblogpremium {
 	}
 
 	function handle_edit_page($id) {
+
+		global $action, $page;
 
 		$feed = $this->get_autoblogentry($id);
 
@@ -1913,7 +1941,7 @@ class autoblogpremium {
 
 		$testlog = get_autoblog_option('autoblog_last_test_log', false);
 
-		if(!empty($testlog) && $testlog !== false && (int) $_GET['msg'] == 7) {
+		if(!empty($testlog) && $testlog !== false && isset($_GET['msg']) && (int) $_GET['msg'] == 7) {
 			echo '<div id="testmessage" class="updated fade"><p>';
 			echo implode( '<br/>', $testlog['log'] );
 			echo '</p></div>';

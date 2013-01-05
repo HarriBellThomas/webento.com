@@ -3,8 +3,7 @@ Contributors: mohanjith
 Tags: chat, twitter, Facebook, short code
 Requires at least: 3.0.0
 Stable tag: trunk
-Tested up to: 3.1.3
-Donate link: http://mohanjith.com/c/wordpress
+Tested up to: 3.5
 
 Allow your readers to chat with you
 
@@ -18,6 +17,46 @@ Add a chat to your blog and allow your readers to chat with you.
 2. Chat widget
 
 == ChangeLog ==
+
+= 1.3.2.1 = 
+- Correct conflict when Facebook SDK loading from other plugins.
+- Added Message display limit when a user first loads the chat page. Should prevent loading hundreds of messages to open chats
+- Changed logic on login options setting. When login option setting only 'WordPress user' the chat boxes will be hidden until the user logs into WordPress.
+
+= 1.3.2 = 
+- Correct visibility issue with WYSIWYG/TinyMCE button for new posts http://premium.wpmudev.org/forums/topic/bug-on-inserting-chat
+
+= 1.3.1 =
+- More changes to query loop for new message and meta to improve server performance. 
+- Testing on WordPress 3.5
+
+= 1.3.0.2 =
+- Corrected issue where bottom corner chat was not resuming polling after being closed then opened.
+- Removed some debug output from message replies.
+
+= 1.3.0.2 =
+- Corrected some undefined variables which throw Notices when full error reporting is enabled.
+
+= 1.3.0.1 =
+- Corrected some undefined variables in the widget.
+
+= 1.3.0 =
+- Added Advanced option to limit of TinyMCE button to selected post types.
+- Added Advanced option to limit of TinyMCE button to selected user roles.
+- Rewrote code messaging logic to limit polling. This should clear up many user reports or chat crashing servers. 
+
+= 1.2.0 =
+
+* Corrected logic when using Facebook authentication only for bottom corner chat and not for inline chat. Which was causing endless refresh of page http://premium.wpmudev.org/forums/topic/wordpress-chat-endlessly-refreshes-for-facebook
+* Renamed global plugin instance from $chat to $wpmudev_chat. https://app.asana.com/0/589152284006/1796940364279
+* Added Chat Widget with some of the options. http://premium.wpmudev.org/forums/topic/chat-box-as-a-widget-instead-of-floating
+* Added support for moderator to delete/undelete messages http://premium.wpmudev.org/forums/topic/moderate-chat-ban-users-delete-messages
+* Added support to close/open chat session. Similar to WPMU DEV. Thanks Enzo. 
+* Corrected emoticons. Had two not properly displaying. 
+* Corrected issue where depending on the WordPress setup the trailing slash is removed from the base URL. Causing sound manager to not load. http://premium.wpmudev.org/forums/topic/soundmanager2swf-404-chat-plugin
+* Added some color options for Row area background, Row item background, Row item border width, Row item border color. http://premium.wpmudev.org/forums/topic/moderate-chat-ban-users-delete-messages
+* Switched plugin to use new WPMU DEV Dashboard plugin updates
+
 
 = 1.1.0 =
 
@@ -97,4 +136,4 @@ Add a chat to your blog and allow your readers to chat with you.
 
 * Initial release
 
-36617-1342582490-au
+36617-1357168680-au

@@ -36,19 +36,20 @@ AgmMapHandler = function (selector, data) {
 		html += '<div style="width:300px">' +
 					'<span style="float:right"><input type="button" class="agm_mh_close_directions" value="' + l10nStrings.close + '" /> </span>' +
 					'<div>' +
-						'<a href="#" class="agm_mh_travel_type"><img src="' + _agm_root_url + '/img/system/car_on.png"></a>' +
-						'<a href="#" class="agm_mh_travel_type"><img src="' + _agm_root_url + '/img/system/bike_off.png"></a>' + 
-						'<a href="#" class="agm_mh_travel_type"><img src="' + _agm_root_url + '/img/system/walk_off.png"></a>' +
+						'<a href="#" class="agm_mh_travel_type"><img src="' + _agm.root_url + '/img/system/car_on.png"></a>' +
+						'<a href="#" class="agm_mh_travel_type"><img src="' + _agm.root_url + '/img/system/bike_off.png"></a>' + 
+						'<a href="#" class="agm_mh_travel_type"><img src="' + _agm.root_url + '/img/system/walk_off.png"></a>' +
+						'<a href="#" class="agm_mh_travel_type"><img src="' + _agm.root_url + '/img/system/bus_off.png"></a>' +
 					'</div>' +
 				'</div>' +
 			'<div>' +
-				'<img src="' + _agm_root_url + '/img/system/a.png">' +
+				'<img src="' + _agm.root_url + '/img/system/a.png">' +
 				'&nbsp;' +
 				'<input size="32" type="text" class="agm_waypoint_a" />' +
 			'</div>' +
-			'<div><a href="#" class="agm_mh_swap_direction_waypoints"><img src="' + _agm_root_url + '/img/system/swap.png"></a></div>' +
+			'<div><a href="#" class="agm_mh_swap_direction_waypoints"><img src="' + _agm.root_url + '/img/system/swap.png"></a></div>' +
 			'<div>' +
-				'<img src="' + _agm_root_url + '/img/system/b.png">' +
+				'<img src="' + _agm.root_url + '/img/system/b.png">' +
 				'&nbsp;' +
 				'<input size="32" type="text"  class="agm_waypoint_b" />' +
 			'</div>' +
@@ -63,6 +64,7 @@ AgmMapHandler = function (selector, data) {
 	};
 	
 	var togglePanoramioLayer = function () {
+		if (typeof google.maps.panoramio !== 'object') return false;
 		if (data.show_panoramio_overlay && parseInt(data.show_panoramio_overlay)) {
 			var tag = data.panoramio_overlay_tag;
 			_panoramioLayer = new google.maps.panoramio.PanoramioLayer();
@@ -84,6 +86,8 @@ AgmMapHandler = function (selector, data) {
 			travelType = google.maps.DirectionsTravelMode.BICYCLING;
 		} else if ($meImg.attr('src').match(/walk_off\.png/)) {
 			travelType = google.maps.DirectionsTravelMode.WALKING;
+		} else if ($meImg.attr('src').match(/bus_off\.png/)) {
+			travelType = google.maps.DirectionsTravelMode.TRANSIT;
 		}
 		$meImg.attr('src', $meImg.attr('src').replace(/_off\./, '_on.'));
 		return false;
@@ -156,9 +160,9 @@ AgmMapHandler = function (selector, data) {
 		});
 	};
 	
-	var addNewMarker = function (title, pos, body, icon) {
+	var addNewMarker = function (title, pos, body, icon, original) {
 		var idx = _markers.length;
-		icon = icon.match(/^https?:\/\//) ? icon : _agm_root_url + '/img/' + icon;
+		icon = icon.match(/^https?:\/\//) ? icon : _agm.root_url + '/img/' + icon;
 		var iconImg = new google.maps.MarkerImage(icon, new google.maps.Size(32, 32), null, null, new google.maps.Size(32, 32));
 		map.setCenter(pos);
 		var marker = new google.maps.Marker({
@@ -185,13 +189,15 @@ AgmMapHandler = function (selector, data) {
 		marker._agmBody = body;
 		marker._agmInfo = info;
 		_markers[idx] = marker;
+		$(document).trigger("agm_google_maps-user-adding_marker", [marker, idx, map, original]);
+		map._agm_add_marker(marker);
 		updateMarkersListDisplay();
 	};
 	
 	var addMarkers = function () {
 		if (!data.markers) return;
 		$.each(data.markers, function (idx, marker) {
-			addNewMarker(marker.title, new google.maps.LatLng(marker.position[0], marker.position[1]), marker.body, marker.icon);
+			addNewMarker(marker.title, new google.maps.LatLng(marker.position[0], marker.position[1]), marker.body, marker.icon, marker);
 		});
 	};
 	
@@ -259,7 +265,7 @@ AgmMapHandler = function (selector, data) {
 			if (!"post_ids" in marker || !marker.post_ids || !marker.post_ids.length) post_ids = data.post_ids;
 			else post_ids = marker.post_ids;
 			if (!post_ids) return true;
-			$.post(_agm_ajax_url, {"action": "agm_get_post_titles", "post_ids": post_ids}, function (data) {
+			$.post(_agm.ajax_url, {"action": "agm_get_post_titles", "post_ids": post_ids}, function (data) {
 				if (!data.posts) return true;
 				var html = '<div class="agm_associated_posts_list_title">' + l10nStrings.posts + '</div>'; 
 				html += '<ul class="agm_associated_posts_list_items">';
@@ -292,6 +298,7 @@ AgmMapHandler = function (selector, data) {
 					}
 					return false;
 				});
+				$(document).trigger("agm_google_maps-user-post_titles_loaded", [mapMarker, data, map]);
 			});
 		});
 	};
@@ -340,7 +347,8 @@ AgmMapHandler = function (selector, data) {
 			"left": "-120000px"
 		});
 		map = new google.maps.Map($('#' + mapId).get(0), {
-			"zoom": parseInt(data.zoom),
+			"zoom": parseInt(data.zoom) ? parseInt(data.zoom) : 1,
+			"minZoom": 1,
 			"center": new google.maps.LatLng(40.7171, -74.0039), // New York
 			"mapTypeId": google.maps.MapTypeId[data.map_type]
 		});
@@ -384,6 +392,7 @@ AgmMapHandler = function (selector, data) {
 		if (plot_routes) plotRoutes();
 		
 		$(document).trigger("agm_google_maps-user-map_initialized", [map, data, _markers]);
+		$(document).trigger("agm_google_maps-user-map_postprocess_markers", [data, _markers, addNewMarker]);
 		
 		// Set alignment
 		switch(data.map_alignment) {
@@ -451,7 +460,7 @@ var AgmPanoramioHandler = function (map, $container, limit, size) {
 	var loadGalleriaScript = function () {
 		if (window.Galleria && typeof(window.Galleria) == 'function') return true;
 		var script = document.createElement("script");
-		var src = _agm_root_url + '/js/external/galleria/galleria-1.2.2.min.js';
+		var src = _agm.root_url + '/js/external/galleria/galleria-1.2.2.min.js';
 		script.type = "text/javascript";
 		script.src = src;
 		document.body.appendChild(script);
@@ -462,7 +471,7 @@ var AgmPanoramioHandler = function (map, $container, limit, size) {
 		else {
 			if (Galleria && Galleria.theme) return true;
 			var script = document.createElement("script");
-			var src = _agm_root_url + '/js/external/galleria/themes/classic/galleria.classic.min.js';
+			var src = _agm.root_url + '/js/external/galleria/themes/classic/galleria.classic.min.js';
 			script.type = "text/javascript";
 			script.src = src;
 			document.body.appendChild(script);

@@ -1,22 +1,19 @@
 <?php
 /*
- Plugin Name: WordPress Chat
- Plugin URI: http://premium.wpmudev.org/project/wordpress-chat-plugin
- Description: Provides you with a fully featured chat area either in a
-post, page or bottom corner of your site - once activated configure <a
-href="options-general.php?page=chat">here</a> and drop into a post or
-page by clicking on the new chat icon in your post/page editor.
- Author: Paul Menard (Incsub), S H Mohanjith (Incsub)
- WDP ID: 159
- Version: 1.1.0
- Author URI: http://premium.wpmudev.org
- Text Domain: chat
+Plugin Name: WordPress Chat
+Plugin URI: http://premium.wpmudev.org/project/wordpress-chat-plugin
+Description: Provides you with a fully featured chat area either in a post, page or bottom corner of your site - once activated configure <a href="options-general.php?page=chat">here</a> and drop into a post or page by clicking on the new chat icon in your post/page editor.
+Author: Paul Menard (Incsub), S H Mohanjith (Incsub)
+WDP ID: 159
+Version: 1.3.2.1
+Author URI: http://premium.wpmudev.org
+Text Domain: wpmudev_chat
 */
 
 /**
  * @global	object	$chat	Convenient access to the chat object
  */
-global $chat;
+//global $wpmudev_chat;
 
 /**
  * Chat object (PHP4 compatible)
@@ -26,18 +23,25 @@ global $chat;
  * @since 1.0.1
  * @author S H Mohanjith <moha@mohanjith.net>
  */
-class Chat {
+
+include_once( dirname(__FILE__) . '/lib/dash-notices/wpmudev-dash-notification.php');
+
+if (!class_exists('WPMUDEV_Chat')) {
+class WPMUDEV_Chat {
+
+	var $logger_fp;
+
 	/**
 	 * @todo Update version number for new releases
 	 * 
 	 * @var		string	$chat_current_version	Current version
 	 */
-	var $chat_current_version = '1.1.0';
+	var $chat_current_version = '1.3.2.1';
 	
 	/**
 	 * @var		string	$translation_domain	Translation domain
 	 */
-	var $translation_domain = 'chat';
+	var $translation_domain = 'wpmudev_chat';
 	
 	/**
 	 * @var		array	$auth_type_map		Authentication methods map
@@ -94,7 +98,7 @@ class Chat {
 	 * 
 	 * Plugin register actions, filters and hooks. 
 	 */
-	function Chat() {
+	function WPMUDEV_Chat() {
 	
 		// Activation deactivation hooks
 		
@@ -125,6 +129,9 @@ class Chat {
 		add_action('wp_ajax_chatArchive', array(&$this, 'archive'));
 		add_action('wp_ajax_chatClear', array(&$this, 'clear'));
 		
+		add_action('wp_ajax_chatModerateDelete', array(&$this, 'chatModerateDelete'));
+		add_action('wp_ajax_chatSessionStatusModerate', array(&$this, 'chatSessionStatusModerate'));
+		
 		// TinyMCE options
 		add_action('wp_ajax_chatTinymceOptions', array(&$this, 'tinymce_options'));
 		
@@ -138,53 +145,71 @@ class Chat {
 		add_shortcode('chat', array(&$this, 'process_shortcode'));
 		
 		$this->_chat_options['default'] = get_option('chat_default', array(
-			'sound'			=> 'enabled',
-			'avatar'		=> 'enabled',
-			'emoticons'		=> 'disabled',
-			'date_show'		=> 'disabled',
-			'time_show'		=> 'disabled',
-			'width'			=> '',
-			'height'		=> '',
-			'background_color'	=> '#FFFFFF',
+			'sound'							=> 'enabled',
+			'avatar'						=> 'enabled',
+			'emoticons'						=> 'disabled',
+			'date_show'						=> 'disabled',
+			'time_show'						=> 'disabled',
+			'width'							=> '',
+			'height'						=> '',
+			'background_color'				=> '#FFFFFF',
+
+			'background_row_area_color'		=>	'#F9F9F9',
+			'background_row_color'			=>	'#FFFFFF',
+			'row_border_color'				=>	'#CCCCCC',
+			'row_border_width'				=>	'1px',
+			'row_spacing'					=>	'5px',
+			
 			'background_highlighted_color'	=> '#FFFFFF',
-			'date_color'		=> '#6699CC',
-			'name_color'		=> '#666666',
-			'moderator_name_color'	=> '#6699CC',
-			'special_color'		=> '#660000',
-			'text_color'		=> '#000000',
-			'code_color'		=> '#FFFFCC',
-			'font'			=> '',
-			'font_size'		=> '12',
-			'log_creation'		=> 'disabled',
-			'log_display'		=> 'disabled',
-			'login_options'		=> array('current_user'),
-			'moderator_roles'	=> array('administrator','editor','author')
-			));
+			'date_color'					=> '#6699CC',
+			'name_color'					=> '#666666',
+			'moderator_name_color'			=> '#6699CC',
+			'special_color'					=> '#660000',
+			'text_color'					=> '#000000',
+			'code_color'					=> '#FFFFCC',
+			'font'							=> '',
+			'font_size'						=> '12',
+			'log_creation'					=> 'disabled',
+			'log_display'					=> 'disabled',
+			'log_limit'						=> '',
+			'login_options'					=> array('current_user'),
+			'moderator_roles'				=> array('administrator','editor','author'),
+			'tinymce_roles'					=> array('administrator'),
+			'tinymce_post_types'			=> array('post','page')
+		));
 		
 		$this->_chat_options['site'] = get_option('chat_site', array(
-			'site'			=> 'enabled',
-			'sound'			=> 'enabled',
-			'avatar'		=> 'enabled',
-			'emoticons'		=> 'disabled',
-			'date_show'		=> 'disabled',
-			'time_show'		=> 'disabled',
-			'width'			=> '',
-			'height'		=> '',
-			'border_color'		=> '#4b96e2',
-			'border_highlighted_color' => '#ff8400',
-			'background_color'	=> '#FFFFFF',
-			'date_color'		=> '#6699CC',
-			'name_color'		=> '#666666',
-			'moderator_name_color'	=> '#6699CC',
-			'special_color'		=> '#660000',
-			'text_color'		=> '#000000',
-			'code_color'		=> '#FFFFCC',
-			'font'			=> '',
-			'font_size'		=> '12',
-			'log_creation'		=> 'disabled',
-			'log_display'		=> 'disabled',
-			'login_options'		=> array('current_user'),
-			'moderator_roles'	=> array('administrator','editor','author')));
+			'site'							=> 'enabled',
+			'sound'							=> 'enabled',
+			'avatar'						=> 'enabled',
+			'emoticons'						=> 'disabled',
+			'date_show'						=> 'disabled',
+			'time_show'						=> 'disabled',
+			'width'							=> '',
+			'height'						=> '',
+			'border_color'					=> '#4b96e2',
+			
+			'background_row_area_color'		=>	'#F9F9F9',
+			'background_row_color'			=>	'#FFFFFF',
+			'row_border_color'				=>	'#CCCCCC',
+			'row_border_width'				=>	'1px',
+			'row_spacing'					=>	'5px',			
+			
+			'border_highlighted_color' 		=> '#ff8400',
+			'background_color'				=> '#FFFFFF',
+			'date_color'					=> '#6699CC',
+			'name_color'					=> '#666666',
+			'moderator_name_color'			=> '#6699CC',
+			'special_color'					=> '#660000',
+			'text_color'					=> '#000000',
+			'code_color'					=> '#FFFFCC',
+			'font'							=> '',
+			'font_size'						=> '12',
+			'log_creation'					=> 'disabled',
+			'log_display'					=> 'disabled',
+			'log_limit'						=> '',
+			'login_options'					=> array('current_user'),
+			'moderator_roles'				=> array('administrator','editor','author')));
 	}
 	
 	/**
@@ -210,10 +235,10 @@ class Chat {
 		if ( ! empty($wpdb->collate) )
 			$charset_collate .= " COLLATE $wpdb->collate";
 			
-		if($wpdb->get_var("SHOW TABLES LIKE '". Chat::tablename('message') ."'") != Chat::tablename('message'))
+		if($wpdb->get_var("SHOW TABLES LIKE '". WPMUDEV_Chat::tablename('message') ."'") != WPMUDEV_Chat::tablename('message'))
 		{
 			// Setup chat message table
-			$sql_main = "CREATE TABLE ".Chat::tablename('message')." (
+			$sql_main = "CREATE TABLE ".WPMUDEV_Chat::tablename('message')." (
 							id BIGINT NOT NULL AUTO_INCREMENT,
 							blog_id INT NOT NULL ,
 							chat_id INT NOT NULL ,
@@ -222,7 +247,7 @@ class Chat {
 							avatar VARCHAR( 1024 ) CHARACTER SET utf8 NOT NULL ,
 							message TEXT CHARACTER SET utf8 NOT NULL ,
 							moderator ENUM( 'yes', 'no' ) NOT NULL DEFAULT 'no' ,
-							archived ENUM( 'yes', 'no' ) NOT NULL DEFAULT 'no' ,
+							archived ENUM( 'yes', 'no', 'yes-deleted', 'no-deleted' ) NOT NULL DEFAULT 'no' ,
 							PRIMARY KEY (`id`),
 							KEY `blog_id` (`blog_id`),
 							KEY `chat_id` (`chat_id`),
@@ -231,78 +256,102 @@ class Chat {
 						) ENGINE = InnoDB {$charset_collate};";
 			dbDelta($sql_main);
 		} else {
-			$wpdb->query("ALTER TABLE ".Chat::tablename('message')." CHANGE name name VARCHAR( 255 ) CHARACTER SET utf8 NOT NULL;");
-			$wpdb->query("ALTER TABLE ".Chat::tablename('message')." CHANGE avatar avatar VARCHAR( 1024 ) CHARACTER SET utf8 NOT NULL;");
-			$wpdb->query("ALTER TABLE ".Chat::tablename('message')." CHANGE message message TEXT CHARACTER SET utf8 NOT NULL;");
-			
-			if ($wpdb->get_var("SHOW COLUMNS FROM ".Chat::tablename('message')." LIKE 'moderator'") != 'moderator') {
-				$wpdb->query("ALTER TABLE ".Chat::tablename('message')." ADD moderator ENUM( 'yes', 'no' ) NOT NULL DEFAULT 'no' AFTER message;");
+			$wpdb->query("ALTER TABLE ".WPMUDEV_Chat::tablename('message')." CHANGE name name VARCHAR( 255 ) CHARACTER SET utf8 NOT NULL;");
+			$wpdb->query("ALTER TABLE ".WPMUDEV_Chat::tablename('message')." CHANGE avatar avatar VARCHAR( 1024 ) CHARACTER SET utf8 NOT NULL;");
+			$wpdb->query("ALTER TABLE ".WPMUDEV_Chat::tablename('message')." CHANGE message message TEXT CHARACTER SET utf8 NOT NULL;");
+			$wpdb->query("ALTER TABLE ".WPMUDEV_Chat::tablename('message')." CHANGE archived archived ENUM( 'yes',  'no',  'yes-deleted', 'no-deleted' ) NOT NULL DEFAULT 'no';");
+		
+			if ($wpdb->get_var("SHOW COLUMNS FROM ".WPMUDEV_Chat::tablename('message')." LIKE 'moderator'") != 'moderator') {
+				$wpdb->query("ALTER TABLE ".WPMUDEV_Chat::tablename('message')." ADD moderator ENUM( 'yes', 'no' ) NOT NULL DEFAULT 'no' AFTER message;");
 			}
 		}
 		
-		// Setup the chat log table
-		$sql_main = "CREATE TABLE ".Chat::tablename('log')." (
-						id BIGINT NOT NULL AUTO_INCREMENT,
-						blog_id INT NOT NULL ,
-						chat_id INT NOT NULL ,
-						start TIMESTAMP DEFAULT '0000-00-00 00:00:00' ,
-						end TIMESTAMP DEFAULT '0000-00-00 00:00:00' ,
-						created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-						PRIMARY KEY (`id`),
-						KEY `blog_id` (`blog_id`),
-						KEY `chat_id` (`chat_id`)
-					) ENGINE = InnoDB {$charset_collate};";
-		dbDelta($sql_main);
+		if($wpdb->get_var("SHOW TABLES LIKE '". WPMUDEV_Chat::tablename('log') ."'") != WPMUDEV_Chat::tablename('log'))
+		{
+		
+			// Setup the chat log table
+			$sql_main = "CREATE TABLE ".WPMUDEV_Chat::tablename('log')." (
+							id BIGINT NOT NULL AUTO_INCREMENT,
+							blog_id INT NOT NULL ,
+							chat_id INT NOT NULL ,
+							start TIMESTAMP DEFAULT '0000-00-00 00:00:00' ,
+							end TIMESTAMP DEFAULT '0000-00-00 00:00:00' ,
+							created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+							PRIMARY KEY (`id`),
+							KEY `blog_id` (`blog_id`),
+							KEY `chat_id` (`chat_id`)
+						) ENGINE = InnoDB {$charset_collate};";
+			dbDelta($sql_main);
+		}
 		
 		// Default chat options
 		$this->_chat_options['default'] = array(
-			'sound'			=> 'enabled',
-			'avatar'		=> 'enabled',
-			'emoticons'		=> 'disabled',
-			'date_show'		=> 'disabled',
-			'time_show'		=> 'disabled',
-			'width'			=> '',
-			'height'		=> '',
-			'background_color'	=> '#ffffff',
-			'background_highlighted_color'	=> '#FFFFFF',
-			'date_color'		=> '#6699CC',
-			'name_color'		=> '#666666',
-			'moderator_name_color'	=> '#6699CC',
-			'special_color'		=> '#660000',
-			'text_color'		=> '#000000',
-			'code_color'		=> '#FFFFCC',
-			'font'			=> '',
-			'font_size'		=> '12',
-			'log_creation'		=> 'disabled',
-			'log_display'		=> 'disabled',
-			'login_options'		=> array('current_user'),
-			'moderator_roles'	=> array('administrator','editor','author'));
+			'sound'								=> 'enabled',
+			'avatar'							=> 'enabled',
+			'emoticons'							=> 'disabled',
+			'date_show'							=> 'disabled',
+			'time_show'							=> 'disabled',
+			'width'								=> '',
+			'height'							=> '',
+			'background_color'					=> '#FFFFFF',
+
+			'background_row_area_color'			=>	'#F9F9F9',
+			'background_row_color'				=>	'#FFFFFF',
+			'row_border_color'					=>	'#CCCCCC',
+			'row_border_width'					=>	'1px',
+			'row_spacing'						=>	'5px',
+
+			'background_highlighted_color'		=> '#FFFFFF',
+			'date_color'						=> '#6699CC',
+			'name_color'						=> '#666666',
+			'moderator_name_color'				=> '#6699CC',
+			'special_color'						=> '#660000',
+			'text_color'						=> '#000000',
+			'code_color'						=> '#FFFFCC',
+			'font'								=> '',
+			'font_size'							=> '12',
+			'log_creation'						=> 'disabled',
+			'log_display'						=> 'disabled',
+			'log_limit'							=> '',
+			'login_options'						=> array('current_user'),
+			'moderator_roles'					=> array('administrator','editor','author'),
+			'tinymce_roles'						=> array('administrator'),
+			'tinymce_post_types'				=> array('post','page')
+		);
 		
 		// Site wide chat options
 		$this->_chat_options['site'] = array(
-			'site'			=> 'enabled',
-			'sound'			=> 'enabled',
-			'avatar'		=> 'enabled',
-			'emoticons'		=> 'disabled',
-			'date_show'		=> 'disabled',
-			'time_show'		=> 'disabled',
-			'width'			=> '',
-			'height'		=> '',
-			'border_color'		=> '#4b96e2',
-			'border_highlighted_color' => '#ff8400',
-			'background_color'	=> '#ffffff',
-			'date_color'		=> '#6699CC',
-			'name_color'		=> '#666666',
-			'moderator_name_color'	=> '#6699CC',
-			'special_color'		=> '#660000',
-			'text_color'		=> '#000000',
-			'code_color'		=> '#FFFFCC',
-			'font'			=> '',
-			'font_size'		=> '12',
-			'log_creation'		=> 'disabled',
-			'log_display'		=> 'disabled',
-			'login_options'		=> array('current_user'),
-			'moderator_roles'	=> array('administrator','editor','author'));
+			'site'								=> 'enabled',
+			'sound'								=> 'enabled',
+			'avatar'							=> 'enabled',
+			'emoticons'							=> 'disabled',
+			'date_show'							=> 'disabled',
+			'time_show'							=> 'disabled',
+			'width'								=> '',
+			'height'							=> '',
+			'border_color'						=> '#4b96e2',
+			'border_highlighted_color' 			=> '#ff8400',
+
+			'background_row_area_color'			=>	'#F9F9F9',
+			'background_row_color'				=>	'#FFFFFF',
+			'row_border_color'					=>	'#CCCCCC',
+			'row_border_width'					=>	'1px',
+			'row_spacing'						=>	'5px',
+
+			'background_color'					=> '#ffffff',
+			'date_color'						=> '#6699CC',
+			'name_color'						=> '#666666',
+			'moderator_name_color'				=> '#6699CC',
+			'special_color'						=> '#660000',
+			'text_color'						=> '#000000',
+			'code_color'						=> '#FFFFCC',
+			'font'								=> '',
+			'font_size'							=> '12',
+			'log_creation'						=> 'disabled',
+			'log_display'						=> 'disabled',
+			'log_limit'							=> '',
+			'login_options'						=> array('current_user'),
+			'moderator_roles'					=> array('administrator','editor','author'));
 		
 		add_option('chat_default', $this->_chat_options['default']);
 		add_option('chat_site', $this->_chat_options['site'], null, 'no');
@@ -354,20 +403,47 @@ class Chat {
 			load_plugin_textdomain($this->translation_domain, false, dirname(plugin_basename(__FILE__)).'/languages');
 		}
 		
-		wp_register_script('chat_soundmanager', plugins_url('wordpress-chat/js/soundmanager2-nodebug-jsmin.js'), array(), $this->chat_current_version, true);
-		wp_register_script('jquery-cookie', plugins_url('wordpress-chat/js/jquery-cookie.js'), array('jquery'), true);
-		wp_register_script('chat_js', plugins_url('wordpress-chat/js/chat.js'), array('jquery', 'jquery-cookie', 'chat_soundmanager'), $this->chat_current_version, true);
+		wp_register_script('chat_soundmanager', plugins_url('/js/soundmanager2-nodebug-jsmin.js', __FILE__), array(), $this->chat_current_version, true);
+		wp_register_script('jquery-cookie', plugins_url('/js/jquery-cookie.js', __FILE__), array('jquery'), $this->chat_current_version, true);
+		wp_register_script('chat_js', plugins_url('/js/chat.js', __FILE__), 
+			array('jquery', 'jquery-cookie', 'chat_soundmanager'), 
+			$this->chat_current_version, true);
 		
 		if (is_admin()) {
-			wp_register_script('farbtastic', plugins_url('wordpress-chat/js/farbtastic.js'), array('jquery'));
-			wp_register_script('chat_admin_js', plugins_url('wordpress-chat/js/chat-admin.js'), array('jquery','jquery-cookie','jquery-ui-core','jquery-ui-tabs','farbtastic'), $this->chat_current_version, true);
-			wp_register_style('chat_admin_css', plugins_url('wordpress-chat/css/wp_admin.css'));
+			wp_register_script('farbtastic', plugins_url('/js/farbtastic.js', __FILE__), array('jquery'));
+			wp_register_script('chat_admin_js', plugins_url('/js/chat-admin.js', __FILE__),
+				array('jquery','jquery-cookie','jquery-ui-core','jquery-ui-tabs','farbtastic'), $this->chat_current_version, true);
+			wp_register_style('chat_admin_css', plugins_url('/css/wp_admin.css', __FILE__), $this->chat_current_version);
 		}
-		
-		if ((current_user_can('edit_posts') || current_user_can('edit_pages')) && get_user_option('rich_editing') == 'true') {
-			add_filter("mce_external_plugins", array(&$this, "tinymce_add_plugin"));
-			add_filter('mce_buttons', array(&$this,'tinymce_register_button'));
-			add_filter('mce_external_languages', array(&$this,'tinymce_load_langs'));
+				
+		if (is_admin()) {
+
+			$post_id = $post = $post_type_object = null;
+			$post_type = "post";
+			if ( isset( $_GET['post_type']) ) {
+				$post_type = $_GET['post_type'];
+			} else {
+				if ( isset( $_GET['post'] ) )
+				 	$post_id = (int) $_GET['post'];
+				elseif ( isset( $_POST['post_ID'] ) )
+				 	$post_id = (int) $_POST['post_ID'];
+				if ( $post_id ) {
+					$post = get_post( $post_id );
+					if ( $post ) {
+						$post_type = $post->post_type;
+					}
+				}
+			}
+			
+			if (get_current_user_id()) {
+				$current_user = wp_get_current_user();
+				if ((array_intersect($current_user->roles, $this->get_option('tinymce_roles', array('administrator') )))
+				 && (in_array($post_type, $this->get_option('tinymce_post_types', array('post','page'))))) {	
+					add_filter("mce_external_plugins", array(&$this, "tinymce_add_plugin"));
+					add_filter('mce_buttons', array(&$this,'tinymce_register_button'));
+					add_filter('mce_external_languages', array(&$this,'tinymce_load_langs'));
+				}
+			}
 		}
 		
 		if (in_array('facebook', $this->get_option('login_options', array('current_user'))) && (empty($_COOKIE['chat_stateless_user_type_104']))) {
@@ -430,11 +506,11 @@ class Chat {
 	function get_footer() {
 		global $chat_processed;
 		
-		if (!$chat_processed) {
-			wp_deregister_script('jquery-cookie');
-			wp_deregister_script('chat_soundmanager');
-			wp_deregister_script('chat_js');
-		}
+//		if (!$chat_processed) {
+//			wp_deregister_script('jquery-cookie');
+//			wp_deregister_script('chat_soundmanager');
+//			wp_deregister_script('chat_js');
+//		}
 	}
 	
 	/**
@@ -465,7 +541,12 @@ class Chat {
 						time_show: "<?php print $this->get_option('time_show', 'disabled'); ?>",
 						width: "<?php print $this->get_option('width', ''); ?>",
 						height: "<?php print $this->get_option('height', ''); ?>",
-						background_color: "<?php print $this->get_option('background_color', '#ffffff'); ?>",
+						background_color: "<?php print $this->get_option('background_color', '#ffffff'); ?>",						
+						background_row_area_color: "<?php print $this->get_option('background_row_area_color', '#F9F9F9'); ?>",
+						background_row_color: "<?php print $this->get_option('background_row_color', '#FFFFFF'); ?>",
+						row_border_color: "<?php print $this->get_option('row_border_color', '#CCCCCC'); ?>",
+						row_border_width: "<?php print $this->get_option('row_border_width', '1px'); ?>",
+						row_spacing: "<?php print $this->get_option('row_spacing', '5px'); ?>",
 						background_highlighted_color: "<?php print $this->get_option('background_highlighted_color', '#FFE9AB'); ?>",
 						date_color: "<?php print $this->get_option('date_color', '#6699CC'); ?>",
 						name_color: "<?php print $this->get_option('name_color', '#666666'); ?>",
@@ -475,6 +556,7 @@ class Chat {
 						font_size: "<?php print $this->get_option('font_size', '12'); ?>",
 						log_creation: "<?php print $this->get_option('log_creation', 'disabled'); ?>",
 						log_display: "<?php print $this->get_option('log_display', 'disabled'); ?>",
+						log_limit: "<?php print $this->get_option('log_limit', ''); ?>",
 						login_options: "<?php print join(',', $this->get_option('login_options', array('current_user'))); ?>",
 						moderator_roles: "<?php print join(',', $this->get_option('moderator_roles', array('administrator','editor','author'))); ?>"
 					};
@@ -489,6 +571,11 @@ class Chat {
 						width: "<?php print $this->get_option('width', ''); ?>",
 						height: "<?php print $this->get_option('height', ''); ?>",
 						background_color: "<?php print $this->get_option('background_color', '#ffffff'); ?>",
+						background_row_area_color: "<?php print $this->get_option('background_row_area_color', '#F9F9F9'); ?>",
+						background_row_color: "<?php print $this->get_option('background_row_color', '#FFFFFF'); ?>",
+						row_border_color: "<?php print $this->get_option('row_border_color', '#CCCCCC'); ?>",
+						row_border_width: "<?php print $this->get_option('row_border_width', '1px'); ?>",
+						row_spacing: "<?php print $this->get_option('row_spacing', '5px'); ?>",
 						background_highlighted_color: "<?php print $this->get_option('background_highlighted_color', '#FFE9AB'); ?>",
 						date_color: "<?php print $this->get_option('date_color', '#6699CC'); ?>",
 						name_color: "<?php print $this->get_option('name_color', '#666666'); ?>",
@@ -498,6 +585,7 @@ class Chat {
 						font_size: "<?php print $this->get_option('font_size', '12'); ?>",
 						log_creation: "<?php print $this->get_option('log_creation', 'disabled'); ?>",
 						log_display: "<?php print $this->get_option('log_display', 'disabled'); ?>",
+						log_limit: "<?php print $this->get_option('log_limit', ''); ?>",
 						login_options: "<?php print join(',', $this->get_option('login_options', array('current_user'))); ?>",
 						moderator_roles: "<?php print join(',', $this->get_option('moderator_roles', array('administrator','editor','author'))); ?>"
 					};
@@ -579,6 +667,9 @@ class Chat {
 						if (default_options.log_display != jQuery.trim(jQuery('#chat_log_display').val())) {
 							output += 'log_display="'+jQuery.trim(jQuery('#chat_log_display').val())+'" ';
 						}
+						if (default_options.log_limit != jQuery.trim(jQuery('#chat_log_limit').val())) {
+							output += 'log_limit="'+jQuery.trim(jQuery('#chat_log_limit').val())+'" ';
+						}
 						var chat_login_options_arr = [];
 						jQuery('input[name=chat_login_options]:checked').each(function() {
 							chat_login_options_arr.push(jQuery(this).val())
@@ -634,14 +725,14 @@ class Chat {
 			
 								<table border="0" cellpadding="4" cellspacing="0">
 									<tr>
-										<td><label for="chat_sound">{#chat_dlg.sound}</label></td>
-										<td>
+										<td style="width: 35%"><label for="chat_sound">{#chat_dlg.sound}</label></td>
+										<td style="width: 15%">
 											<select id="chat_sound" name="chat_sound" >
 												<option value="enabled" <?php print ($this->get_option('sound', 'enabled') == 'enabled')?'selected="selected"':''; ?>>{#chat_dlg.enabled}</option>
 												<option value="disabled" <?php print ($this->get_option('sound', 'enabled') == 'disabled')?'selected="selected"':''; ?>>{#chat_dlg.disabled}</option>
 											</select>
 										</td>
-										<td class="info"><?php _e("Play sound when a new message is received?", $this->translation_domain); ?></td>
+										<td style="width: 50%" class="info"><?php _e("Play sound when a new message is received?", $this->translation_domain); ?></td>
 									</tr>
 									
 									
@@ -692,10 +783,10 @@ class Chat {
 									<tr>
 										<td><label for="chat_width">{#chat_dlg.dimensions}</label></td>
 										<td>
-											<input type="text" id="chat_width" name="chat_width" value="<?php print $this->get_option('width', ''); ?>" class="size" size="5" /> x
-											<input type="text" id="chat_height" name="chat_height" value="<?php print $this->get_option('height', ''); ?>" class="size" size="5" />
+											<input type="text" id="chat_width" name="chat_width" value="<?php print $this->get_option('width', ''); ?>" class="size" size="5" />W
+											<input type="text" id="chat_height" name="chat_height" value="<?php print $this->get_option('height', ''); ?>" class="size" size="5" />H
 										</td>
-										<td class="info"><?php _e("Dimensions of the chat box", $this->translation_domain); ?></td>
+										<td class="info"><?php _e("Dimensions of the chat box. Include px, em, etc.", $this->translation_domain); ?></td>
 									</tr>
 								</table>
 							</fieldset>
@@ -707,13 +798,64 @@ class Chat {
 			
 								<table border="0" cellpadding="4" cellspacing="0">
 									<tr>
-										<td><label for="chat_background_color">{#chat_dlg.background}</label></td>
-										<td>
+										<td style="width: 35%"><label for="chat_background_color">{#chat_dlg.background}</label></td>
+										<td style="width: 15%">
 											<input type="text" id="chat_background_color" name="chat_background_color" value="<?php print $this->get_option('background_color', '#ffffff'); ?>" class="color" size="7" />
 											<div class="color" id="chat_background_color_panel"></div>
 										</td>
-										<td class="info"><?php _e("Chat box background color", $this->translation_domain); ?></td>
+										<td style="width: 50%" class="info"><?php _e("Chat box background color", $this->translation_domain); ?></td>
 									</tr>
+
+<?php /* ?>
+									<tr>
+										<td><label for="chat_background_row_area_color">{#chat_dlg.background_row_area_color}</label></td>
+										<td>
+											<input type="text" id="chat_background_row_area_color" name="chat_default[background_row_area_color]" 
+												value="<?php print $this->get_option('background_row_area_color', '#F9F9F9'); ?>" class="color" size="7" />
+											<div class="color" id="chat_background_row_area_color_panel"></div>
+										</td>
+										<td class="info"><?php _e("Background color of the message area", $this->translation_domain); ?></td>
+									</tr>
+
+									<tr>
+										<td><label for="chat_background_row_color">{#chat_dlg.background_row_color}</label></td>
+										<td>
+											<input type="text" id="chat_background_row_color" name="chatbackground_row_color" 
+												value="<?php print $this->get_option('background_row_color', '#FFFFFF'); ?>" class="color" size="7" />
+											<div class="color" id="chat_background_row_color_panel"></div>
+										</td>
+										<td class="info"><?php _e("Background color of the message row items", $this->translation_domain); ?></td>
+									</tr>
+
+									<tr>
+										<td><label for="chat_row_border_color">{#chat_dlg.row_border_color}</label></td>
+										<td>
+											<input type="text" id="chat_row_border_color" name="chat_row_border_color" 
+												value="<?php print $this->get_option('row_border_color', '#CCCCCC'); ?>" class="color" size="7" />
+											<div class="color" id="chat_row_border_color_panel"></div>
+										</td>
+										<td class="info"><?php _e("Border color of the message row items", $this->translation_domain); ?></td>
+									</tr>
+
+									<tr>
+										<td><label for="chat_row_border_width">{#chat_dlg.row_border_width}</label></td>
+										<td>
+											<input type="text" id="chat_row_border_width" name="chat_row_border_width" 
+												value="<?php print $this->get_option('row_border_width', '1px'); ?>" size="7" />
+										</td>
+										<td class="info"><?php _e("Border width of the message row items", $this->translation_domain); ?></td>
+									</tr>
+
+									<tr>
+										<td><label for="chat_row_spacing">{#chat_dlg.row_spacing}</label></td>
+										<td>
+											<input type="text" id="chat_row_spacing" name="chat__row_spacing" 
+												value="<?php print $this->get_option('row_spacing', '5px'); ?>" size="7" />
+										</td>
+										<td class="info"><?php _e("Spacing between row items", $this->translation_domain); ?></td>
+									</tr>
+
+<?php */ ?>
 									
 									<tr>
 										<td><label for="chat_background_highlighted_color">{#chat_dlg.background_highlighted}</label></td>
@@ -768,15 +910,15 @@ class Chat {
 								<table border="0" cellpadding="4" cellspacing="0">
 			
 									<tr>
-										<td><label for="chat_font">{#chat_dlg.font}</label></td>
-										<td>
+										<td style="width: 35%"><label for="chat_font">{#chat_dlg.font}</label></td>
+										<td style="width: 15%">
 											<select id="chat_font" name="chat_font" class="font" >
 											<?php foreach ($this->fonts_list as $font_name => $font) { ?>
-												<option value="<?php print $font; ?>" <?php print ($this->get_option('font', '') == $font)?'selected="selected"':''; ?>" ><?php print $font_name; ?></option>
+												<option value="<?php print $font; ?>" <?php print ($this->get_option('font', '') == $font)?'selected="selected"':''; ?> ><?php print $font_name; ?></option>
 											<?php } ?>
 											</select>
 										</td>
-										<td class="info"><?php _e("Chat box font", $this->translation_domain); ?></td>
+										<td style="width: 50%" class="info"><?php _e("Chat box font", $this->translation_domain); ?></td>
 									</tr>
 									
 									<tr>
@@ -800,14 +942,14 @@ class Chat {
 								
 								<table border="0" cellpadding="4" cellspacing="0">
 									<tr>
-										<td><label for="chat_log_creation">{#chat_dlg.creation}</label></td>
-										<td>
+										<td style="width: 35%"><label for="chat_log_creation">{#chat_dlg.creation}</label></td>
+										<td style="width: 15%">
 											<select id="chat_log_creation" name="chat_log_creation" >
 												<option value="enabled" <?php print ($this->get_option('log_creation', 'disabled') == 'enabled')?'selected="selected"':''; ?>>{#chat_dlg.enabled}</option>
 												<option value="disabled" <?php print ($this->get_option('log_creation', 'disabled') == 'disabled')?'selected="selected"':''; ?>>{#chat_dlg.disabled}</option>
 											</select>
 										</td>
-										<td class="info"><?php _e("Log chat messages?", $this->translation_domain); ?></td>
+										<td style="width: 50%" class="info"><?php _e("Log chat messages?", $this->translation_domain); ?></td>
 									</tr>
 									
 									<tr>
@@ -820,8 +962,26 @@ class Chat {
 										</td>
 										<td class="info"><?php _e("Display chat logs?", $this->translation_domain); ?></td>
 									</tr>
+
 								</table>
 							</fieldset>
+
+
+							<fieldset>
+								<legend><?php _e("Number of messages to display on initial page load", $this->translation_domain); ?></legend>
+								<table border="0" cellpadding="4" cellspacing="0">
+								<tr>
+									<td><label for="chat_log_limit"><?php _e("Number of Messages", $this->translation_domain); ?></label></td>
+									<td>
+										<input type="text" id="chat_log_limit" name="chat_log_limit" size="5"
+											value="<?php print ($this->get_option('log_limit', '')); ?>" />									
+									</td>
+									<td class="info"><?php _e("set empty for all", $this->translation_domain); ?></td>
+								</tr>
+								<tr><td colspan="3"><?php _e("Note: This does not truncate the message in the database.", $this->translation_domain); ?></td></tr>
+								</table>
+							</fieldset>
+
 						</div>
 					
 						<div id="authentication_panel" class="panel">
@@ -830,9 +990,9 @@ class Chat {
 								
 								<table border="0" cellpadding="4" cellspacing="0">
 									<tr>
-										<td valign="top"><label for="chat_login_options">{#chat_dlg.login_options}</label></td>
-										<td>
-											<lable><input type="checkbox" id="chat_login_options_current_user" name="chat_login_options" class="chat_login_options" value="current_user" <?php print (in_array('current_user', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('Current user', $this->translation_domain); ?></label><br/>
+										<td valign="top" style="width: 25%"><label for="chat_login_options">{#chat_dlg.login_options}</label></td>
+										<td style="width: 35%">
+											<lable><input type="checkbox" id="chat_login_options_current_user" name="chat_login_options" class="chat_login_options" value="current_user" <?php print (in_array('current_user', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('WordPress user', $this->translation_domain); ?></label><br/>
 											<?php if (is_multisite()) { ?>
 											<lable><input type="checkbox" id="chat_login_options_network_user" name="chat_login_options" class="chat_login_options" value="network_user" <?php print (in_array('network_user', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('Network user', $this->translation_domain); ?></label><br/>
 											<?php } ?>
@@ -844,14 +1004,16 @@ class Chat {
 											<lable><input type="checkbox" id="chat_login_options_facebook" name="chat_login_options" class="chat_login_options" value="facebook" <?php print (!$this->is_facebook_setup())?'disabled="disabled"':''; ?> <?php print (in_array('facebook', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('Facebook', $this->translation_domain); ?></label><br/>
 											<?php } ?>
 										</td>
-										<td class="info"><?php _e("Authentication methods users can use", $this->translation_domain); ?></td>
+										<td class="info" style="width: 45%"><?php _e("Authentication methods users can use. <strong>If only 'WordPress user' is selected then chat will be hidden from non-authenticated users.</strong>", $this->translation_domain); ?></td>
 									</tr>
 									<tr>
 										<td valign="top"><label for="chat_moderator_roles">{#chat_dlg.moderator_roles}</label></td>
 										<td>
 											<?php
-											foreach (get_editable_roles() as $role => $details) {
-												$name = translate_user_role($details['name'] );
+											//foreach (get_editable_roles() as $role => $details) {
+											//	$name = translate_user_role($details['name'] );
+											global $wp_roles;
+											foreach ($wp_roles->role_names as $role => $name) {	
 											?>
 											<lable><input type="checkbox" id="chat_moderator_roles_<?php print $role; ?>" name="chat_moderator_roles" class="chat_moderator_roles" value="<?php print $role; ?>" <?php print (in_array($role, $this->get_option('moderator_roles', array('administrator','editor','author'))) > 0)?'checked="checked"':''; ?> /> <?php _e($name, $this->translation_domain); ?></label><br/>
 											<?php 
@@ -920,7 +1082,7 @@ class Chat {
 				</ul>
 				
 				<div id="chat_default_panel" class="chat_panel current">
-					<p class="info">Default options for in post chat boxes.</p>
+					<p class="info"><?php _e('Default options for in post chat boxes.', $this->translation_domain); ?></p>
 					<fieldset>
 						<legend><?php _e('General', $this->translation_domain); ?></legend>
 		
@@ -983,10 +1145,10 @@ class Chat {
 							<tr>
 								<td><label for="chat_width"><?php _e('Dimensions', $this->translation_domain); ?></label></td>
 								<td>
-									<input type="text" id="chat_width" name="chat_default[width]" value="<?php print $this->get_option('width', '100%'); ?>" class="size" size="5" /> x
-									<input type="text" id="chat_height" name="chat_default[height]" value="<?php print $this->get_option('height', '425px'); ?>" class="size" size="5" />
+									<input type="text" id="chat_width" name="chat_default[width]" value="<?php print $this->get_option('width', '100%'); ?>" class="size" size="5" />W<br />
+									<input type="text" id="chat_height" name="chat_default[height]" value="<?php print $this->get_option('height', '425px'); ?>" class="size" size="5" />H
 								</td>
-								<td class="info"><?php _e("Dimensions of the chat box", $this->translation_domain); ?></td>
+								<td class="info"><?php _e("Dimensions of the chat box. Include px, em, etc.", $this->translation_domain); ?></td>
 							</tr>
 						</table>
 					</fieldset>
@@ -996,13 +1158,64 @@ class Chat {
 		
 						<table border="0" cellpadding="4" cellspacing="0">
 							<tr>
-								<td><label for="chat_background_color"><?php _e('Background', $this->translation_domain); ?></label></td>
-								<td>
+								<td style="width: 35%"><label for="chat_background_color"><?php _e('Background', $this->translation_domain); ?></label></td>
+								<td  style="width: 15%">
 									<input type="text" id="chat_background_color" name="chat_default[background_color]" value="<?php print $this->get_option('background_color', '#ffffff'); ?>" class="color" size="7" />
 									<div class="color" id="chat_background_color_panel"></div>
 								</td>
-								<td class="info"><?php _e("Chat box background color", $this->translation_domain); ?></td>
+								<td  style="width: 50%" class="info"><?php _e("Chat box background color", $this->translation_domain); ?></td>
 							</tr>
+
+
+							<tr>
+								<td><label for="chat_background_row_area_color"><?php _e('Background Messages Area', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_background_row_area_color" name="chat_default[background_row_area_color]" 
+										value="<?php print $this->get_option('background_row_area_color', '#F9F9F9'); ?>" class="color" size="7" />
+									<div class="color" id="chat_background_row_area_color_panel"></div>
+								</td>
+								<td class="info"><?php _e("Background color of the message area", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_background_row_color"><?php _e('Row items background', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_background_row_color" name="chat_default[background_row_color]" 
+										value="<?php print $this->get_option('background_row_color', '#FFFFFF'); ?>" class="color" size="7" />
+									<div class="color" id="chat_background_row_color_panel"></div>
+								</td>
+								<td class="info"><?php _e("Background color of the message row items", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_row_border_color"><?php _e('Row items border', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_row_border_color" name="chat_default[row_border_color]" 
+										value="<?php print $this->get_option('row_border_color', '#CCCCCC'); ?>" class="color" size="7" />
+									<div class="color" id="chat_row_border_color_panel"></div>
+								</td>
+								<td class="info"><?php _e("Border color of the message row items", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_row_border_width"><?php _e('Row items border width', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_row_border_width" name="chat_default[row_border_width]" 
+										value="<?php print $this->get_option('row_border_width', '1px'); ?>" size="7" />
+								</td>
+								<td class="info"><?php _e("Border width of the message row items", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_row_spacing"><?php _e('Row items spacing', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_row_spacing" name="chat_default[row_spacing]" 
+										value="<?php print $this->get_option('row_spacing', '5px'); ?>" size="7" />
+								</td>
+								<td class="info"><?php _e("Spacing between row items", $this->translation_domain); ?></td>
+							</tr>
+
+
 							
 							<tr>
 								<td><label for="chat_background_highlighted_color"><?php _e('Highlighted Background', $this->translation_domain); ?></label></td>
@@ -1110,13 +1323,28 @@ class Chat {
 					</fieldset>
 					
 					<fieldset>
+						<legend><?php _e("Number of messages to display on initial page load", $this->translation_domain); ?></legend>
+						<table border="0" cellpadding="4" cellspacing="0">
+						<tr>
+							<td><label for="chat_log_limit"><?php _e("Number of Messages", $this->translation_domain); ?></label></td>
+							<td>
+								<input type="text" id="chat_log_limit" name="chat_default[log_limit]" size="5"
+									value="<?php print ($this->get_option('log_limit', '')); ?>" />									
+							</td>
+							<td class="info"><?php _e("set empty for all", $this->translation_domain); ?></td>
+						</tr>
+						<tr><td colspan="3"><?php _e("Note: This does not truncate the message in the database.", $this->translation_domain); ?></td></tr>
+						</table>
+					</fieldset>
+					
+					<fieldset>
 						<legend><?php _e('Authentication', $this->translation_domain); ?></legend>
 							
 						<table border="0" cellpadding="4" cellspacing="0">
 							<tr>
-								<td valign="top"><label for="chat_login_options"><?php _e('Login options', $this->translation_domain); ?></label></td>
-								<td>
-									<lable><input type="checkbox" id="chat_login_options_current_user" name="chat_default[login_options][]" class="chat_login_options" value="current_user" <?php print (in_array('current_user', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('Current user', $this->translation_domain); ?></label><br/>
+								<td valign="top" style="width: 25%"><label for="chat_login_options"><?php _e('Login options', $this->translation_domain); ?></label></td>
+								<td style="width: 35%">
+									<lable><input type="checkbox" id="chat_login_options_current_user" name="chat_default[login_options][]" class="chat_login_options" value="current_user" <?php print (in_array('current_user', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('WordPress user', $this->translation_domain); ?></label><br/>
 									<?php if (is_multisite()) { ?>
 									<lable><input type="checkbox" id="chat_login_options_network_user" name="chat_default[login_options][]" class="chat_login_options" value="network_user" <?php print (in_array('network_user', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('Network user', $this->translation_domain); ?></label><br/>
 									<?php } ?>
@@ -1124,15 +1352,17 @@ class Chat {
 									<lable><input type="checkbox" id="chat_login_options_twitter" name="chat_default[login_options][]" class="chat_login_options" value="twitter" <?php print (!$this->is_twitter_setup())?'disabled="disabled"':''; ?> <?php print (in_array('twitter', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('Twitter', $this->translation_domain); ?></label><br/>
 									<lable><input type="checkbox" id="chat_login_options_facebook" name="chat_default[login_options][]" class="chat_login_options" value="facebook" <?php print (!$this->is_facebook_setup())?'disabled="disabled"':''; ?> <?php print (in_array('facebook', $this->get_option('login_options', array('current_user'))) > 0)?'checked="checked"':''; ?> /> <?php _e('Facebook', $this->translation_domain); ?></label><br/>
 								</td>
-								<td class="info"><?php _e("Authentication methods users can use", $this->translation_domain); ?></td>
+								<td class="info" style="width: 45%"><?php _e("Authentication methods users can use. <strong>If only 'WordPress user' is selected chat will be hidden from non-authenticated users.</strong>", $this->translation_domain); ?></td>
 							</tr>
 							
 							<tr>
 								<td valign="top"><label for="chat_moderator_roles"><?php _e('Moderator roles', $this->translation_domain); ?></label></td>
 								<td>
 									<?php
-									foreach (get_editable_roles() as $role => $details) {
-										$name = translate_user_role($details['name'] );
+									//foreach (get_editable_roles() as $role => $details) {
+									//	$name = translate_user_role($details['name'] );
+									global $wp_roles;
+									foreach ($wp_roles->role_names as $role => $name) {	
 									?>
 									<lable><input type="checkbox" id="chat_moderator_roles_<?php print $role; ?>" name="chat_default[moderator_roles][]" class="chat_moderator_roles" value="<?php print $role; ?>" <?php print (in_array($role, $this->get_option('moderator_roles', array('administrator','editor','author'))) > 0)?'checked="checked"':''; ?> /> <?php _e($name, $this->translation_domain); ?></label><br/>
 									<?php 
@@ -1146,7 +1376,7 @@ class Chat {
 				</div>
 				
 				<div id="chat_site_panel" class="chat_panel current">
-					<p class="info">Options for the bottom corner chat</p>
+					<p class="info"><?php _e('Options for the bottom corner chat', $this->translation_domain); ?></p>
 					<fieldset>
 						<legend><?php _e('Main', $this->translation_domain); ?></legend>
 		
@@ -1227,10 +1457,10 @@ class Chat {
 							<tr>
 								<td><label for="chat_width_1"><?php _e('Dimensions', $this->translation_domain); ?></label></td>
 								<td>
-									<input type="text" id="chat_width_1" name="chat_site[width]" value="<?php print $this->get_option('width', '', 'site'); ?>" class="size" size="5" /> x
-									<input type="text" id="chat_height_1" name="chat_site[height]" value="<?php print $this->get_option('height', '', 'site'); ?>" class="size" size="5" />
+									<input type="text" id="chat_width_1" name="chat_site[width]" value="<?php print $this->get_option('width', '', 'site'); ?>" class="size" size="5" /> W<br />
+									<input type="text" id="chat_height_1" name="chat_site[height]" value="<?php print $this->get_option('height', '', 'site'); ?>" class="size" size="5" /> H
 								</td>
-								<td class="info"><?php _e("Dimensions of the chat box", $this->translation_domain); ?></td>
+								<td class="info"><?php _e("Dimensions of the chat box. Include px, em, etc.", $this->translation_domain); ?></td>
 							</tr>
 						</table>
 					</fieldset>
@@ -1247,6 +1477,60 @@ class Chat {
 								</td>
 								<td class="info"><?php _e("Chat box border color", $this->translation_domain); ?></td>
 							</tr>
+
+
+
+
+							<tr>
+								<td><label for="chat_background_row_area_color"><?php _e('Background Messages Area', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_background_row_area_color" name="chat_site[background_row_area_color]" 
+										value="<?php print $this->get_option('background_row_area_color', '#F9F9F9', 'site'); ?>" class="color" size="7" />
+									<div class="color" id="chat_background_row_area_color_panel"></div>
+								</td>
+								<td class="info"><?php _e("Background color of the message area", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_background_row_color"><?php _e('Row items background', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_background_row_color" name="chat_site[background_row_color]" 
+										value="<?php print $this->get_option('background_row_color', '#FFFFFF', 'site'); ?>" class="color" size="7" />
+									<div class="color" id="chat_background_row_color_panel"></div>
+								</td>
+								<td class="info"><?php _e("Background color of the message row items", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_row_border_color"><?php _e('Row items border', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_row_border_color" name="chat_site[row_border_color]" 
+										value="<?php print $this->get_option('row_border_color', '#CCCCCC', 'site'); ?>" class="color" size="7" />
+									<div class="color" id="chat_row_border_color_panel"></div>
+								</td>
+								<td class="info"><?php _e("Border color of the message row items", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_row_border_width"><?php _e('Row items border width', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_row_border_width" name="chat_site[row_border_width]" 
+										value="<?php print $this->get_option('row_border_width', '1px', 'site'); ?>" size="7" />
+								</td>
+								<td class="info"><?php _e("Border width of the message row items", $this->translation_domain); ?></td>
+							</tr>
+
+							<tr>
+								<td><label for="chat_row_spacing"><?php _e('Row items spacing', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_row_spacing" name="chat_site[row_spacing]" 
+										value="<?php print $this->get_option('row_spacing', '5px', 'site'); ?>" size="7" />
+								</td>
+								<td class="info"><?php _e("Spacing between row items", $this->translation_domain); ?></td>
+							</tr>
+
+
+
 							
 							<tr>
 								<td><label for="chat_border_highlighted_color_1"><?php _e('Highlighted Border', $this->translation_domain); ?></label></td>
@@ -1332,15 +1616,29 @@ class Chat {
 							</tr>
 						</table>
 					</fieldset>
+					<fieldset>
+						<legend><?php _e("Number of messages to display on initial page load", $this->translation_domain); ?></legend>
+						<table border="0" cellpadding="4" cellspacing="0">
+						<tr>
+							<td><label for="chat_log_limit"><?php _e("Number of Messages", $this->translation_domain); ?></label></td>
+							<td>
+								<input type="text" id="chat_log_limit" name="chat_site[log_limit]" size="5"
+									value="<?php print ($this->get_option('log_limit', '', 'site')); ?>" />									
+							</td>
+							<td class="info"><?php _e("set empty for all", $this->translation_domain); ?></td>
+						</tr>
+						<tr><td colspan="3"><?php _e("Note: This does not truncate the message in the database.", $this->translation_domain); ?></td></tr>
+						</table>
+					</fieldset>
 					
 					<fieldset>
 						<legend><?php _e('Authentication', $this->translation_domain); ?></legend>
 							
 						<table border="0" cellpadding="4" cellspacing="0">
 							<tr>
-								<td valign="top"><label for="chat_login_options_1"><?php _e('Login options', $this->translation_domain); ?></label></td>
-								<td>
-									<lable><input type="checkbox" id="chat_login_options_1_current_user" name="chat_site[login_options][]" class="chat_login_options" value="current_user" <?php print (in_array('current_user', $this->get_option('login_options', array('current_user'), 'site')) > 0)?'checked="checked"':''; ?> /> <?php _e('Current user', $this->translation_domain); ?></label><br/>
+								<td valign="top" style="width: 25%"><label for="chat_login_options_1"><?php _e('Login options', $this->translation_domain); ?></label></td>
+								<td style="width: 35%">
+									<lable><input type="checkbox" id="chat_login_options_1_current_user" name="chat_site[login_options][]" class="chat_login_options" value="current_user" <?php print (in_array('current_user', $this->get_option('login_options', array('current_user'), 'site')) > 0)?'checked="checked"':''; ?> /> <?php _e('WordPress user', $this->translation_domain); ?></label><br/>
 									<?php if (is_multisite()) { ?>
 									<lable><input type="checkbox" id="chat_login_options_1_network_user" name="chat_site[login_options][]" class="chat_login_options" value="network_user" <?php print (in_array('network_user', $this->get_option('login_options', array('current_user'), 'site')) > 0)?'checked="checked"':''; ?> /> <?php _e('Network user', $this->translation_domain); ?></label><br/>
 									<?php } ?>
@@ -1348,15 +1646,17 @@ class Chat {
 									<lable><input type="checkbox" id="chat_login_options_1_twitter" name="chat_site[login_options][]" class="chat_login_options" value="twitter" <?php print (!$this->is_twitter_setup())?'disabled="disabled"':''; ?> <?php print (in_array('twitter', $this->get_option('login_options', array('current_user'), 'site')) > 0)?'checked="checked"':''; ?> /> <?php _e('Twitter', $this->translation_domain); ?></label><br/>
 									<lable><input type="checkbox" id="chat_login_options_1_facebook" name="chat_site[login_options][]" class="chat_login_options" value="facebook" <?php print (!$this->is_facebook_setup())?'disabled="disabled"':''; ?> <?php print (in_array('facebook', $this->get_option('login_options', array('current_user'), 'site')) > 0)?'checked="checked"':''; ?> /> <?php _e('Facebook', $this->translation_domain); ?></label><br/>
 								</td>
-								<td class="info"><?php _e("Authentication methods users can use", $this->translation_domain); ?></td>
+								<td class="info" style="width: 45%"><?php _e("Authentication methods users can use. <strong>If only 'WordPress user' is selected then chat will be hidden from non-authenticated users.</strong>", $this->translation_domain); ?></td>
 							</tr>
 							
 							<tr>
 								<td valign="top"><label for="chat_moderator_roles_1"><?php _e('Moderator roles', $this->translation_domain); ?></label></td>
 								<td>
 									<?php
-									foreach (get_editable_roles() as $role => $details) {
-										$name = translate_user_role($details['name'] );
+									//foreach (get_editable_roles() as $role => $details) {
+									//	$name = translate_user_role($details['name'] );
+									global $wp_roles;
+									foreach ($wp_roles->role_names as $role => $name) {	
 									?>
 									<lable><input type="checkbox" id="chat_moderator_roles_1_<?php print $role; ?>" name="chat_site[moderator_roles][]" class="chat_moderator_roles" value="<?php print $role; ?>" <?php print (in_array($role, $this->get_option('moderator_roles', array('administrator','editor','author'), 'site')) > 0)?'checked="checked"':''; ?> /> <?php _e($name, $this->translation_domain); ?></label><br/>
 									<?php 
@@ -1418,7 +1718,7 @@ class Chat {
 						
 						
 						<tr>
-							<td><label for="chat_facebook_active_in_site"><?php _e('Facebook Connet Used in Site? (e.g. Facebook Ultimate Connect)', $this->translation_domain); ?></label></td>
+							<td><label for="chat_facebook_active_in_site"><?php _e('Facebook Connect Used in Site? (e.g. Facebook Ultimate Connect)', $this->translation_domain); ?></label></td>
 							<td>
 								<label><input type="radio" id="chat_facebook_active_in_site" name="chat_default[facebook_active_in_site]" value="yes" <?php print ($this->get_option('facebook_active_in_site', 'no') == 'yes')?'checked="checked"':''; ?> class="" size="40" /> <?php _e('Yes', $this->translation_domain); ?></label>
 								<label><input type="radio" id="chat_facebook_active_in_site" name="chat_default[facebook_active_in_site]" value="no" <?php print ($this->get_option('facebook_active_in_site', 'no') == 'no')?'checked="checked"':''; ?> class="" size="40" /> <?php _e('No', $this->translation_domain); ?></label>
@@ -1428,17 +1728,61 @@ class Chat {
 				</div>
 				
 				<div id="chat_advanced_panel" class="chat_panel chat_advanced_panel">
-					<table border="0" cellpadding="4" cellspacing="0">
+
+					<fieldset>
+						<legend><?php _e('Polling Interval', $this->translation_domain); ?></legend>
+						<table border="0" cellpadding="4" cellspacing="0">
+							<tr>
+								<td><label for="chat_interval"><?php _e('Interval', $this->translation_domain); ?></label></td>
+								<td>
+									<input type="text" id="chat_interval" name="chat_default[interval]" value="<?php print $this->get_option('interval', 1); ?>" class="" size="2" /> (seconds)
+								</td>
+								<td class="info"><?php _e('Controls how often the chat polls for new messages.', $this->translation_domain); ?></td>
+							</tr>
+						</table>
+					</fieldset>
+
+					<fieldset>
+						<legend><?php _e('WYSIWYG Chat button User Roles', $this->translation_domain); ?></legend>
+							
+						<table border="0" cellpadding="4" cellspacing="0">
 						<tr>
-							<td><label for="chat_interval"><?php _e('Interval', $this->translation_domain); ?></label></td>
-							<td>
-								<input type="text" id="chat_interval" name="chat_default[interval]" value="<?php print $this->get_option('interval', 1); ?>" class="" size="2" />
+							<td style="width: 40%">
+								<?php
+								//foreach (get_editable_roles() as $role => $details) {
+								//	$name = translate_user_role($details['name'] );
+								global $wp_roles;
+								foreach ($wp_roles->role_names as $role => $name) {	
+								?>
+								<lable><input type="checkbox" id="chat_tinymce_roles_<?php print $role; ?>" name="chat_default[tinymce_roles][]" class="chat_tinymce_roles" value="<?php print $role; ?>" <?php print (in_array($role, $this->get_option('tinymce_roles', array('administrator'))) > 0)?'checked="checked"':''; ?> /> <?php _e($name, $this->translation_domain); ?></label><br/>
+								<?php 
+								}
+								?>
 							</td>
-							<td class="info">
-								Refresh interval in seconds
-							</td>
+							<td style="width: 60%" class="info"><?php _e("Select which roles will see the Chat WYSIWYG button on the Post editor screen. Note the user must also have Edit capabilities for the Post type.", $this->translation_domain); ?></td>
 						</tr>
-					</table>
+						</table>
+					</fieldset>
+
+					<fieldset>
+						<legend><?php _e('WYSIWYG Chat button Post Types', $this->translation_domain); ?></legend>
+							
+						<table border="0" cellpadding="4" cellspacing="0">
+						<tr>
+							<td style="width: 40%">
+								<?php
+								foreach ((array) get_post_types( array( 'show_ui' => true ), 'name' ) as $post_type => $details) {
+								?>
+								<lable><input type="checkbox" id="chat_tinymce_post_types_<?php print $post_type; ?>" name="chat_default[tinymce_post_types][]" class="chat_tinymce_roles" value="<?php print $post_type; ?>" <?php print (in_array($post_type, $this->get_option('tinymce_post_types', array('post','page'))) > 0)?'checked="checked"':''; ?> /> <?php echo $details->labels->name; ?></label><br/>
+								<?php 
+								}
+								?>
+							</td>
+							<td style="width: 60%" class="info"><?php _e("Select which Post Types will have the Chat WYSIWYG button available.", $this->translation_domain); ?></td>
+						</tr>
+						</table>
+					</fieldset>
+
 				</div>
 			</div>
 	    
@@ -1482,15 +1826,15 @@ class Chat {
 		}
 				
 		$chat_localized["url"] = site_url()."/wp-admin/admin-ajax.php";
-		$chat_localized["plugin_url"] = plugins_url("wordpress-chat/");
+		$chat_localized["plugin_url"] = plugins_url("/", __FILE__);
 		$chat_localized["facebook_text_sign_out"] = __('Sign out of Facebook', $this->translation_domain);
 		$chat_localized["twitter_text_sign_out"] = __('Sign out of Twitter', $this->translation_domain);
 		$chat_localized["please_wait"] = __('Please wait...', $this->translation_domain);
 				
 		$chat_localized["minimize"] = __('Minimize', $this->translation_domain);
-		$chat_localized["minimize_button"] = plugins_url('wordpress-chat/images/16-square-blue-remove.png');
+		$chat_localized["minimize_button"] = plugins_url('/images/16-square-blue-remove.png', __FILE__);
 		$chat_localized["maximize"] = __('Maximize', $this->translation_domain);
-		$chat_localized["maximize_button"] = plugins_url('wordpress-chat/images/16-square-green-add.png');
+		$chat_localized["maximize_button"] = plugins_url('/images/16-square-green-add.png', __FILE__);
 		
 		$chat_localized["interval"] = $this->get_option('interval', 1);
 		
@@ -1517,7 +1861,14 @@ class Chat {
 			$chat_localized["facebook_active"] = true;
 			$chat_localized["facebook_app_id"] = $this->get_option('facebook_application_id');
 			if ($this->get_option('facebook_active_in_site') != 'yes') {
-				wp_enqueue_script('facebook', 'http://connect.facebook.net/en_US/all.js');
+				$locale = get_locale();
+
+				// We use 'facebook-all' to match our Ultimate Facebook plugin which enques the same script. Prevents enque duplication
+				if (is_ssl()) {
+					wp_enqueue_script('facebook-all', 'https://connect.facebook.net/'. $locale .'/all.js');
+				} else {
+					wp_enqueue_script('facebook-all', 'http://connect.facebook.net/'. $locale .'/all.js');					
+				}
 			}
 		} else {
 			$chat_localized["facebook_active"] = false;
@@ -1546,10 +1897,22 @@ class Chat {
 				'font_size' => $this->get_option('font_size', '', 'site'),
 				'log_creation' => $this->get_option('log_creation', 'disabled', 'site'),
 				'log_display' => $this->get_option('log_display', 'disabled', 'site'),
+				'log_limit' => $this->get_option('log_limit', '', 'site'),
 				'login_options' => join(',', $this->get_option('login_options', array('current_user'), 'site')),
 				'moderator_roles' => join(',', $this->get_option('moderator_roles', array('administrator','editor','author'))),
 			);
-			$this->process_shortcode($atts);
+			
+			if ((preg_match('/current_user/', $atts['login_options']) > 0) 
+			 && ($this->authenticate(preg_split('/,/', $atts['login_options'])) != 1)) {
+				if ((preg_match('/public_user/', $atts['login_options']) == 0)
+				 && (preg_match('/facebook/', $atts['login_options']) == 0)
+				 && (preg_match('/twitter/', $atts['login_options']) == 0)) {
+					;
+				} else {
+					$this->process_shortcode($atts);
+					
+				}
+			}
 		}
 	}
 	
@@ -1625,7 +1988,7 @@ class Chat {
 	 * Output CSS
 	 */
 	function output_css() {
-		echo '<link rel="stylesheet" href="' . plugins_url('wordpress-chat/css/style.css') . '" type="text/css" />';
+		echo '<link rel="stylesheet" href="' . plugins_url('/css/style.css', __FILE__) . '" type="text/css" />';
 	}
 	
 	/**
@@ -1637,18 +2000,11 @@ class Chat {
 	 * @return	boolean					Is the user authenticated. true or false
 	 */
 	function authenticate_facebook() {
-		//$cookie = $this->get_facebook_cookie();
-		//echo "_chat_options<pre>"; print_r($this->_chat_options); echo "</pre>";
 
 		// Include the Facebook OAuth 2.0 PHP-SDK
-		require_once( dirname(__FILE__) . '/lib/facebook-php-sdk/facebook.php');
-		
-		$login_options = $this->get_option('login_options');
-		if (empty($login_options)) $login_options = array();
-		
-		if (array_search('facebook', $login_options) === false)
-			return false;
-					
+		if (!class_exists('Facebook')) {
+			require_once( dirname(__FILE__) . '/lib/facebook-php-sdk/facebook.php');
+		}
 		$fb_app_id 		= $this->get_option('facebook_application_id', '');
 		$fb_app_secret 	= $this->get_option('facebook_application_secret', '');
 		
@@ -1697,24 +2053,6 @@ class Chat {
 			  	}
 			}
 		}
-		
-		
-/*
-		if ($cookie && isset($cookie['access_token'])) {
-			$user = json_decode($this->file_get_contents('https://', 'graph.facebook.com', 443, '/me?access_token='.$cookie['access_token']));
-			$existing = preg_split('/,/', $_COOKIE['chat_stateless_user_type_104']);
-			$existing[] = 'facebook';
-			
-			setcookie('chat_stateless_user_type_104', join(',', $existing), time()+3600*24*7, '/');
-			setcookie('chat_stateless_user_name_facebook', $user->name, time()+3600*24*7, '/');
-			setcookie('chat_stateless_user_image_facebook', "http://graph.facebook.com/{$user->id}/picture", time()+3600*24*7, '/');
-			
-			$_COOKIE['chat_stateless_user_type_104'] = join(',', $existing); 
-			$_COOKIE['chat_stateless_user_name_facebook'] = $user->name; 
-			$_COOKIE['chat_stateless_user_image_facebook'] = "http://graph.facebook.com/{$user->id}/picture"; 
-			return true;
-		}
-*/
 		return false;
 	}
 	
@@ -1765,7 +2103,7 @@ class Chat {
 	 * @see		http://developers.facebook.com/docs/guides/web#login
 	 */
 	function get_facebook_cookie() {
-		$fb_app_id 				= $this->get_option('facebook_application_id', '');
+		$fb_app_id 		= $this->get_option('facebook_application_id', '');
 		$fb_app_secret 	= $this->get_option('facebook_application_secret', '');
 		
 		if ((empty($fb_app_id)) || (empty($fb_app_secret)))
@@ -1775,8 +2113,6 @@ class Chat {
 		  'appId'  => $fb_app_id,
 		  'secret' => $fb_app_secret
 		));
-
-		
 		
 		if (!isset($_COOKIE['fbsr_' . $app_id])) 
 			return;
@@ -1836,12 +2172,13 @@ class Chat {
 		if (is_user_logged_in() && current_user_can('read')) {
 			return 1;
 		}
+		
 		// Network user
-		if (in_array('network_user', $options) && is_user_logged_in()) {
+		else if (in_array('network_user', $options) && is_user_logged_in()) {
 			return 2;
 		}
 		
-		if (isset($_COOKIE['chat_stateless_user_type_104'])) {
+		else if (isset($_COOKIE['chat_stateless_user_type_104'])) {
 			if (in_array('facebook', $options) 
 				&& (preg_match('/facebook/', $_COOKIE['chat_stateless_user_type_104']) > 0 || $this->authenticate_facebook())) {
 				return 3;
@@ -1856,6 +2193,23 @@ class Chat {
 				return 5;
 			}
 		}
+
+		else if (isset($_COOKIE['chat_site_wide_state_104'])) {
+			if (in_array('facebook', $options) 
+				&& (preg_match('/facebook/', $_COOKIE['chat_site_wide_state_104']) > 0 || $this->authenticate_facebook())) {
+				return 3;
+			}
+			
+			if (in_array('twitter', $options) 
+				&& isset($_COOKIE['chat_site_wide_state_104']) && preg_match('/twitter/', $_COOKIE['chat_stateless_user_type_104']) > 0) {
+					return 4;
+			}
+			if (in_array('public_user', $options) 
+				&& preg_match('/public_user/', $_COOKIE['chat_site_wide_state_104']) > 0) {
+				return 5;
+			}
+		}
+
 		return false;
 	}
 	
@@ -1912,25 +2266,53 @@ class Chat {
 			'font_size' => $this->get_option('font_size', '', 'site'),
 			'log_creation' => $this->get_option('log_creation', 'disabled', 'site'),
 			'log_display' => $this->get_option('log_display', 'disabled', 'site'),
+			'log_limit' => $this->get_option('log_limit', '', 'site'),
 			'login_options' => join(',', $this->get_option('login_options', array('current_user'), 'site')),
 			'moderator_roles' => join(',', $this->get_option('moderator_roles', array('administrator','editor','author'))),
 		);
+		//echo "atts<pre>"; print_r($atts); echo "</pre>";
+		
+		//echo "_COOKIE<pre>"; print_r($_COOKIE); echo "</pre>";
+		if (isset($_COOKIE['chat_site_wide_state_104'])) {
+			$bottom_corner_chat_state = $_COOKIE['chat_site_wide_state_104'];
+		} else {
+			$bottom_corner_chat_state = "closed";
+		}
 		
 		if ($this->get_option('site', 'enabled', 'site') == 'enabled') {
-			$width = $this->get_option('width', '', 'site');
-			if (!empty($width)) {
-				$width_str = 'width: '.$width;
-				$width_style = '';
-			} else {
-				$width_style = ' free-width';
+
+			$show_chat_box = true;
+			$site_login_options = $this->get_option('login_options', array('current_user'), 'site');
+			
+			//echo "auth=[". $this->authenticate($site_login_options) ."]<br />";
+			if ( (array_search('current_user', $site_login_options) > 0) 
+			  && ($this->authenticate($site_login_options) != 1) ) {
+			
+				if ((array_search('public_user', $site_login_options) === false)
+			 		&& (array_search('facebook', $site_login_options) === false)
+			 	&& (array_search('twitter', $site_login_options) === false)) {
+					$show_chat_box = false;
+				}
 			}
-			echo '<style type="text/css">#chat-block-site.new_msg { background-color: '.$this->get_option('border_highlighted_color', '#4b96e2', 'site').' !important; }</style>';
-			echo '<div id="chat-block-site" class="chat-block-site closed'.$width_style.'" style="'.$width_str.'; background-color: '.$this->get_option('border_color', '#4b96e2', 'site').';">';
-			echo '<div id="chat-block-header" class="chat-block-header"><span class="chat-title-text">'.__('Chat', $this->translation_domain).'</span><span class="chat-prompt-text">'.__('Click here to chat!', $this->translation_domain).'</span>';
-			echo '<img src="'.plugins_url('wordpress-chat/images/16-square-green-add.png').'" alt="+" width="16" height="16" title="'.__('Maximize', $this->translation_domain).'" class="chat-toggle-button" id="chat-toggle-button" />';
-			echo '</div>';
-			echo '<div id="chat-block-inner" style="background: '.$this->get_option('background_color', '#ffffff', 'site').';">'.$this->process_shortcode($atts).'</div>';
-			echo '</div>';
+			if ($show_chat_box == true) {
+				$chat_processed = true;
+				
+				$width = $this->get_option('width', '', 'site');
+				if (!empty($width)) {
+					$width_str = 'width: '.$width;
+					$width_style = '';
+				} else {
+					$width_style = ' free-width';
+					$width_str = "300px";
+				}
+				echo '<style type="text/css">#chat-block-site.new_msg { background-color: '.$this->get_option('border_highlighted_color', '#4b96e2', 'site').' !important; }</style>';
+				echo '<div id="chat-block-site" class="chat-block-site '. $bottom_corner_chat_state ." ". $width_style.'" style="'.$width_str.'; background-color: '.$this->get_option('border_color', '#4b96e2', 'site').';">';
+				echo '<div id="chat-block-header" class="chat-block-header"><span class="chat-title-text">'.__('Chat', $this->translation_domain).'</span><span class="chat-prompt-text">'.__('Click here to chat!', $this->translation_domain).'</span>';
+				echo '<img src="'.plugins_url('/images/16-square-green-add.png', __FILE__).'" alt="+" width="16" height="16" title="'.__('Maximize', $this->translation_domain).'" class="chat-toggle-button" id="chat-toggle-button" />';
+				echo '</div>';
+				echo '<div id="chat-block-inner" style="background: '.$this->get_option('background_color', '#ffffff', 'site').';">'.$this->process_shortcode($atts).'</div>';
+				echo '</div>';
+			}
 		}
 		
 		if ($chat_processed) {
@@ -1948,32 +2330,91 @@ class Chat {
 	function process_shortcode($atts) {
 		global $post, $chat_localized, $chat_processed;
 		
-		$a = shortcode_atts(array(
-			'id' => 1,
-			'sound' => $this->get_option('sound', 'enabled'),
-			'avatar' => $this->get_option('avatar', 'enabled'),
-			'emoticons' => $this->get_option('emoticons', 'enabled'),
-			'date_show' => $this->get_option('date_show', 'disabled'),
-			'time_show' => $this->get_option('time_show', 'disabled'),
-			'width' => $this->get_option('width', '700px'),
-			'height' => $this->get_option('height', '425px'),
-			'background_color' => $this->get_option('background_color', '#ffffff'),
-			'background_highlighted_color' => $this->get_option('background_highlighted_color', '#FFE9AB'),
-			'date_color' => $this->get_option('date_color', '#6699CC'),
-			'name_color' => $this->get_option('name_color', '#666666'),
-			'moderator_name_color' => $this->get_option('moderator_name_color', '#6699CC'),
-			'text_color' => $this->get_option('text_color', '#000000'),
-			'font' => $this->get_option('font', ''),
-			'font_size' => $this->get_option('font_size', ''),
-			'log_creation' => $this->get_option('log_creation', 'disabled'),
-			'log_display' => $this->get_option('log_display', 'disabled'),
-			'login_options' => join(',', $this->get_option('login_options', array('current_user'))),
-			'moderator_roles' => join(',', $this->get_option('moderator_roles', array('administrator','editor','author'))),
-		), $atts);
+		//echo "atts<pre>"; print_r($atts); echo "</pre>";
+		//echo "atts-id=[". $atts['id'] ."]<br />";
 		
+		if (!isset($atts['id'])) return;
+		
+		if ($atts['id'] == 1) {
+			$a = shortcode_atts(array(
+				'id' 							=> 1,
+				'sound' 						=> $this->get_option('sound', 'enabled', 'site'),
+				'avatar' 						=> $this->get_option('avatar', 'enabled', 'site'),
+				'emoticons' 					=> $this->get_option('emoticons', 'enabled', 'site'),
+				'date_show' 					=> $this->get_option('date_show', 'disabled', 'site'),
+				'time_show' 					=> $this->get_option('time_show', 'disabled', 'site'),
+				'width' 						=> $this->get_option('width', '700px', 'site'),
+				'height' 						=> $this->get_option('height', '425px', 'site'),
+				'background_color' 				=> $this->get_option('background_color', '#ffffff', 'site'),
+
+				'background_row_area_color'		=> $this->get_option('background_row_area_color', '#F9F9F9', 'site'),
+				'background_row_color'			=> $this->get_option('background_row_color', '#FFFFFF', 'site'),
+				'row_border_color'				=> $this->get_option('row_border_color', '#CCCCCC', 'site'),
+				'row_border_width'				=> $this->get_option('row_border_width', '1px', 'site'),
+				'row_spacing'					=> $this->get_option('row_spacing', '5px', 'site'),	
+
+				'background_highlighted_color' 	=> $this->get_option('background_highlighted_color', '#FFE9AB', 'site'),
+				'date_color' 					=> $this->get_option('date_color', '#6699CC', 'site'),
+				'name_color' 					=> $this->get_option('name_color', '#666666', 'site'),
+				'moderator_name_color' 			=> $this->get_option('moderator_name_color', '#6699CC', 'site'),
+				'text_color' 					=> $this->get_option('text_color', '#000000', 'site'),
+				'font' 							=> $this->get_option('font', '', 'site'),
+				'font_size' 					=> $this->get_option('font_size', '', 'site'),
+				'log_creation' 					=> $this->get_option('log_creation', 'disabled', 'site'),
+				'log_display' 					=> $this->get_option('log_display', 'disabled', 'site'),
+				'log_limit' 					=> $this->get_option('log_limit', '', 'site'),
+				'login_options' 				=> join(',', $this->get_option('login_options', array('current_user'), 'site')),
+				'moderator_roles'	 			=> join(',', $this->get_option('moderator_roles', array('administrator','editor','author'), 'site')),
+			), $atts);
+			
+		} else {
+			$a = shortcode_atts(array(
+				'id' 							=> 1,
+				'sound' 						=> $this->get_option('sound', 'enabled'),
+				'avatar' 						=> $this->get_option('avatar', 'enabled'),
+				'emoticons' 					=> $this->get_option('emoticons', 'enabled'),
+				'date_show' 					=> $this->get_option('date_show', 'disabled'),
+				'time_show' 					=> $this->get_option('time_show', 'disabled'),
+				'width' 						=> $this->get_option('width', '700px'),
+				'height' 						=> $this->get_option('height', '425px'),
+				'background_color' 				=> $this->get_option('background_color', '#ffffff'),
+
+				'background_row_area_color'		=> $this->get_option('background_row_area_color', '#F9F9F9'),
+				'background_row_color'			=> $this->get_option('background_row_color', '#FFFFFF'),
+				'row_border_color'				=> $this->get_option('row_border_color', '#CCCCCC'),
+				'row_border_width'				=> $this->get_option('row_border_width', '1px'),
+				'row_spacing'					=> $this->get_option('row_spacing', '5px'),	
+
+				'background_highlighted_color' 	=> $this->get_option('background_highlighted_color', '#FFE9AB'),
+				'date_color' 					=> $this->get_option('date_color', '#6699CC'),
+				'name_color' 					=> $this->get_option('name_color', '#666666'),
+				'moderator_name_color' 			=> $this->get_option('moderator_name_color', '#6699CC'),
+				'text_color' 					=> $this->get_option('text_color', '#000000'),
+				'font' 							=> $this->get_option('font', ''),
+				'font_size' 					=> $this->get_option('font_size', ''),
+				'log_creation' 					=> $this->get_option('log_creation', 'disabled'),
+				'log_display' 					=> $this->get_option('log_display', 'disabled'),
+				'log_limit' 					=> $this->get_option('log_limit', ''),
+				'login_options' 				=> join(',', $this->get_option('login_options', array('current_user'))),
+				'moderator_roles'	 			=> join(',', $this->get_option('moderator_roles', array('administrator','editor','author'))),
+			), $atts);
+		}
+
+		//echo "login_options=[". $a['login_options'] ."]<br />";
+		//echo "auth=[". $this->authenticate(preg_split('/,/', $a['login_options'])) ."]<br />";
+		if ((preg_match('/current_user/', $a['login_options']) > 0) 
+		 && ($this->authenticate(preg_split('/,/', $a['login_options'])) != 1)) {
+			if ((preg_match('/public_user/', $a['login_options']) == 0)
+			 && (preg_match('/facebook/', $a['login_options']) == 0)
+			 && (preg_match('/twitter/', $a['login_options']) == 0)) {
+				return '';
+			}
+		}
+				
 		foreach ($a as $k=>$v) {
 			$chat_localized[$k.'_'.$a['id']] = $v;
 		}
+		//echo "a<pre>"; print_r($a); echo "</pre>";
 		
 		$content = '';
 		
@@ -2004,7 +2445,32 @@ class Chat {
 			$a['url_separator'] = "?";
 		}
 		
-		$a['smilies_list'] = array(':)', ':D', ':(', ':o', '8O', ':?', '8)', ':x', ':P', ':|', ';)', ':lol:', ':oops:', ':cry:', ':evil:', ':twisted:', ':roll:', ':!:', ':?:', ':idea:', ':arrow:', ':mrgreen:');
+//		$a['smilies_list'] = array(':)', ':D', ':(', ':o', '8O', ':?', '8)', ':x', ':P', ':|', ';)', ':lol:', ':oops:', ':cry:', ':evil:', ':twisted:', ':roll:', ':!:', ':?:', ':idea:', ':arrow:', ':mrgreen:');
+
+		$a['smilies_list'] = array(
+				':smile:', 
+				':grin:', 
+				':sad:', 
+				':eek:', 
+				':shock:', 
+				':???:', 
+				':cool:', 
+				':mad:', 
+				':razz:', 
+				':neutral:', 
+				':wink:', 
+				':lol:', 
+				':oops:', 
+				':cry:', 
+				':evil:', 
+				':twisted:', 
+				':roll:', 
+				':!:', 
+				':?:', 
+				':idea:', 
+				':arrow:', 
+				':mrgreen:');
+
 		$chat_localized['type_'.$a['id']] = $this->authenticate(preg_split('/,/', $a['login_options']));
 		
 		if ( $chat_localized['type_'.$a['id']] ) {
@@ -2050,23 +2516,37 @@ class Chat {
 				if ( $dates && is_array($dates) ) {
 					$content .= '<br />';
 					$content .= '<div class="chat-note"><p><strong>' . __('Chat Logs', $this->translation_domain) . '</strong></p></div>';
+					$date_content = '';
 					foreach ($dates as $date) {
 						$date_content .= '<li><a class="chat-log-link" style="text-decoration: none;" href="' . $a['permalink'] . $a['url_separator'] . 'lid=' . $date->id . '">' . date_i18n(get_option('date_format').' '.get_option('time_format'), strtotime($date->start) + get_option('gmt_offset') * 3600, false) . ' - ' . date_i18n(get_option('date_format').' '.get_option('time_format'), strtotime($date->end) + get_option('gmt_offset') * 3600, false) . '</a>';
 						if (isset($_GET['lid']) && $_GET['lid'] == $date->id) {
 							$_POST['cid'] = $a['id'];
-							$_POST['archived'] = 'yes';
+							$_POST['archived'] = array('yes', 'yes-deleted');
 							$_POST['function'] = 'update';
 							$_POST['since'] = strtotime($date->start);
 							$_POST['end'] = strtotime($date->end);
+							$_POST['background_row_area_color'] = $a['background_row_area_color'];
+							$_POST['background_row_color'] = $a['background_row_color'];
+							$_POST['row_border_color'] = $a['row_border_color'];
+							$_POST['row_border_width'] = $a['row_border_width'];
+							$_POST['row_spacing'] = $a['row_spacing'];
 							$_POST['date_color'] = $a['date_color'];
 							$_POST['name_color'] = $a['name_color'];
+							$_POST['moderator_roles'] = $a['moderator_roles'];
 							$_POST['moderator_name_color'] = $a['moderator_name_color'];
 							$_POST['text_color'] = $a['text_color'];
 							$_POST['date_show'] = $a['date_show'];
 							$_POST['time_show'] = $a['time_show'];
 							$_POST['avatar'] = $a['avatar'];
 							
-							$date_content .= '<div class="chat-wrap avatar-'.$a['avatar'].'" style="background-color: '.$a['background_color'].'; '.$a['font_style'].'"><div class="chat-area" >';
+							//echo "a<pre>"; print_r($a); echo "</pre>";
+							
+							if ($this->is_moderator(preg_split('/,/', $a['moderator_roles']))) 
+								$chat_area_moderator = "chat-area-moderator";
+							else
+								$chat_area_moderator = "";
+														
+							$date_content .= '<div class="chat-wrap avatar-'.$a['avatar'].'" style="background-color: '.$a['background_row_area_color'].'; '.$a['font_style'].'"><div class="chat-area '. $chat_area_moderator .'" >';
 							$date_content .= $this->process('yes');
 							$date_content .= '</div></div>';
 						}
@@ -2077,7 +2557,10 @@ class Chat {
 				}
 			}
 			$content .= '<div class="chat-clear"></div></div>';
-			$content .= '<style type="text/css">#chat-box-'.$a['id'].'.new_msg { background-color: '.$a['background_highlighted_color'].' !important; }</style>';
+			$content .= '<style type="text/css">
+				#chat-box-'.$a['id'].'.new_msg { background-color: '.$a['background_highlighted_color'].' !important; }
+				#chat-box-'.$a['id'].' p { margin-bottom: '. $a['row_spacing'] .' !important; }
+			</style>';
 		}
 		
 		wp_localize_script('chat_js', 'chat_localized', $chat_localized);
@@ -2088,14 +2571,38 @@ class Chat {
 	}
 	
 	function chat_message_area($a, $echo = false) {
+
+		//$chat_status = get_post_meta($a['id'], "wpmudev_chat_status", true);
+		$chat_status = $this->chatSessionStatusGet($a['id']);
+		//if (!$chat_status) $chat_status = "open";
+
 		$content = '';
-		
 		$content .= '<div class="chat-note"><p><strong>' . __('Message', $this->translation_domain) . '</strong></p></div>';
-		$content .= '<form id="send-message-area">';
+		
+		$content .= '<form id="send-message-area"';
+		
+		if ($this->is_moderator(preg_split('/,/', $a['moderator_roles']))) {
+			$content .= ' class="send-message-area-moderator" ';
+		}
+		$content .= '>';
 		
 		$content .= '<input type="hidden" name="chat-post-id" id="chat-post-id-'.$a['id'].'" value="'.$a['id'].'" class="chat-post-id" />';
 		
-		$content .= '<div class="chat-tool-bar-wrap"><div class="chat-note">';
+		$content .= '<p class="chat-session-status-closed" style="text-align: center; font-weight:bold; ';	// note we don't close the " here! 		
+		if (!$this->is_moderator(preg_split('/,/', $a['moderator_roles']))) {
+			if ($chat_status != "open") {
+				$content .= ' display: none; ';
+			} 
+		}		
+		$content .= '">'. __('The Moderator has closed this chat session', $this->translation_domain) .'</p>';
+		
+		$content .= '<div class="chat-tool-bar-wrap"';
+		if (!$this->is_moderator(preg_split('/,/', $a['moderator_roles']))) {
+			if ($chat_status != "open") {
+				$content .= ' style="display: none;" ';
+			}
+		}		
+		$content .= '><div class="chat-note">';
 		
 		if ($a['emoticons'] == 'enabled') {
 			$content .= '<div id="chat-emoticons-list-'.$a['id'].'" class="chat-emoticons-list chat-tool-bar">';
@@ -2109,10 +2616,26 @@ class Chat {
 		
 		// $this->chat_send_form();
 		
-		$content .= '<div id="chat-send-wrap">';
+		$content .= '<div class="chat-send-wrap-container"';
+		if (!$this->is_moderator(preg_split('/,/', $a['moderator_roles']))) {
+			if ($chat_status != "open") {
+				$content .= ' style="display:none" ';
+			}
+		}
+		$content .= '>';
+		
 		$content .= '<div class="chat-clear"></div>';
-		$content .= '<div class="chat-send-wrap"><textarea id="chat-send-'.$a['id'].'" class="chat-send"></textarea></div>';
-		$content .= '<div class="chat-note">' . __('"Enter" to send', $this->translation_domain) . '. ' . __('Place code in between [code] tags', $this->translation_domain) . '.</div>';
+		$content .= '<div class="chat-send-wrap">';
+		$content .= '<textarea id="chat-send-'.$a['id'].'" class="chat-send"></textarea>';
+		
+
+		$content .= '<p class="chat-session-status-open" ';
+		if ($chat_status != "open") {
+			$content .= ' style="display:none" ';
+		}		
+		$content .= '>' . __('"Enter" to send', $this->translation_domain) . '. ' . __('Place code in between [code] tags', $this->translation_domain) . '</p>';
+		$content .= '</div>';
+				
 		if ( $this->authenticate(preg_split('/,/', $a['login_options'])) > 2 ) {
 			$content .= '<div class="chat-note"><input type="button" value="'. __('Logout', $this->translation_domain) .'" name="chat-logout-submit" class="chat-logout-submit" id="chat-logout-submit-'.$a['id'].'" /></div>';
 		}
@@ -2122,6 +2645,15 @@ class Chat {
 		// $this->chat_after_toolbar();
 		if ($this->is_moderator(preg_split('/,/', $a['moderator_roles']))) {
 			$content .= '<div id="chat-log-actions-'.$a['id'].'" class="chat-log-actions chat-tool-bar">';
+
+			if ($chat_status == "open") {
+				$content .= '<input type="button" value="'. __('Close Chat', $this->translation_domain) .'" name="chat-session-close" class="chat-session-status" id="chat-session-close-'.$a['id'].'" />';
+				$content .= '<input type="button" style="display: none;" value="'. __('Open Chat', $this->translation_domain) .'" name="chat-session-open" class="chat-session-status" id="chat-session-open-'.$a['id'].'" />';				
+			} else {
+				$content .= '<input type="button" style="display: none;" value="'. __('Close Chat', $this->translation_domain) .'" name="chat-session-close" class="chat-session-status" id="chat-session-close-'.$a['id'].'" />';
+				$content .= '<input type="button" value="'. __('Open Chat', $this->translation_domain) .'" name="chat-session-open" class="chat-session-status" id="chat-session-open-'.$a['id'].'" />';				
+			}
+			
 			if ($a['log_creation'] == 'enabled' && $a['id'] != 1) {
 				$content .= '<input type="button" value="'. __('Archive', $this->translation_domain) .'" name="chat-archive" class="chat-archive" id="chat-archive-'.$a['id'].'" />';
 			}
@@ -2143,10 +2675,15 @@ class Chat {
 		
 		$content = '';
 		
+		if ($this->is_moderator(preg_split('/,/', $a['moderator_roles']))) 
+			$chat_box_moderator = "chat-box-moderator";
+		else
+			$chat_box_moderator = "";
+		
 		if ($post) {
-			$content = '<div id="chat-box-'.$a['id'].'" class="chat-box" style="width: '.$a['width'].' !important; background-color: '.$a['background_color'].'; '.$a['font_style'].'" >';
+			$content = '<div id="chat-box-'.$a['id'].'" class="chat-box '. $chat_box_moderator.'" style="width: '.$a['width'].' !important; background-color: '.$a['background_color'].'; '.$a['font_style'].'" >';
 		} else {
-			$content = '<div id="chat-box-'.$a['id'].'" class="chat-box" style="width: '.$a['width'].' !important; height: '.$a['height'].' !important; background-color: '.$a['background_color'].'; '.$a['font_style'].'" >';
+			$content = '<div id="chat-box-'.$a['id'].'" class="chat-box '. $chat_box_moderator. '" style="width: '.$a['width'].' !important; height: '.$a['height'].' !important; background-color: '.$a['background_color'].'; '.$a['font_style'].'" >';
 		}
 		
 		if ($echo) {
@@ -2169,10 +2706,15 @@ class Chat {
 	function chat_area($a, $echo = false) {
 		global $post;
 		
+		//echo "a<pre>"; print_r($a); echo "</pre>";
 		$content = '';
 		
+		if ($this->is_moderator(preg_split('/,/', $a['moderator_roles']))) 
+			$chat_area_moderator = "chat-area-moderator";
+		else
+			$chat_area_moderator = "";
 		if ($post) {
-			$content .= '<div id="chat-area-'.$a['id'].'" class="chat-area" style="height: '.$a['height'].' !important;" ><div class="chat-scroll-height"></div></div></div>';
+			$content .= '<div id="chat-area-'.$a['id'].'" class="chat-area '. $chat_area_moderator .'" style="background-color: '.$a['background_row_area_color'].' !important;; height: '.$a['height'].' !important;" ><div class="chat-scroll-height"></div></div></div>';
 		} else {
 			$content .= '<div id="chat-area-'.$a['id'].'" class="chat-area" ><div class="chat-scroll-height"></div></div></div>';
 		}
@@ -2258,7 +2800,7 @@ class Chat {
 	 * @see		http://codex.wordpress.org/TinyMCE_Custom_Buttons
 	 */
 	function tinymce_load_langs($langs) {
-		$langs["chat"] =  plugins_url('wordpress-chat/tinymce/langs/langs.php');
+		$langs["chat"] =  plugins_url('/tinymce/langs/langs.php', __FILE__);
 		return $langs;
 	}
  
@@ -2266,7 +2808,7 @@ class Chat {
 	 * @see		http://codex.wordpress.org/TinyMCE_Custom_Buttons
 	 */
 	function tinymce_add_plugin($plugin_array) {
-		$plugin_array['chat'] = plugins_url('wordpress-chat/tinymce/editor_plugin.js');
+		$plugin_array['chat'] = plugins_url('/tinymce/editor_plugin.js', __FILE__);
 		return $plugin_array;
 	}
 	
@@ -2289,95 +2831,261 @@ class Chat {
 			$function = $_GET['function'];
 		}
 		
-		$log = array();
-	    
+		$log = array();	
+
+		$this->start_logger();
+		
 		switch($function) {
+			case 'meta':			
+													
+				$this->add_logger_entry('starting chat '. $function);
+				
+				if (isset($_POST['cid'])) {
+					$chat_id = $_POST['cid'];
+					
+					if (isset($_POST['chatMetaData']))
+						$chatMetaData = $_POST['chatMetaData'];
+					else
+						$chatMetaData = array();
+					
+					if (!isset($chatMetaData[$chat_id])) {
+						$chatMetaData[$chat_id] = array();
+					}
+
+					//echo "_POST<pre>"; print_r($_POST); echo "</pre>";
+					//$chat_status = $this->chatSessionStatusGet($chat_id);
+					//echo "chat_status=[". $chat_status ."]<br />";
+					//die();
+					
+					if (!isset($chatMetaData[$chat_id]['status'])) {
+						$chatMetaData[$chat_id]['status'] = ''; //$this->chatSessionStatusGet($chat_id);
+					} 
+
+					if ((!isset($chatMetaData[$chat_id]['rows'])) || (!is_array($chatMetaData[$chat_id]['rows']))) {
+						$chatMetaData[$chat_id]['rows'] = array();
+					} else {
+						foreach($chatMetaData[$chat_id]['rows'] as $_key => $_val) {
+							$chatMetaData[$chat_id]['rows'][$_key] = intval($_val); 
+						}
+					}
+					
+			        $chatPollTime = time();
+			        while((time() - $chatPollTime) <= 15) {
+
+						//$this->add_logger_entry($function .' calling chatSessionStatusGet '. $function);
+						$chat_status = $this->chatSessionStatusGet($chat_id);
+						//$this->add_logger_entry($function .' returned chatSessionStatusGet '. $function);
+						
+						if ($chat_status !== $chatMetaData[$chat_id]['status']) {
+							$chatMetaData[$chat_id]['status'] = $chat_status;
+							echo json_encode($chatMetaData);
+							die();
+						} else {
+							$chatMetaData[$chat_id]['status'] = $this->chatSessionStatusGet($chat_id);
+						}
+
+						//$this->add_logger_entry($function .' calling get_messages');
+						$rows = $this->get_messages($chat_id, 0, 0, array('no', 'no-deleted'), 0, true, 0);
+						//$this->add_logger_entry($function .' returned get_messages');
+
+						if (($rows) && (count($rows))) {
+														
+							if (isset($rows_timestamps)) unset($rows_timestamps);
+							$rows_timestamps = array();
+							
+							foreach($rows as $row) {
+								if ($row->archived == "no-deleted")
+									$rows_timestamps[] = intval(strtotime($row->timestamp)); 
+							}
+														
+							if (count($chatMetaData[$chat_id]['rows']) != count($rows_timestamps)) {
+								$chatMetaData[$chat_id]['rows'] = $rows_timestamps;
+								echo json_encode($chatMetaData);
+								exit(0);
+								
+							} else {
+								if (array_diff($rows_timestamps, $chatMetaData[$chat_id]['rows'])) {
+									$chatMetaData[$chat_id]['rows'] = $rows_timestamps;
+									$chatMetaData[$chat_id]['rows'] = array_unique($chatMetaData[$chat_id]['rows'],
+										SORT_NUMERIC);
+									
+									sort($chatMetaData[$chat_id]['rows'], SORT_NUMERIC);	
+
+									echo json_encode($chatMetaData);
+									exit(0);
+								}
+							}
+						} 
+						//sleep(1);
+						break;						
+					}
+					echo json_encode($chatMetaData);
+					exit(0);					
+				}
+				break;
+				
 			case 'update':
-	    			$chat_id = $_POST['cid'];
-	    			$since = $_POST['since'];
-				$since_id = $_POST['since_id'];
-	    			$end = isset($_POST['end'])?$_POST['end']:0;
-	    			$archived = isset($_POST['archived'])?$_POST['archived']:'no';
+			
+				if (isset($_POST['cid']))
+					$chat_id = $_POST['cid'];
+				
+				if (isset($_POST['since']))
+					$since = $_POST['since'];
+				
+				if (isset($_POST['since_id']))
+					$since_id = $_POST['since_id'];
+				else
+					$since_id = 0;
+
+				if ($since_id == 0) {
+					if (isset($_POST['log_limit']))
+						$log_limit = $_POST['log_limit'];
+					else
+						$log_limit = 0;
+				} else {
+					$log_limit = 0;
+				}
+						
+    			$end = isset($_POST['end'])?$_POST['end']:0;
+    			$archived = isset($_POST['archived']) ? $_POST['archived'] : array('no', 'no-deleted');
+    			//$archived = isset($_POST['archived']) ? $_POST['archived'] : array('no');
 				$name = isset($_POST['name'])?$_POST['name']:md5('wordpress-chat');
 				$name = htmlentities(strip_tags($name));
-	    			
-	    			$rows = $this->get_messages($chat_id, $since, $end, $archived, $since_id);
+	    		
+		        $chatPollTime = time();
+		        //while((time() - $chatPollTime) <= 15) {
+					//$this->add_logger_entry($function .' calling get_messages');
+					$rows = $this->get_messages($chat_id, $since, $end, $archived, $since_id, false, $log_limit);
+					//echo "rows<pre>"; print_r($rows); echo "</pre>";
+					
+					//$this->add_logger_entry($function .' returned get_messages');
+					//if (($rows) && (count($rows))) break;
 
-	    			if ($rows) {
-		    			$text = array();
+					//sleep(1);
+					//break;
+				//}
+				
+				if ($rows) {
+					$text = array();
+					
 					$new_message = false;
-		    			
-		    			foreach ($rows as $row) {
-		    				$message = stripslashes($row->message);
-		    				$reg_exUrl = "/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/";
-		    				
-		    				if(($message) != "\n" && ($message) != "<br />" && ($message) != "") {
-								if(preg_match_all($reg_exUrl, $message, $urls) && isset($urls[0]) && count($urls[0]) > 0) {
-									foreach ($urls[0] as $url) {
-										$message = str_replace($url, '<a href="'.$url.'" target="_blank">'.$url.'</a>', $message);
-									}
+		    		//echo "this<pre>"; print_r($this); echo "</pre>";
+			
+					if ($this->is_moderator(preg_split('/,/', $_POST['moderator_roles']))) 
+						$_user_is_moderator = true;
+					else
+						$_user_is_moderator = false;
+
+					foreach ($rows as $row) {
+		
+						$message = stripslashes($row->message);
+    					$reg_exUrl = "/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/";
+    				
+    					if(($message) != "\n" && ($message) != "<br />" && ($message) != "") {
+							if(preg_match_all($reg_exUrl, $message, $urls) && isset($urls[0]) && count($urls[0]) > 0) {
+								foreach ($urls[0] as $url) {
+									$message = str_replace($url, '<a href="'.$url.'" target="_blank">'.$url.'</a>', $message);
 								}
-		    				}
-		    				
-		    				$message = preg_replace(array('/\[code\]/','/\[\/code\]/'), array('<code style="background: '.$this->get_option('code_color', '#FFFFCC').'; padding: 4px 8px;">', '</code>'), $message);
-		    				
+							}
+    					}
+    				
+    					$message = preg_replace(array('/\[code\]/','/\[\/code\]/'), array('<code style="background: '.
+							$this->get_option('code_color', '#FFFFCC').'; padding: 4px 8px;">', '</code>'), $message);
+    				
 						$code_start_count = preg_match_all('/<code/i', $message, $code_starts);
-						
 						$code_end_count = preg_match_all('/<\/code>/i', $message, $code_ends);
-						
+				
 						if ($code_start_count > $code_end_count) {
 							$code_diff = $code_start_count - $code_end_count;
-							
+					
 							for ($i=0; $i<$code_diff; $i++) {
 								$message .= '</code>';
 							}
+							
 						} else {
 							$code_diff = $code_end_count - $code_start_count;
-							
+					
 							for ($i=0; $i<$code_diff; $i++) {
 								$message = '<code>'.$message;
 							}
 						}
+				
+    					$message = str_replace("\n", "<br />", $message);
+    				
+    					$prepend = "";
+
+						$prepend .= '<div class="chat-actions" style="float: left; width: 50px; margin-right: 5px">';
+    					if ($_POST['avatar'] == 'enabled') {
+
+    						if (preg_match('/@/', $row->avatar)) {
+    							$avatar = get_avatar($row->avatar, 50, null, $row->name);
+    						} else {
+    							$avatar = "<img alt='{$row->name}' src='{$row->avatar}' class='avatar photo' />";
+    						}
+    						$prepend .= '<a class="chat-user-avatar" title="'. $row->name .
+								'" href="@'. $row->name .'">'. "$avatar " .'</a>';
+    					}
+
+						if ( ($_user_is_moderator) && (!isset($_GET['lid'])) ) {
+							$prepend .= '<div class="chat-admin-actions">';
+							if (($row->archived == "no-deleted") || ($row->archived == "yes-deleted")) {
+								$prepend .= '<a class="chat-admin-actions chat-admin-actions-undelete" title="" href="#"><span class="action">undelete</span></a>';
+							} else {
+								$prepend .= '<a class="chat-admin-actions chat-admin-actions-delete" title="" href="#"><span class="action">delete</span></a>';
+							}
+							$prepend .= '</div>';
+						}
 						
-		    				$message = str_replace("\n", "<br />", $message);
-		    				
-		    				$prepend = "";
-		    				if ($_POST['avatar'] == 'enabled') {
-		    					if (preg_match('/@/', $row->avatar)) {
-		    						$avatar = get_avatar($row->avatar, 50, null, $row->name);
-		    					} else {
-		    						$avatar = "<img alt='{$row->name}' src='{$row->avatar}' class='avatar photo' />";
-		    					}
-		    					$prepend .= "$avatar ";
-		    				}
-		    				
-		    				if ($_POST['date_show'] == 'enabled') {
-		    					$prepend .= ' <span class="date" style="background: '.$_POST['date_color'].';">'. date_i18n(get_option('date_format'), strtotime($row->timestamp) + get_option('gmt_offset') * 3600, false) . '</span>';
-		    				}
-		    				if ($_POST['time_show'] == 'enabled') {
-		    					$prepend .= ' <span class="time" style="background: '.$_POST['date_color'].';">'. date_i18n(get_option('time_format'), strtotime($row->timestamp) + get_option('gmt_offset') * 3600, false) . '</span>';
-		    				}
-		    				
+						$prepend .= '</div>';	
+    				
+    					if ($_POST['date_show'] == 'enabled') {
+    						$prepend .= ' <span class="date" style="background: '.$_POST['date_color'].';">'. date_i18n(get_option('date_format'),
+ 								strtotime($row->timestamp) + get_option('gmt_offset') * 3600, false) . '</span>';
+    					}
+
+    					if ($_POST['time_show'] == 'enabled') {
+    						$prepend .= ' <span class="time" style="background: '.$_POST['date_color'].';">'. date_i18n(get_option('time_format'),
+ 								strtotime($row->timestamp) + get_option('gmt_offset') * 3600, false) . '</span>';
+    					}
+    				
 						if ($row->moderator == 'yes') {
 							$name_color = $_POST['moderator_name_color'];
 						} else {
 							$name_color = $_POST['name_color'];
 						}
-						
-		    				$prepend .= ' <span class="name" style="background: '.$name_color.';">'.stripslashes($row->name).'</span>';
-		    				
-		    				$text[$row->id] = " <div id='row-".strtotime($row->timestamp)."' class='row'>{$prepend}<span class='message' style='color: ".$_POST['text_color']."'>".convert_smilies($message)."</span><div class='chat-clear'></div></div>";
-		    				$last_check = $row->timestamp;
+				
+    					$prepend .= '<a class="chat-user-avatar" title="'. $row->name . '" href="@'. $row->name .'"> <span class="name" style="background: '.$name_color.';">'.stripslashes($row->name).'</span></a>';
+    				
+    					$text[$row->id] = ' <div id="row-'. strtotime($row->timestamp). '" class="row" 
+							style="background-color:'. $_POST['background_row_color'].' !important; border:'. $_POST['row_border_width'] .' solid '. $_POST['row_border_color'].' !important;">'. $prepend .'<span class="message" 
+							style="color: '. $_POST['text_color'] .'">'. convert_smilies($message) .'</span><div class="chat-clear"></div></div>';
+    					$last_check = $row->timestamp;
+
 						if ($name != $row->name) {
 							$new_message = true;
 						}
-		    			}
-		    			
-					$log['text'] = $text;
-					$log['time'] = strtotime($last_check)+1;
-					$log['new_message'] = $new_message;
+	    			
+						$log['text'] = $text;
+						$log['time'] = strtotime($last_check)+1;
+						$log['new_message'] = $new_message;						
 	    			}
+				}
+
+				$rows_deleted = $this->get_messages($chat_id, 0, 0, array('no-deleted'), 0, false, 0);
+				if (($rows_deleted) && (count($rows_deleted))) {
+					//echo "rows_deleted<pre>"; print_r($rows_deleted); echo "</pre>";							
+					$rows_timestamps = array();
+					
+					foreach($rows_deleted as $row) {
+						if ($row->archived == "no-deleted")
+							$rows_timestamps[] = intval(strtotime($row->timestamp)); 
+					}
+					$log['deleted-rows'] = $rows_timestamps;				
+					//echo "log<pre>"; print_r($log); echo "</pre>";
+				}
+				$log['status'] = $this->chatSessionStatusGet($chat_id);
 				break; 
+				
 			case 'send':
 				$chat_id = $_POST['cid'];
 				$name = strip_tags($_POST['name']);
@@ -2393,7 +3101,9 @@ class Chat {
 				
 				$smessage = strip_tags($smessage);
 				
+				//$this->add_logger_entry($function .' returned send_message');				
 				$this->send_message($chat_id, $name, $avatar, base64_encode($smessage), $moderator);
+				//$this->add_logger_entry($function .' returned send_message');
 				break;
 		}
 		
@@ -2438,7 +3148,7 @@ class Chat {
 	 * @param	int		$end		End Unix timestamp
 	 * @param	string	$archived	Archived? 'yes' or 'no'
 	 */
-	function get_messages($chat_id, $since = 0, $end = 0, $archived = 'no', $since_id = false) {
+	function get_messages($chat_id, $since = 0, $end = 0, $archived = array('no'), $since_id = false, $row_id_only = false, $log_limit = 0) {
 		global $wpdb, $blog_id;
 		
 		$chat_id = $wpdb->escape($chat_id);
@@ -2458,9 +3168,30 @@ class Chat {
 			$start = date('Y-m-d H:i:s', 0);
 		}
 		
-		return $wpdb->get_results(
-			"SELECT * FROM `".Chat::tablename('message')."` WHERE blog_id = '$blog_id' AND chat_id = '$chat_id' AND archived = '$archived' AND timestamp BETWEEN '$start' AND '$end' AND id > '$since_id' ORDER BY timestamp ASC;"
-		);
+		if (!is_array($archived))
+			$archived = array($archived);
+		$archived_str = "";
+
+		foreach($archived as  $_val) {
+			if (strlen($archived_str)) $archived_str .= ",";
+			$archived_str .= "'". $_val ."'";
+		}
+		
+		if ($row_id_only == false) {
+			$sql_str = "SELECT * FROM `".WPMUDEV_Chat::tablename('message')."` WHERE blog_id = '". $blog_id ."' AND chat_id = '". $chat_id ."' AND archived IN ( ". $archived_str ." ) AND timestamp BETWEEN '". $start ."' AND '". $end ."' AND id > ". $since_id ." ORDER BY timestamp DESC";
+		} else {
+			$sql_str = "SELECT id, timestamp FROM `".WPMUDEV_Chat::tablename('message')."` WHERE blog_id = '". $blog_id ."' AND chat_id = '". $chat_id ."' AND archived IN ( ". $archived_str ." ) AND timestamp BETWEEN '". $start ."' AND '". $end ."' AND id > ". $since_id ." ORDER BY timestamp DESC";
+		}
+		if (intval($log_limit)) {
+			$sql_str .= " LIMIT ". intval($log_limit);
+		}
+			
+		//echo "sql_str=[". $sql_str ."]<br />";
+		$this->add_logger_entry(__FUNCTION__ .' SQL ['. $sql_str.']');
+			
+		$results = $wpdb->get_results( $sql_str );
+		krsort($results);
+		return $results;
 	}
 	
 	/**
@@ -2494,9 +3225,12 @@ class Chat {
 			$moderator_str = 'yes';
 		}
 		
-		return $wpdb->query("INSERT INTO ".Chat::tablename('message')."
+		$sql_str = "INSERT INTO ".WPMUDEV_Chat::tablename('message')."
 					(blog_id, chat_id, timestamp, name, avatar, message, archived, moderator)
-					VALUES ('$blog_id', '$chat_id', '$time_stamp', '$name', '$avatar', '$message', 'no', '$moderator_str');");
+					VALUES ('$blog_id', '$chat_id', '$time_stamp', '$name', '$avatar', '$message', 'no', '$moderator_str');";
+		$this->add_logger_entry(__FUNCTION__ .' SQL ['. $sql_str.']');
+		
+		return $wpdb->query($sql_str);
 	}
 	
 	/**
@@ -2508,7 +3242,7 @@ class Chat {
 	function get_last_chat_id() {
 		global $wpdb, $blog_id;
 		
-		$last_id = $wpdb->get_var("SELECT chat_id FROM `".Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' ORDER BY chat_id DESC LIMIT 1");
+		$last_id = $wpdb->get_var("SELECT chat_id FROM `".WPMUDEV_Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' ORDER BY chat_id DESC LIMIT 1");
 		
 		if ($last_id) {
 			return substr($last_id, 0, -1);
@@ -2530,7 +3264,7 @@ class Chat {
 		$option_type = ($_POST['cid'] == 1)?'site':'default';
 		
 		if ($this->is_moderator($this->get_option('moderator_roles', array('administrator','editor','author'), $option_type))) {
-			$wpdb->query("DELETE FROM `".Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived = 'no';");
+			$wpdb->query("DELETE FROM `".WPMUDEV_Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived IN ('no', 'no-deleted');");
 		}
 		exit(0);
 	}
@@ -2550,18 +3284,14 @@ class Chat {
 		$option_type = ($_POST['cid'] == 1)?'site':'default';
 		
 		if ($this->is_moderator($this->get_option('moderator_roles', array('administrator','editor','author'), $option_type))) {
-			$start = $wpdb->get_var("SELECT timestamp FROM `".Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived = 'no' ORDER BY timestamp ASC LIMIT 1;");
-			$end = $wpdb->get_var("SELECT timestamp FROM `".Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived = 'no' ORDER BY timestamp DESC LIMIT 1;");
+			$start = $wpdb->get_var("SELECT timestamp FROM `".WPMUDEV_Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived IN ('no', 'no-deleted') ORDER BY timestamp ASC LIMIT 1;");
+			$end = $wpdb->get_var("SELECT timestamp FROM `".WPMUDEV_Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived IN ('no', 'no-deleted') ORDER BY timestamp DESC LIMIT 1;");
 			
-			$sql = array();
+			$wpdb->query("UPDATE `".WPMUDEV_Chat::tablename('message')."` set archived = 'yes' WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp BETWEEN '{$start}' AND '{$end}' AND archived = 'no';");
+
+			$wpdb->query("UPDATE `".WPMUDEV_Chat::tablename('message')."` set archived = 'yes-deleted' WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp BETWEEN '{$start}' AND '{$end}' AND archived = 'no-deleted';");
 			
-			$sql[] = "SELECT timestamp FROM `".Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived = 'no' ORDER BY timestamp DESC LIMIT 1;";
-			$sql[] = "SELECT timestamp FROM `".Chat::tablename('message')."` WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp <= '{$since}' AND archived = 'no' ORDER BY timestamp ASC LIMIT 1; ";
-			$sql[] = "UPDATE `".Chat::tablename('message')."` set archived = 'yes' WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp BETWEEN '{$start}' AND '{$end}' AND archived = 'no';";
-			
-			$wpdb->query("UPDATE `".Chat::tablename('message')."` set archived = 'yes' WHERE blog_id = '{$blog_id}' AND chat_id = '{$chat_id}' AND timestamp BETWEEN '{$start}' AND '{$end}' AND archived = 'no';");
-			
-			$wpdb->query("INSERT INTO ".Chat::tablename('log')."
+			$wpdb->query("INSERT INTO ".WPMUDEV_Chat::tablename('log')."
 						(blog_id, chat_id, start, end, created)
 						VALUES ('$blog_id', '$chat_id', '$start', '$end', '$created');");
 		}
@@ -2583,21 +3313,318 @@ class Chat {
 		$chat_id = $wpdb->escape($chat_id);
 		
 		return $wpdb->get_results(
-			"SELECT * FROM `".Chat::tablename('log')."` WHERE blog_id = '$blog_id' AND chat_id = '$chat_id' ORDER BY created ASC;"
+			"SELECT * FROM `".WPMUDEV_Chat::tablename('log')."` WHERE blog_id = '$blog_id' AND chat_id = '$chat_id' ORDER BY created ASC;"
 		);
 	}
+	
+	function chatModerateDelete() {
+		global $wpdb, $blog_id;
+
+		if (isset($_POST['cid']))
+			$chat_id = intval($_POST['cid']);
+		if (isset($_POST['row_id']))
+			$row_id = intval($_POST['row_id']);
+		if (isset($_POST['moderate_action']))
+			$moderate_action = esc_attr($_POST['moderate_action']);
+			
+		if ( ($chat_id > 0) && ($row_id > 0) && (strlen($moderate_action)) ) {
+			
+			$row_date  = date('Y-m-d H:i:s', $row_id);
+			//echo "row_date=[". $row_date ."]<br />";
+
+			$sql_str = "SELECT id, archived FROM `"	.WPMUDEV_Chat::tablename('message')
+				."` WHERE blog_id = '". $blog_id ."' AND chat_id = '". $chat_id ."' AND timestamp = '". $row_date ."' LIMIT 1;";
+			//echo "sql_str=[". $sql_str ."]<br />";
+
+			$chat_row = $wpdb->get_row($sql_str);
+			//echo "chat_row<pre>"; print_r($chat_row); echo "</pre>";
+			if (($chat_row) && (isset($chat_row->archived))) {
+				$chat_row_archived_new = '';
+				
+				if ($moderate_action == "delete") {
+					if ($chat_row->archived == "yes") {
+						$chat_row_archived_new = 'yes-deleted';
+					} else if ($chat_row->archived == "no") {
+						$chat_row_archived_new = 'no-deleted';
+					}
+				} else if ($moderate_action == "undelete") {
+					if ($chat_row->archived == "yes-deleted") {
+						$chat_row_archived_new = 'yes';
+					} else if ($chat_row->archived == "no-deleted") {
+						$chat_row_archived_new = 'no';
+					}					
+				}
+				
+				if (strlen($chat_row_archived_new)) {
+					$sql_str = "UPDATE `".WPMUDEV_Chat::tablename('message')
+						."` SET archived='". $chat_row_archived_new 
+						."' WHERE id=". $chat_row->id ." AND blog_id = '". $blog_id ."' AND chat_id = '". $chat_id ."' LIMIT 1;";
+					
+					//echo "sql_str=[". $sql_str ."]<br />";
+					$wpdb->get_results( $sql_str );						
+					echo 1;
+					die();
+				}
+			}
+		}
+	}
+	
+	function chatSessionStatusModerate() {
+
+		$chat_id = 0;
+		
+		if (isset($_POST['cid']))
+			$chat_id = intval($_POST['cid']);
+
+		if ($chat_id > 0) {
+			//echo "chat_id=[". $chat_id ."]<br />";
+			
+			if (isset($_POST['chat_session_status'])) {
+				$chat_session_status = esc_attr($_POST['chat_session_status']);
+				//echo "chat_session_status=[". $chat_session_status ."]<br />";
+				
+				if ($chat_session_status == "chat-session-close")
+					$chat_session_status = "closed";
+				else if ($chat_session_status == "chat-session-open")
+					$chat_session_status = "open";
+				//echo "chat_session_status=[". $chat_session_status ."]<br />";
+					
+				$options = get_option('wordpress-chat-session-status', $this->chatSessionStatusDefault());
+				$options[$chat_id] = $chat_session_status;
+				//echo "options<pre>"; print_r($options); echo "</pre>";
+				$update_ret = update_option('wordpress-chat-session-status', $options);
+				if ($update_ret === true)
+					echo "1";
+			}
+			die();
+		}
+	}
+	
+	function chatSessionStatusDefault() {
+		return array();
+	}
+	
+	function chatSessionStatusGet($chat_id = 0) {
+
+		if (!$chat_id) {
+			if (isset($_POST['cid'])) 
+				$chat_id = intval($_POST['cid']);
+		} else {
+			$chat_id = intval($chat_id);
+		}
+		
+		if ($chat_id > 0) {
+			global $wpdb;
+			// We can't use the get/update options. Since we are polling the options table and a different process is updating via AJAX we would 
+			// need to wait for the cache to timeout. So we check the database directly. 
+			//$options = get_option('wordpress-chat-session-status', $this->chatSessionStatusDefault());
+			
+			$sql_str = $wpdb->prepare("SELECT option_value FROM $wpdb->options WHERE option_name = '%s' LIMIT 1", "wordpress-chat-session-status");
+			$this->add_logger_entry(__FUNCTION__ .' SQL ['. $sql_str. ']');
+			$row = $wpdb->get_col( $sql_str );
+			$this->add_logger_entry(__FUNCTION__ .' returned');
+			if ($row) {
+				$options = unserialize($row[0]);
+				if (!isset($options[$chat_id]))  {
+					return "closed";
+				} else {
+					if (($options[$chat_id] == "open") || ($options[$chat_id] == "closed")) return $options[$chat_id];
+					else return "closed";
+				}
+			}
+		}
+		return "closed";
+	}	
+	
+	function start_logger() {
+		
+		if (isset($_POST['cid'])) {
+			$chat_id = intval($_POST['cid']);
+		
+			$plugin_path = dirname(__FILE__) ."/_logs";
+			//echo "plugin_path=[". $plugin_path ."]<br />";
+			//die();
+			
+			@mkdir($plugin_path, 0777, true);
+			$this->logger_fp = fopen($plugin_path ."/log_". $chat_id .".log", "a+");
+		}
+	}
+	
+	function add_logger_entry($message='') {		
+		if ($this->logger_fp) {
+			fwrite($this->logger_fp, date('Y-m-d H:i:s', time()) .": ". $message ."\r\n");		
+			fflush($this->logger_fp);
+		}
+	}
 }
+} // End of class_exists()
 
 // Lets get things started
-$chat = new Chat();
+$wpmudev_chat = new WPMUDEV_Chat();
 
-if ( !function_exists( 'wdp_un_check' ) ) {
-	add_action( 'admin_notices', 'wdp_un_check', 5 );
-	add_action( 'network_admin_notices', 'wdp_un_check', 5 );
+if (!class_exists('WPMUDEVChatWidget')) {
 
-	function wdp_un_check() {
-		if ( !class_exists( 'WPMUDEV_Update_Notifications' ) && current_user_can( 'edit_users' ) )
-			echo '<div class="error fade"><p>' . __('Please install the latest version of <a href="http://premium.wpmudev.org/project/update-notifications/" title="Download Now &raquo;">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href="http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/">More information &raquo;</a>', 'wpmudev') . '</a></p></div>';
+	class WPMUDEVChatWidget extends WP_Widget {
+
+		function WPMUDEVChatWidget () {
+			global $wpmudev_chat;
+			
+			$widget_ops = array('classname' => __CLASS__, 'description' => __('WPMU DEV Chat Widget.', $wpmudev_chat->translation_domain));
+			parent::WP_Widget(__CLASS__, __('WPMU DEV Chat Widget', $wpmudev_chat->translation_domain), $widget_ops);
+		}
+	
+		function form($instance) {
+			global $wpmudev_chat;
+			
+			// Set defaults
+			// ...
+			$defaults = array( 
+				'title' 		=> 	'',
+				'id'			=>	'',
+				'height'		=>	'300px',
+				'sound'			=>	'disabled',
+				'avatar'		=>	'disabled',
+				'date_show'		=>	'disabled',
+				'time_show'		=>	'disabled'
+			);
+
+			$instance = wp_parse_args( (array) $instance, $defaults ); 
+			//echo "instance<pre>"; print_r($instance); echo "</pre>";
+
+			if (empty($instance['height'])) {
+				$instance['height'] = "300px";
+			}
+			
+			if ($instance['sound'] == "enabled")
+				$widget_sound = 'checked="checked"';
+			else 
+			 	$widget_sound = '';
+			
+			if ($instance['avatar'] == "enabled")
+				$widget_avatar = 'checked="checked"';
+			else 
+			 	$widget_avatar = '';
+
+			if ($instance['date_show'] == "enabled")
+				$widget_date = 'checked="checked"';
+			else 
+			 	$widget_date = '';
+
+			if ($instance['time_show'] == "enabled")
+				$widget_time = 'checked="checked"';
+			else 
+			 	$widget_time = '';
+			
+			?>
+			<input type="hidden" name="<?php echo $this->get_field_name('id'); ?>" id="<?php echo $this->get_field_id('id'); ?>" 
+				class="widefat" value="<?php echo $instance['id'] ?> "/>
+			<p>
+				<label for="<?php echo $this->get_field_id('title') ?>"><?php _e('Title:', $wpmudev_chat->translation_domain); ?></label>
+				<input type="text" name="<?php echo $this->get_field_name('title'); ?>" id="<?php echo $this->get_field_id('title'); ?>" 
+					class="widefat" value="<?php echo $instance['title'] ?>" />
+			</p>
+
+			<p>
+				<label for="<?php echo $this->get_field_id( 'height' ); ?>"><?php 
+					_e('Height for widget:', $wpmudev_chat->translation_domain); ?></label>
+
+				<input type="text" id="<?php echo $this->get_field_id( 'height' ); ?>" value="<?php echo $instance['height']; ?>"
+					name="<?php echo $this->get_field_name( 'height'); ?>" class="widefat" style="width:100%;" />
+					<span class="description"><?php _e('The width will be 100% of the widget area', $wpmudev_chat->translation_domain); ?></span>
+			</p>
+
+			<p>
+				<input type="checkbox" class="checkbox" <?php echo $widget_sound; ?> id="<?php echo $this->get_field_id( 'sound' ); ?>" 
+					value="<?php echo $instance['sound']; ?>"
+					name="<?php echo $this->get_field_name( 'sound'); ?>" /> <label for="<?php echo $this->get_field_id( 'sound' ); ?>"><?php 
+						_e('Play Sound on new messages', $wpmudev_chat->translation_domain); ?></label><br />
+
+				<input type="checkbox" class="checkbox" <?php echo $widget_avatar; ?> id="<?php echo $this->get_field_id( 'avatar' ); ?>" 
+					value="<?php echo $instance['avatar']; ?>"
+					name="<?php echo $this->get_field_name( 'avatar'); ?>" /> <label for="<?php echo $this->get_field_id( 'avatar' ); ?>"><?php 
+						_e('Show User Avatars', $wpmudev_chat->translation_domain); ?></label><br />
+
+				<input type="checkbox" class="checkbox" <?php echo $widget_date; ?> id="<?php echo $this->get_field_id( 'date_show' ); ?>" 
+					value="<?php echo $instance['date_show']; ?>"
+					name="<?php echo $this->get_field_name( 'date_show'); ?>" /> <label for="<?php echo $this->get_field_id( 'date_show' ); ?>"><?php 
+						_e('Show Date', $wpmudev_chat->translation_domain); ?></label><br />
+
+				<input type="checkbox" class="checkbox" <?php echo $widget_time; ?> id="<?php echo $this->get_field_id( 'time_show' ); ?>" 
+					value="<?php echo $instance['time_show']; ?>"
+					name="<?php echo $this->get_field_name( 'time_show'); ?>" /> <label for="<?php echo $this->get_field_id( 'time_show' ); ?>"><?php 
+						_e('Show Date', $wpmudev_chat->translation_domain); ?></label>
+			</p>
+
+			<?php
+		}
+		
+		function update($new_instance, $old_instance) {
+			global $wpmudev_chat;
+			
+			//echo "new_instance<pre>"; print_r($new_instance); echo "</pre>";
+			//echo "old_instance<pre>"; print_r($old_instance); echo "</pre>";
+			//die();
+			
+			$instance = $old_instance;
+
+			$instance['title'] 			= strip_tags($new_instance['title']);
+
+			if ((!empty($new_instance['id'])) && (intval($new_instance['id'])))
+				$instance['id'] 		= intval($new_instance['id']);
+			else {
+				$last_chat_id = $wpmudev_chat->get_last_chat_id();
+				$instance['id']	=  rand($last_chat_id+1, $last_chat_id*1000);
+			}
+
+			if (isset($new_instance['height']))
+				$instance['height'] 	= esc_attr($new_instance['height']);
+			else
+				$instance['height']		= '300px';
+
+			if (isset($new_instance['sound']))
+				$instance['sound'] 		= 'enabled';
+			else
+				$instance['sound']		= 'disabled';
+
+			if (isset($new_instance['avatar']))
+				$instance['avatar'] 	= 'enabled';
+			else
+				$instance['avatar']		= 'disabled';
+
+			if (isset($new_instance['date_show']))
+				$instance['date_show'] 	= 'enabled';
+			else
+				$instance['date_show']		= 'disabled';
+
+			if (isset($new_instance['time_show']))
+				$instance['time_show'] 	= 'enabled';
+			else
+				$instance['time_show']		= 'disabled';
+
+
+
+			return $instance;
+		}		
+		
+		function widget($args, $instance) {
+			global $wpmudev_chat;
+			
+			extract($args);
+			
+			echo $before_widget;
+
+			$title = apply_filters('widget_title', $instance['title']);
+			if ($title) echo $before_title . $title . $after_title;
+		
+			echo do_shortcode('[chat id="'. $instance['id'] .'" width="100%" height="'. $instance['height'] .'"  sound="'. $instance['sound'] .'" avatar="'. $instance['avatar'].'" emoticons="disabled" date_show="'. $instance['date_show'].'" time_show="'.$instance['time_show'].'" ]');
+
+			echo $after_widget;
+			
+		}
 	}
 }
 
+function wpmudev_chat_widget_init_proc() {
+	register_widget('WPMUDEVChatWidget');
+}
+add_action( 'widgets_init', 'wpmudev_chat_widget_init_proc');

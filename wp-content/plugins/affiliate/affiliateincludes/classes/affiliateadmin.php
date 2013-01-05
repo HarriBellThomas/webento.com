@@ -607,7 +607,12 @@ class affiliateadmin {
 							<tr style='background: transparent;'>
 								<th><label for="affiliate_referrer"><?php _e('Your URL', 'affiliate'); ?></label></th>
 								<td>
-									http://&nbsp;<input type="text" name="affiliate_referrer" id="affiliate_referrer" value="<?php echo $referrer; ?>" class="regular-text" /><?php echo "&nbsp;&nbsp;" . $msg;?>
+									http://&nbsp;<input type="text" name="affiliate_referrer" id="affiliate_referrer" value="<?php echo $referrer; ?>" class="regular-text" />
+									<?php 	echo "&nbsp;&nbsp;";
+									 		if (isset($msg)) {
+												echo $msg;
+											}
+									?>
 									<?php
 									if(defined('AFFILIATE_VALIDATE_REFERRER_URLS') && AFFILIATE_VALIDATE_REFERRER_URLS == 'yes' ) {
 										if(empty($referrer) || (!empty($validreferrer) && $validreferrer == 'yes')) {}
@@ -763,7 +768,7 @@ class affiliateadmin {
 				$period = date('Ym', $rdate);
 				$place = 18 - $n;
 
-				echo "<tr $bgcolour class='$class periods' id='period-$place'>";
+				echo "<tr class='periods' id='period-$place'>";
 				echo '<td valign="top">';
 				echo date("M", $rdate) . '<br/>' . date("Y", $rdate);
 				echo '</td>';
@@ -1905,7 +1910,7 @@ class affiliateadmin {
 
 				echo '<div class="alignright">';
 
-				echo '<input type="submit" value="' . __('Export Payments', 'affiliate') . '" name="allaction_exportpayments" class="button-secondary delete" />';
+				echo '<input type="submit" value="' . __('Export Payments', 'affiliate') . '" name="allaction_exportpayments" class="button-secondary delete" />&nbsp;&nbsp;';
 				echo '<input type="submit" value="' . __('Mark as Paid', 'affiliate') . '" name="allaction_markaspaid" class="button-secondary" />';
 				wp_nonce_field( 'allaffiliateactions' );
 				echo '<br class="clear" />';
@@ -1995,7 +2000,7 @@ class affiliateadmin {
 				}
 			} else {
 
-				echo "<tr $bgcolour class='$class'>";
+				echo "<tr class=''>";
 
 				echo '<td colspan="8" valign="top">';
 				echo __('There are no results for the selected month.','affiliate');
@@ -2136,15 +2141,17 @@ class affiliateadmin {
 
 			case 'bulk-toggle':
 								check_admin_referer('bulk-addon');
-								foreach($_GET['addoncheck'] AS $key) {
-									$found = array_search($key, $active);
-									if($found !== false) {
-										unset($active[$found]);
-									} else {
-										$active[] = $key;
+								if( is_array($_GET['plugincheck'])) {
+									foreach($_GET['plugincheck'] AS $key) {
+										$found = array_search($key, $active);
+										if($found !== false) {
+											unset($active[$found]);
+										} else {
+											$active[] = $key;
+										}
 									}
+									update_option('affiliate_activated_addons', array_unique($active));
 								}
-								update_option('affiliate_activated_addons', array_unique($active));
 								return 7;
 								break;
 
@@ -2344,7 +2351,7 @@ class affiliateadmin {
 			$searchstring = explode( 'referrer:', $s );
 
 			if(!empty($searchstring[1])) {
-				$user = get_userdatabylogin( $searchstring[1] );
+				$user = get_user_by( 'login',$searchstring[1] );
 				if($user) {
 					$referred = $this->get_referred_by( $user->ID );
 

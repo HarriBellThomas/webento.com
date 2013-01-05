@@ -1,4 +1,4 @@
-	<section id="profile" class="grid_container">
+	<section id="profile" class="grid_container wpmudev-dash">
 		<section class="overlay"></section>
 		<section class="profile-left col-03">
 			<section class="profile-user">
@@ -99,14 +99,14 @@
 				<?php if ($count >= 5) break; $count++ ?>
 				<?php } ?>
 			</table>
-			<a href="http://premium.wpmudev.org/profile/private/" target="_blank" class="button"><i class="icon-list icon-large"></i> <?php _e('VIEW ALL ACTIVITY', 'wpmudev'); ?></a>
+			<a href="http://premium.wpmudev.org/profile/private/" target="_blank" class="wpmu-button icon"><i class="icon-list icon-large"></i> <?php _e('VIEW ALL ACTIVITY', 'wpmudev'); ?></a>
 		</section>
 	</section>
 
 	<!-- Bottom part of the dashboard -->
 	
 	<!-- 3 column section -->
-	<section id="main" role="main">
+	<section id="main" role="main" class="wpmudev-dash">
 		<!-- VISUAL BACKDROP -->
 		<div id="left-side-bg">
 			<div class="spacer"></div>
@@ -120,7 +120,7 @@
 				<h1><i class="icon-question-sign"></i><?php _e('Support', 'wpmudev'); ?></h1>
 				<hr />
 				<input type="text" class="dash-search" id="forum-search-q" placeholder="<?php _e('Search support', 'wpmudev'); ?>" /><a id="forum-search-go" href="#" class="column-search"><i class="icon-search"></i></a>
-				<a href="admin.php?page=wpmudev-support" class="button big-button"><i class="icon-play-circle icon-larger"></i><span class="btn-txt"><strong><?php _e('Q&A', 'wpmudev'); ?></strong><br /><small><?php _e('Ask a question', 'wpmudev'); ?></small></span></a>
+				<a href="admin.php?page=wpmudev-support" class="wpmu-button icon big"><span class="btn-txt"><strong><?php _e('Q&A', 'wpmudev'); ?><i class="icon-play-circle icon-larger"></i></strong><small><?php _e('Ask a question', 'wpmudev'); ?></small></span></a>
 				<section class="recent-activity-widget">
 					<ul>
 						<li class="accordion-title">
@@ -200,7 +200,7 @@
 					</ul>
 				</section>
 				<!-- plugin / theme foldout on main dash -->
-				<a href="admin.php?page=wpmudev-plugins" class="button big-button"><i class="icon-play-circle icon-larger"></i><strong><?php _e('All plugins', 'wpmudev'); ?></strong></a>
+				<a href="admin.php?page=wpmudev-plugins" class="wpmu-button icon big"><i class="icon-play-circle icon-larger"></i><strong><?php _e('All plugins', 'wpmudev'); ?></strong></a>
 
 				<!-- plugin / theme foldout on main dash -->
 				<section class="product-foldout">
@@ -253,7 +253,7 @@
 					</ul>
 				</section>
 				<!-- plugin / theme foldout on main dash -->
-				<a href="admin.php?page=wpmudev-themes" class="button big-button"><i class="icon-play-circle icon-larger"></i><strong><?php _e('All themes', 'wpmudev'); ?></strong></a>
+				<a href="admin.php?page=wpmudev-themes" class="wpmu-button icon big"><i class="icon-play-circle icon-larger"></i><strong><?php _e('All themes', 'wpmudev'); ?></strong></a>
 			</section> <!-- /PRODUCTS COLUMN -->
 
 			<section class="community-column col-02" >

@@ -41,7 +41,6 @@ class AgmAdminFormRenderer {
 		echo "</select>";
 	}
 	function  create_map_zoom_box () {
-		$opt = apply_filters('agm_google_maps-options', get_option('agm_google_maps'));
 		$items = array(
 			'1' => __('Earth', 'agm_google_maps'),
 			'3' => __('Continent', 'agm_google_maps'),
@@ -50,13 +49,63 @@ class AgmAdminFormRenderer {
 			'12' => __('City Plan', 'agm_google_maps'),
 			'15' => __('Details', 'agm_google_maps'),
 		);
-		echo "<select id='zoom' name='agm_google_maps[zoom]'>";
+		$opt = apply_filters('agm_google_maps-options', get_option('agm_google_maps'));
+		$zoom = !empty($opt['zoom']) && is_numeric($opt['zoom']) ? (int)$opt['zoom'] : 1;
+		$is_advanced = (bool)(empty($opt['zoom']) || !in_array($zoom, array_keys($items)));
+
+		$basic_visibility = $is_advanced ? 'style="display:none"' : '';
+		$basic_disabled = $is_advanced ? 'disabled="disabled"' : '';
+		$advanced_visibility = $is_advanced ? '' : 'style="display:none"';
+		$advanced_disabled = $is_advanced ? '' : 'disabled="disabled"';
+
+		// Basic
+		echo "<div id='agm-zoom-basic-container' {$basic_visibility}>";
+		echo "<select id='zoom' name='agm_google_maps[zoom]' {$basic_disabled}>";
 		foreach($items as $item=>$label) {
-			$selected = (@$opt['zoom'] == $item) ? 'selected="selected"' : '';
+			$selected = ($zoom == $item) ? 'selected="selected"' : '';
 			echo "<option value='{$item}' {$selected}>{$label}</option>";
 		}
 		echo "</select>";
+		echo '&nbsp;<a href="#agm-advanced_zoom" id="agm-advanced_zoom-toggler">' . __('Advanced', 'agm_google_maps') . '</a>';
 		_e('<div>Please note, these titles are only approximations, but generally fit the description.</div>', 'agm_google_maps');
+		echo "</div>";
+		
+		// Advanced
+		echo "<div id='agm-zoom-advanced-container' {$advanced_visibility}>";
+		echo "<input type='text' size='2' name='agm_google_maps[zoom]' value='{$zoom}' id='agm-zoom-advanced' {$advanced_disabled} />";
+		echo '&nbsp;<a href="#agm-advanced_zoom" id="agm-basic_zoom-toggler">' . __('Basic mode', 'agm_google_maps') . '</a>';
+		_e('<div>Please input the numeric zoom value.</div>', 'agm_google_maps');
+		echo '</div>';
+
+		// Toggling JS
+		echo <<<EOZoomModeTogglingJS
+<script type="text/javascript">
+(function ($) {
+$("#agm-advanced_zoom-toggler").on("click", function () {
+	$("#agm-zoom-basic-container")
+		.find("select").attr("disabled", true).end()
+		.hide()
+	;
+	$("#agm-zoom-advanced-container")
+		.find("#agm-zoom-advanced").attr("disabled", false).end()
+		.show()
+	;
+	return false;
+});
+$("#agm-basic_zoom-toggler").on("click", function () {
+	$("#agm-zoom-advanced-container")
+		.find("#agm-zoom-advanced").attr("disabled", true).end()
+		.hide()
+	;
+	$("#agm-zoom-basic-container")
+		.find("select").attr("disabled", false).end()
+		.show()
+	;
+	return false;
+});
+})(jQuery);
+</script>
+EOZoomModeTogglingJS;
 	}
 
 	function  create_map_units_box () {
@@ -153,6 +202,13 @@ class AgmAdminFormRenderer {
 
 		echo '<div><b>' . __('My posts have an address field', 'agm_google_maps') . '</b></div>';
 		echo __("Address field name:", 'agm_google_maps') . ' <input type="text" name="agm_google_maps[custom_fields_map][address_field]" size="12" maxisize="32" value="' . $add_field . '" />';
+
+		$discard = @$opt['custom_fields_map']['discard_old'] ? 'checked="checked"' : '';
+		echo '<br />';
+		echo '<input type="hidden" name="agm_google_maps[custom_fields_map][discard_old]" value="" />';
+		echo '<input type="checkbox" id="agm-custom_fields-discard_old" name="agm_google_maps[custom_fields_map][discard_old]" value="1" ' . $discard . ' />';
+		echo '&nbsp;';
+		echo '<label for="agm-custom_fields-discard_old">' . __('Discard old map when my custom fields value change', 'agm_google_maps') . '</label>';
 	}
 	function create_custom_fields_options_box () {
 		$opt = apply_filters('agm_google_maps-options', get_option('agm_google_maps'));

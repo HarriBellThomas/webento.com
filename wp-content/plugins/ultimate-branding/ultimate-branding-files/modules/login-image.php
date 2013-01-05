@@ -35,12 +35,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /**
  * Plugin main class
  **/
-class Login_Image {
+class ub_Login_Image {
 
 	/**
 	 * PHP 4 constructor
 	 **/
-	function Login_Image() {
+	function ub_Login_Image() {
 		$this->__construct();
 	}
 
@@ -93,6 +93,7 @@ class Login_Image {
 		if ( file_exists( $login_image_dir ) ) {
 
 			list($width, $height) = getimagesize( $login_image_dir );
+			$login_image_url = preg_replace( array('/http:/i', '/https:/i'), '', $login_image_url );
 
 		?>
 		<style type="text/css">
@@ -234,6 +235,7 @@ class Login_Image {
 					</p>
 					<?php
 					if ( $login_image_dir && file_exists( $login_image_dir ) ) {
+						$login_image_url = preg_replace( array('/http:/i', '/https:/i'), '', $login_image_url );
 						echo '<img src="' . $login_image_url . '?'. md5( time() ) . '" />';
 					} else {
 						echo '<img src="' . site_url( 'wp-admin/images/wordpress-logo.png' ) . '" />';
@@ -270,5 +272,5 @@ class Login_Image {
 
 }
 
-$ub_loginimage = new Login_Image();
+$ub_loginimage = new ub_Login_Image();
 

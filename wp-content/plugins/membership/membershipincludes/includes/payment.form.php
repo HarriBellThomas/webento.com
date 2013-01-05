@@ -6,17 +6,17 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 		$pricing = $sub->get_pricingarray();
 		do_action('membership_payment_form', $sub, $pricing, $member->ID);
 	}
-		
+
 } else if($member->on_sub( $subscription )) {
 		$sub =  new M_Subscription( $subscription );
-		$coupon_code = (isset($_REQUEST['remove_coupon']) ? '' : $_REQUEST['coupon_code']);
+		$coupon_code = membership_get_current_coupon();
 		$pricing = $sub->get_pricingarray();
-		$remove_coupon = sprintf('<input type="submit" name="remove_coupon" value="%s" href="#" id="membership_remove_coupon" />',__('Remove Coupon','membership'));
-		
+
+
 		if(!empty($pricing) && !empty($coupon_code) ) {
 				$pricing = $sub->apply_coupon_pricing($coupon_code,$pricing);
 		}
-		
+
 	?>
 		<div id='membership-wrapper'>
 		<form class="form-membership" action="<?php echo get_permalink(); ?>" method="post">
@@ -81,7 +81,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 									</td>
 									<td class='buynowcolumn'>
 									<?php
-									
+
 
 									if(!empty($pricing)) {
 										do_action('membership_purchase_button', $sub, $pricing, $member->ID);
@@ -93,29 +93,18 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 						}
 				?>
 			</table>
-			
+
 			</fieldset>
 			</form>
-			<div class="membership-coupon">
-				<form method="post">
-					<?php if(empty($coupon_code)) : ?>
-					<label><?php echo __('Have a coupon code?','membership'); ?>
-					<input type="text" name="coupon_code" value="<?php echo (!empty($coupon_code) ? $_REQUEST['coupon_code'] : ''); ?>" /></label>
-					<input type="submit" name="apply_coupon" value="<?php _e('Apply','membership'); ?>"/>
-					<?php else: ?>
-						<?php echo $remove_coupon; ?>
-					<?php endif; ?>
-				</form>
-			</div>
+
 		</div>
 
 	<?php
 } else {
 
 	$sub =  new M_Subscription( $subscription );
-	$coupon_code = (isset($_REQUEST['remove_coupon']) ? '' : $_REQUEST['coupon_code']);
+	$coupon_code = membership_get_current_coupon();
 	$pricing = $sub->get_pricingarray();
-	$remove_coupon = sprintf('<input type="submit" name="remove_coupon" value="%s" href="#" id="membership_remove_coupon" />',__('Remove Coupon','membership'));
 
 	if(!empty($pricing) && !empty($coupon_code) ) {
 		$pricing = $sub->apply_coupon_pricing($coupon_code,$pricing);
@@ -134,11 +123,11 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 				<?php echo $sub->sub_name(); ?>
 				</td>
 				<td class='pricecolumn'><?php
-					
+
 					$amount = $sub->sub_pricetext();
 					if(!empty($amount)) {
 						echo $amount;
-						if($sub->coupon_label) {
+						if(isset($sub->coupon_label) && !empty($sub->coupon_label)) {
 							echo sprintf('<p class="membership_coupon_label">%s</p>',$sub->coupon_label);
 						}
 					} else {
@@ -165,7 +154,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 							}
 						}
 						echo $price;
-						if($sub->coupon_label) {
+						if(isset($sub->coupon_label) && !empty($sub->coupon_label)) {
 							echo sprintf('<p class="membership_coupon_label">%s</p>',$sub->coupon_label);
 						}
 					}
@@ -173,8 +162,8 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 				</td>
 				<td class='buynowcolumn'>
 				<?php
-				
-				
+
+
 				if(!empty($pricing)) {
 					do_action('membership_purchase_button', $sub, $pricing, $member->ID);
 				}
@@ -182,17 +171,6 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 				</td>
 			</tr>
 			</table>
-			<div class="membership-coupon">
-				<form method="post">
-					<?php if(empty($coupon_code)) : ?>
-					<label><?php echo __('Have a coupon code?','membership'); ?>
-					<input type="text" name="coupon_code" value="<?php echo (!empty($coupon_code) ? $_REQUEST['coupon_code'] : ''); ?>" /></label>
-					<input type="submit" name="apply_coupon" value="<?php _e('Apply','membership'); ?>"/>
-					<?php else: ?>
-						<?php echo $remove_coupon; ?>
-					<?php endif; ?>
-				</form>
-			</div>
 		</div>
 	<?php
 }

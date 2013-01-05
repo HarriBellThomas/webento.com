@@ -5,6 +5,27 @@ Change Log:
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 
+3.2.4 - 12/28/2012
+----------------------------------------------------------------------
+- Handle WPMU DEV API connection problems more gracefully, with helpful error message
+
+3.2.3 - 12/17/2012
+----------------------------------------------------------------------
+- Remove any conflicting-slug local WPMU DEV plugins from WP update notifications
+- A few more style compatibility updates for WP 3.5
+- Fix memory leaks in Safari on Windows
+
+3.2.2 - 12/14/2012
+----------------------------------------------------------------------
+- More style compatibility updates for WP 3.5
+- Reset allowed user when reactivating the plugin
+- Handle https admin areas better
+
+3.2.1 - 12/11/2012
+----------------------------------------------------------------------
+- Style compatibility updates for WP 3.5
+- allow override of menu location via define('WPMUDEV_MENU_LOCATION', 3);
+
 3.2 - 9/26/2012
 ----------------------------------------------------------------------
 - Rewrite Dashboard and Listings pages to be more useful to free or single members
@@ -125,4 +146,4 @@ Added option to disable admin notices.
 ----------------------------------------------------------------------
 Initial Release.
 
-36617-1349924655-au
+36617-1357168681-au

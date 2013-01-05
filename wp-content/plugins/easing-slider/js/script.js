@@ -135,7 +135,7 @@ function handler(event) {
 			$(this.wrapper).find(text).slideUp().eq(this.currentNo).slideDown();
 		} else { 
       var text = '.lof-main-item-desc';
-	  		this.wrapper.css({'left':'-'+this.currentNo*this.maxSize+'px', 'width':( this.maxWidth ) * this.slides.length } );
+			this.wrapper.css({'left':'-'+this.currentNo*this.maxSize+'px', 'width':( this.maxWidth ) * this.slides.length } );
 			$(this.wrapper).find(text).show();
 		}
 
@@ -176,6 +176,7 @@ function handler(event) {
 			return this;
 		},
 		onComplete:function(){
+
 			setTimeout( function(){ $('.preload').fadeOut( 900 ); }, 400 );	this.startUp( this );
 		},
 		preLoadImage:function(  callback ){
@@ -291,8 +292,7 @@ function handler(event) {
             duration: this.settings.duration, 
             easing:this.settings.easing, 
             complete:function() {
-              $(this).find(text).slideDown(200);
-			   } });
+              $(this).find(text).slideDown(200); } });
 				}
 			return this;
 		},
@@ -307,8 +307,7 @@ function handler(event) {
 		},
 		next:function( manual , item){
 
-			this.currentNo += (this.currentNo < this.slides.length-1) ? 1 : (1 - this.slides.length);
-			this.maxSize = jQuery('#lofslidecontent45').width();
+			this.currentNo += (this.currentNo < this.slides.length-1) ? 1 : (1 - this.slides.length);	
 			this.onProcessing( item, manual, 0, this.maxSize )
 				.fxStart( this.currentNo, this.getObjectDirection(this.maxSize ), this )
 				.finishFx( manual );

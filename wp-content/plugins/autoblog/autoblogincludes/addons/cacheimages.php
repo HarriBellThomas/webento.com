@@ -1,6 +1,6 @@
 <?php
 /*
-Addon Name: Import images
+Addon Name: Image Import
 Description: Imports any images in a post to the media library and attaches them to the imported post.
 Author: Barry (Incsub)
 Author URI: http://premium.wpmudev.org
@@ -66,7 +66,7 @@ class A_ImageCacheAddon {
 			}
 		}
 
-		return $theimage;
+		return $image;
 	}
 
 	/**
@@ -85,7 +85,12 @@ class A_ImageCacheAddon {
 			require_once( ABSPATH . 'wp-admin/includes/media.php' );
 
 			foreach ($images as $image) {
-				$this->grab_image_from_url($image, $post_ID);
+
+				preg_match( '/[^\?]+\.(jpe?g|jpe|gif|png)\b/i', $image, $matches );
+				if(!empty($matches)) {
+					$this->grab_image_from_url($image, $post_ID);
+				}
+
 			}
 
 		}

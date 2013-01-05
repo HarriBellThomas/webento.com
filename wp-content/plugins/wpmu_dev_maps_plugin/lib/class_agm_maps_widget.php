@@ -4,12 +4,12 @@
  * Sidebar widget for Google Maps Plugin.
  */
 class AgmMapsWidget extends WP_Widget {
-	function AgmMapsWidget() {
+	function AgmMapsWidget () {
 		parent::WP_Widget(false, $name = 'Google Maps Widget');
 		$this->model = new AgmMapModel();
 	}
 
-	function form($instance) {
+	function form ($instance) {
 		$title = esc_attr(@$instance['title']);
 		$height = esc_attr(@$instance['height']);
 		$width = esc_attr(@$instance['width']);
@@ -44,13 +44,13 @@ class AgmMapsWidget extends WP_Widget {
 			'15' => __('Details', 'agm_google_maps'),
 		);
 
-		// Load map titles/ids
-		$maps = $this->model->get_maps();
+		// Load *all* map titles/ids
+		$maps = $this->model->get_maps(null, -1);
 
 		include(AGM_PLUGIN_BASE_DIR . '/lib/forms/widget_settings.php');
 	}
 
-	function update($new_instance, $old_instance) {
+	function update ($new_instance, $old_instance) {
 		$instance = $old_instance;
 		$instance['title'] = strip_tags($new_instance['title']);
 		$instance['height'] = strip_tags($new_instance['height']);
@@ -68,7 +68,7 @@ class AgmMapsWidget extends WP_Widget {
 		return $instance;
 	}
 
-	function widget($args, $instance) {
+	function widget ($args, $instance) {
 		extract($args);
 		$title = apply_filters('widget_title', $instance['title']);
 		$height = (int)$instance['height'];

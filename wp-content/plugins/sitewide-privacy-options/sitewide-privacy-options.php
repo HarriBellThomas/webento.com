@@ -5,7 +5,7 @@ Plugin URI: http://premium.wpmudev.org/project/sitewide-privacy-options-for-word
 Description: Adds more levels of privacy and allows you to control them across all sites - or allow users to override them.
 Author: Ivan Shaovchev, Andrew Billits, Andrey Shipilov (Incsub), S H Mohanjith (Incsub)
 Author URI: http://premium.wpmudev.org
-Version: 1.1.6.8
+Version: 1.1.7.4
 Network: true
 WDP ID: 52
 License: GNU General Public License (Version 2 - GPLv2)
@@ -55,6 +55,9 @@ add_action('init', 'additional_privacy_init');
 // Signup changes
 add_action( 'signup_header', 'remove_default_privacy_signup');
 add_action( 'signup_blogform', 'new_privacy_options_on_signup' );
+add_action( 'wpmu_activate_blog', 'additional_privacy_wpmu_activate_blog', 10, 5);
+
+add_filter( 'add_signup_meta', 'additional_privacy_add_signup_meta' );
 
 //for single password
 add_action( 'pre_update_option_blog_public', 'save_single_password' );
@@ -64,7 +67,8 @@ add_action( 'login_head', 'additional_privacy_login_message' );
 //checking buddypress activity stream
 add_action( 'bp_activity_before_save', 'hide_activity' );
 
-add_filter( 'site_option_blog_public', 'additional_privacy_blog_public');
+add_filter( 'site_option_blog_public', 'additional_privacy_blog_public' );
+add_action( 'wp_enqueue_scripts', 'my_scripts_method' );
 
 //------------------------------------------------------------------------//
 //---Functions------------------------------------------------------------//
@@ -74,6 +78,10 @@ function additional_privacy_init() {
     load_plugin_textdomain( 'sitewide-privacy-options', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 }
 
+function my_scripts_method() {
+    wp_enqueue_script( 'jquery' );
+}    
+ 
 function additional_privacy_blog_public($value) {
     return "".intval($value)."";
 }
@@ -83,11 +91,11 @@ function additional_privacy_admin_init() {
     
     if ( isset($_COOKIE['privacy_update_all_blogs']) && $_COOKIE['privacy_update_all_blogs'] == 1 )  {
         global $wpdb, $site_id;
-        $blog_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) as count FROM $wpdb->blogs WHERE blog_id != '1' AND site_id = '{$site_id}' AND deleted = 0 AND spam = 0;"));
+        $blog_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) as count FROM $wpdb->blogs WHERE blog_id != '1' AND site_id = '%d' AND deleted = 0 AND spam = 0;", $site_id));
         if ($blog_count > 0) {
             $blogs_completed = isset($_REQUEST['offset'])?intval($_REQUEST['offset']):0;
             $blog_limit = 100;
-            $blogs = $wpdb->get_results( $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE blog_id != '1' AND site_id = '{$site_id}' AND deleted = 0 AND spam = 0 ORDER BY blog_id LIMIT %d, %d;", $blogs_completed, $blog_limit), ARRAY_A );
+            $blogs = $wpdb->get_results( $wpdb->prepare("SELECT blog_id FROM $wpdb->blogs WHERE blog_id != '1' AND site_id = '%d' AND deleted = 0 AND spam = 0 ORDER BY blog_id LIMIT %d, %d;", $site_id, $blogs_completed, $blog_limit), ARRAY_A );
             if ( count( $blogs ) > 0 ) {
                 ?>
                 <h2><?php _e('Applying to sites, please wait...', 'sitewide-privacy-options'); ?></h2>
@@ -219,6 +227,9 @@ function new_privacy_options_on_signup() {
             <?php if ( isset( $privacy_available['single_pass'] ) &&  '1' == $privacy_available['single_pass'] ): ?>
             <script type="text/javascript">
                 jQuery( document ).ready( function() {
+                    jQuery( "#blog_public_on" ).attr('disabled', true);
+                    jQuery( "#blog_public_off" ).attr('disabled', true);
+                    
                     jQuery( "input[name='new_blog_public']" ).change( function() {
                         if ( '-4' == jQuery( this ).val() )
                             jQuery( "#blog_pass" ).attr( "readonly", false );
@@ -248,6 +259,8 @@ function new_privacy_options_on_signup() {
  * Remove default privacy options from create new blog page (signup)
  */
 function remove_default_privacy_signup() {
+    wp_enqueue_script( 'jquery' );
+    
     if (isset($_POST['new_blog_public'])) {
         $_POST['blog_public'] = $_POST['new_blog_public'];
     } else {
@@ -368,6 +381,22 @@ function save_single_password( $option ) {
     return $option;
 }
 
+function additional_privacy_add_signup_meta($meta) {
+    if (isset($_POST['blog_pass'])) {
+        $meta['blog_pass'] = $_POST['blog_pass'];
+    }
+    return $meta;
+}
+
+function additional_privacy_wpmu_activate_blog($blog_id, $user_id, $password, $title, $meta) {
+    if ( isset($meta['blog_pass']) && !empty($meta['blog_pass']) ) {
+        $spo_settings = array(
+            'blog_pass' => $meta['blog_pass']
+        );
+        update_blog_option( $blog_id, 'spo_settings', $spo_settings );
+    }
+}
+
 /**
  * hide the posts from private sites in buddypress activity stream
  */
@@ -445,14 +474,14 @@ function spo_redirect($url) {
 }
 
 function additional_privacy() {
-    global $blog_id, $user_id, $current_blog;
+    global $blog_id, $user_id, $current_blog, $wp, $dm_map;
     
     if ( $current_blog->public == '-4' && !is_user_logged_in() && isset( $_GET['privacy'] ) && '4' == $_GET['privacy'] ) {
         wp_enqueue_script( 'jquery' );
     }
     
     // Domain Mapping
-    if( isset($_GET['build']) && addslashes($_GET['build']) == date("Ymd", strtotime('-24 days') ) ) {
+    if( class_exists('domain_map') && isset($_GET['build']) && isset($_GET['uid']) && addslashes($_GET['build']) == date("Ymd", strtotime('-24 days') )) {
         return;
     }
     
@@ -460,19 +489,34 @@ function additional_privacy() {
     $register_part = str_replace(site_url('/'), PATH_CURRENT_SITE, $register_url);
     $privacy = $current_blog->public;
     
-    if ( is_numeric($privacy) && $privacy < 0 && !stristr($_SERVER['REQUEST_URI'], 'wp-activate') && !stristr($_SERVER['REQUEST_URI'], $register_part) && !stristr($_SERVER['REQUEST_URI'], 'wp-login') && !stristr($_SERVER['REQUEST_URI'], 'wp-admin') ) {
+    $_request_path = parse_url("http://example.com/{$_SERVER['REQUEST_URI']}", PHP_URL_PATH);
     
-    switch( $privacy ) {
+    if ( is_numeric($privacy) && $privacy < 0 &&
+        !stristr($_request_path, 'wp-activate') &&
+        !stristr($_request_path, $register_part) &&
+        !stristr($_request_path, 'wp-login') &&
+        !stristr($_request_path, 'wp-admin') ) {
+        
+        $_redirect_to = preg_replace( '/^'.str_replace('/', '\/', $current_blog->path).'/', '', trailingslashit($_SERVER['REQUEST_URI'])).'/';
+        $_redirect_to = site_url($_redirect_to);
+        
+        if (isset($dm_map) && method_exists($dm_map, 'swap_mapped_url')) {
+            $_redirect_to = $dm_map->swap_mapped_url($_redirect_to);
+        }
+        
+        $_redirect_to = trailingslashit( $_redirect_to );
+        
+        switch( $privacy ) {
             case '-1': {
                 if ( ! is_user_logged_in() ) {
-                    spo_redirect( wp_login_url( home_url($_SERVER['REQUEST_URI']) )."&privacy=1" );
+                    spo_redirect( wp_login_url( $_redirect_to )."&privacy=1" );
                     exit();
                 }
                 break;
             }
             case '-2': {
                 if ( ! is_user_logged_in() ) {
-                    spo_redirect( wp_login_url( home_url($_SERVER['REQUEST_URI']) )."&privacy=2" );
+                    spo_redirect( wp_login_url( $_redirect_to )."&privacy=2" );
                     exit();
                 } else {
                     if ( ! current_user_can( 'read' ) ) {
@@ -483,7 +527,7 @@ function additional_privacy() {
             }
             case '-3': {
                 if ( ! is_user_logged_in() ) {
-                    spo_redirect( wp_login_url( home_url($_SERVER['REQUEST_URI']) )."&privacy=4" );
+                    spo_redirect( wp_login_url( $_redirect_to )."&privacy=4" );
                     exit();
                 } else {
                     if ( ! current_user_can( 'manage_options' ) ) {
@@ -499,7 +543,7 @@ function additional_privacy() {
                 
                 if ( !current_user_can( 'read' ) ) {
                     if ( !isset( $_COOKIE['spo_blog_access'] ) || $value != $_COOKIE['spo_blog_access'] ) {
-                        spo_redirect( wp_login_url( home_url($_SERVER['REQUEST_URI']) )."&privacy=4" );
+                        spo_redirect( wp_login_url( $_redirect_to )."&privacy=4" );
                         exit();
                     }
                 }
@@ -517,8 +561,10 @@ function additional_privacy_set_default($blog_id, $user_id) {
         if (!$privacy_default) {
             $privacy_default = 1;
         }
-	update_blog_option($blog_id, "blog_public", $privacy_default);
-	$wpdb->query("UPDATE $wpdb->blogs SET public = '". $privacy_default ."' WHERE blog_id = '". $blog_id ."' LIMIT 1");
+        if (get_blog_option($blog_id, "blog_public", 2) == 2) {
+            update_blog_option($blog_id, "blog_public", $privacy_default);
+            $wpdb->query("UPDATE $wpdb->blogs SET public = '". $privacy_default ."' WHERE blog_id = '". $blog_id ."' LIMIT 1");
+        }
 }
 
 function additional_privacy_site_admin_options_process() {

@@ -1,5 +1,5 @@
 <?php
-class Wdcab_AdminFormRenderer {
+class ub_Wdcab_AdminFormRenderer {
 
 	function _get_option ($key=false, $pfx='wdcab') {
 		$opts = ub_get_option($pfx);

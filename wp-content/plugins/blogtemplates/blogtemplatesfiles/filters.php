@@ -4,6 +4,52 @@
  */
 
  
+/**
+ * Ensure we're the last thing to run on blog creation.
+ */
+function blog_template_ensure_last_place () {
+	global $wp_filter, $blog_templates;
+	if (!$wp_filter || !$blog_templates) return false;
+
+	$tag = 'wpmu_new_blog';
+	$method = 'set_blog_defaults';
+	$action_order = false;
+
+	$bt_callback = array($blog_templates, $method);
+	if (!is_callable($bt_callback)) return false;
+
+	if (has_action($tag, $bt_callback)) { 
+		// This is all provided it's even bound
+		$actions = !empty($wp_filter[$tag]) ? $wp_filter[$tag] : false;
+		if (!$actions) return false;
+
+		$highest = max(array_keys($actions));
+		if (!$idx = _wp_filter_build_unique_id($tag, $bt_callback, false)) return false; // Taken from core (`has_filter()`)
+
+		foreach ($actions as $priority => $callbacks) {
+			if (!isset($actions[$priority][$idx])) continue;
+			$action_order = $priority;
+			break;
+		}
+
+		if ($action_order >= $highest) return true; // We're the on the bottom, all good.
+
+		// If we reached here, this is not good - we need to re-bind to highest position
+		remove_action($tag, $bt_callback, $action_order, 6);
+		$action_order = $highest + 10;
+	} else {
+		// No action bound, let's do our thing
+		$action_order = defined('NBT_APPLY_TEMPLATE_ACTION_ORDER') && NBT_APPLY_TEMPLATE_ACTION_ORDER ? NBT_APPLY_TEMPLATE_ACTION_ORDER : 9999;
+		$action_order = apply_filters('blog_templates-actions-action_order', $action_order);
+	}
+
+	add_action($tag, $bt_callback, $action_order, 6);
+	return true;
+}
+if (defined('NBT_ENSURE_LAST_PLACE') && NBT_ENSURE_LAST_PLACE) add_action('init', 'blog_template_ensure_last_place', 99);
+
+
+
 /* ----- Default filters ----- */
 
 
@@ -88,7 +134,7 @@ add_filter('blog_template_exclude_settings', 'blog_template_exclude_epanel_temp_
  */
 function blog_template_add_user_as_admin ($template, $blog_id, $user_id) {
 	if (is_super_admin($user_id)) return false;
-	if (!in_array('users', $template['to_copy'])) return false; // Only apply this if we're trumping over users
+	if (!in_array('users', $template['to_copy'])) return false; // Only apply this if we're trumping over users	
 	return add_user_to_blog($blog_id, $user_id, 'administrator');
 }
 add_action('blog_templates-copy-after_copying', 'blog_template_add_user_as_admin', 10, 3);
@@ -111,4 +157,20 @@ if (defined('NBT_REASSIGN_POST_AUTHORS_TO_USER') && NBT_REASSIGN_POST_AUTHORS_TO
 		$wpdb->query("UPDATE {$wpdb->posts} SET post_author={$new_author}");
 	}
 	add_action('blog_templates-copy-posts', 'blog_template_reassign_post_authors', 10, 3);
+}
+
+
+// Play nice with Multisite Privacy, if requested so
+if (defined('NBT_TO_MULTISITE_PRIVACY_ALLOW_SIGNUP_OVERRIDE') && NBT_TO_MULTISITE_PRIVACY_ALLOW_SIGNUP_OVERRIDE) {
+	/**
+	 * Keeps user-selected Multisite Privacy settings entered on registration time.
+	 * Propagate template settings on admin blog creation time.
+	 */
+	function blog_template_exclude_multisite_privacy_settings ($and) {
+		$user = wp_get_current_user();
+		if (is_super_admin($user->ID)) return $and;
+		$and .= " AND `option_name` NOT IN ('spo_settings', 'blog_public')";
+		return $and;
+	}
+	add_filter('blog_template_exclude_settings', 'blog_template_exclude_multisite_privacy_settings');
 }

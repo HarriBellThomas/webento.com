@@ -70,10 +70,22 @@ class AgmAdminMaps {
 	 * Introduces plugins_url() as root variable (global).
 	 */
 	function js_plugin_url () {
+		/*
 		printf(
-			'<script type="text/javascript">var _agm_root_url="%s"; var _agm_is_multisite=%d;</script>',
+			//'<script type="text/javascript">var _agm_root_url="%s"; var _agm_is_multisite=%d;</script>',
 			AGM_PLUGIN_URL, (int)is_multisite()
 		);
+		*/
+		$defaults = array(
+			'ajax_url' => admin_url('admin-ajax.php'),
+			'root_url' => AGM_PLUGIN_URL,
+			'is_multisite' => (int)is_multisite(),
+			'libraries' => array('panoramio'),
+		);
+		$vars = apply_filters('agm_google_maps-javascript-data_object',
+			apply_filters('agm_google_maps-javascript-data_object-admin', $defaults)
+		);
+		echo '<script type="text/javascript">var _agm = ' . json_encode($vars) . '; var _agm_root_url="' . esc_url(AGM_PLUGIN_URL) . '";</script>';
 	}
 
 	/**
@@ -88,6 +100,8 @@ class AgmAdminMaps {
 			'preview_or_edit' => __('Preview/Edit', 'agm_google_maps'),
 			'delete_map' => __('Delete', 'agm_google_maps'),
 			'add_map' => __('Add Map', 'agm_google_maps'),
+			'load_next_maps' => __('Next &raquo;', 'agm_google_maps'),
+			'load_prev_maps' => __('&laquo; Prev', 'agm_google_maps'),
 			'existing_map' => __('Existing map', 'agm_google_maps'),
 			'no_existing_maps' => __('No existing maps', 'agm_google_maps'),
 			'new_map' => __('Create new map', 'agm_google_maps'),
@@ -169,17 +183,21 @@ class AgmAdminMaps {
 	 */
 	function css_load_styles () {
 		wp_enqueue_style('thickbox');
-		wp_enqueue_style('agm_google_maps_admin_style', AGM_PLUGIN_URL . '/css/google_maps_admin.css');
-		wp_enqueue_style('agm_google_maps_jquery_ui_dialog_style', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.0/themes/base/jquery-ui.css');
+		wp_enqueue_style('agm_google_maps_admin_style', AGM_PLUGIN_URL . '/css/google_maps_admin.css', array('wp-jquery-ui-dialog'));
 	}
 
 	/**
 	 * Handles map listing requests.
 	 */
 	function json_list_maps () {
-		$maps = $this->model->get_maps();
+		$increment = !empty($_POST['increment']) ? $_POST['increment'] : false;
+		$maps = $this->model->get_maps($increment);
+		$total = $this->model->get_maps_total();
 		header('Content-type: application/json');
-		echo json_encode($maps);
+		echo json_encode(array(
+			"maps" => $maps,
+			"total" => $total,
+		));
 		exit();
 	}
 
@@ -251,6 +269,7 @@ class AgmAdminMaps {
 	 */
 	function json_get_post_titles () {
 		$titles = $this->model->get_post_titles($_POST['post_ids']);
+		$titles = apply_filters("agm_google_maps-json_post_titles", $titles);
 		header('Content-type: application/json');
 		echo json_encode(array(
 			'posts' => $titles,
@@ -293,9 +312,6 @@ class AgmAdminMaps {
 		$post = get_post($post_id);
 		if ('publish' != $post->post_status) return false; // Draft, auto-save or something else we don't want
 
-		$map_id = get_post_meta($post_id, 'agm_map_created', true);
-		if ($map_id) return true; // Already have a map, nothing to do
-
 		$opts = apply_filters('agm_google_maps-options', get_option('agm_google_maps'));
 		$fields = $opts['custom_fields_map'];
 		$latitude = $longitude = $address = false;
@@ -315,10 +331,14 @@ class AgmAdminMaps {
 			if ($address) {
 				if ($address == $map['markers'][0]['title']) {
 					return true; // Already have a map, nothing to do
+				} else if (isset($fields['discard_old']) && $fields['discard_old']) {
+					$this->model->delete_map(array('id' => $map_id)); // Discaring old map
 				}
 			} else if ($latitude && $longitude) {
 				if ($latitude == $map['markers'][0]['position'][0] && $longitude == $map['markers'][0]['position'][1]) {
 					return true; // Already have a map, nothing to do
+				} else if (isset($fields['discard_old']) && $fields['discard_old']) {
+					$this->model->delete_map(array('id' => $map_id)); // Discaring old map
 				}
 			}
 		}

@@ -27,25 +27,109 @@ if(!class_exists('UltimateBrandingAdmin')) {
 
 		function __construct() {
 
-			add_action( 'plugins_loaded', array(&$this, 'deactivate_existing_plugins' ) );	// Check other plugins
+			add_action( 'plugins_loaded', array(&$this, 'load_modules' ) );
+
+			add_action( 'plugins_loaded', array(&$this, 'setup_translation') );
+
+			add_action( 'init', array(&$this, 'initialise_ub') );
+
+		}
+
+		function UltimateBrandingAdmin() {
+			$this->__construct();
+		}
+
+		function transfer_old_settings() {
+			if(is_multisite() && function_exists('is_plugin_active_for_network') && is_plugin_active_for_network('ultimate-branding/ultimate-branding.php')) {
+				// Check for the original settings and if there are none, but there are some in the old location then move them across
+				$modules = ub_get_option('ultimatebranding_activated_modules', array());
+				if(empty($modules)) {
+					// none in our settings
+					$othermodules = get_option('ultimatebranding_activated_modules', array());
+					if(!empty($othermodules)) {
+						// We shall do a transfer across - first modules
+						ub_update_option('ultimatebranding_activated_modules', $othermodules);
+						// Next each set of settings for the activated modules
+						foreach($othermodules as $key => $title) {
+							switch( $key ) {
+								case 'favicons.php':						ub_update_option( 'ub_favicon_dir',  get_option('ub_favicon_dir') );
+																			ub_update_option( 'ub_favicon_url',  get_option('ub_favicon_url') );
+																			break;
+
+								case 'login-image.php':						ub_update_option( 'ub_login_image_dir',  get_option('ub_login_image_dir') );
+																			ub_update_option( 'ub_login_image_url',  get_option('ub_login_image_url') );
+																			break;
+
+								case 'custom-admin-bar.php':				ub_update_option('wdcab', get_option('wdcab') );
+																			break;
+
+								case 'admin-help-content.php':				ub_update_option('admin_help_content', get_option('admin_help_content') );
+																			break;
+
+								case 'global-footer-content.php':			ub_update_option( 'global_footer_content' , get_option('global_footer_content') );
+																			break;
+
+								case 'admin-footer-text.php':				ub_update_option( 'admin_footer_text' , get_option('admin_footer_text') );
+																			break;
+
+								case 'custom-dashboard-welcome.php':
+																			break;
+
+								case 'remove-wp-dashboard-widgets.php':		ub_update_option( 'rwp_active_dashboard_widgets', get_option('rwp_active_dashboard_widgets') );
+																			break;
+
+								case 'rebranded-meta-widget.php':
+																			break;
+
+								case 'remove-permalinks-menu-item.php':		break;
+
+								case 'site-generator-replacement.php':		ub_update_option( "site_generator_replacement", get_option('site_generator_replacement') );
+																			ub_update_option( "site_generator_replacement_link", get_option('site_generator_replacement_link') );
+																			break;
+
+								case 'site-wide-text-change.php':			ub_update_option('translation_ops', get_option('translation_ops') );
+																			ub_update_option('translation_table', get_option('translation_table') );
+																			break;
+
+								case 'custom-login-css.php':				ub_update_option( 'global_login_css' , get_option('global_login_css') );
+																			break;
+
+								case 'custom-admin-css.php':				ub_update_option( 'global_admin_css' , get_option('global_admin_css') );
+																			break;
+
+							}
+						}
+					}
+				}
+
+			}
+		}
+
+		function initialise_ub() {
+
+			global $blog_id;
+
+			// For this version only really - to bring settings across from the old storage locations
+			$this->transfer_old_settings();
 
 			if ( !is_multisite() ) {
 				if(UB_HIDE_ADMIN_MENU != true) {
 					add_action( 'admin_menu', array( &$this, 'network_admin_page' ) );
 				}
 			} else {
-				add_action( 'network_admin_menu', array( &$this, 'network_admin_page' ) );
+
+				if( is_plugin_active_for_network('ultimate-branding/ultimate-branding.php') ) {
+					add_action( 'network_admin_menu', array( &$this, 'network_admin_page' ) );
+				} else {
+					// Added to allow single site activation across a network
+					if(UB_HIDE_ADMIN_MENU != true && !defined('UB_HIDE_ADMIN_MENU_' . $blog_id )) {
+						add_action( 'admin_menu', array( &$this, 'network_admin_page' ) );
+					}
+				}
 			}
 
 			// Header actions
 			add_action('load-toplevel_page_branding', array(&$this, 'add_admin_header_branding'));
-
-			add_action( 'plugins_loaded', array(&$this, 'setup_translation') );
-
-		}
-
-		function UltimateBrandingAdmin() {
-			$this->__construct();
 		}
 
 		function setup_translation() {
@@ -88,7 +172,17 @@ if(!class_exists('UltimateBrandingAdmin')) {
 		/**
 		 *	Check plugins those will be used if they are active or not
 		 */
-		function deactivate_existing_plugins() {
+		function load_modules() {
+
+			// Load our remaining modules here
+			foreach( $this->modules as $module => $plugin ) {
+				if(ub_is_active_module( $module )) {
+					ub_load_single_module( $module );
+				}
+			}
+		}
+
+		function check_active_plugins() {
 			// We may be calling this function before admin files loaded, therefore let's be sure required file is loaded
 			include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 
@@ -97,23 +191,7 @@ if(!class_exists('UltimateBrandingAdmin')) {
 			foreach( $plugins as $plugin_file => $plugin_data ) {
 				if ( is_plugin_active( $plugin_file ) && in_array( $plugin_file, $this->modules ) ) {
 					// Add the title to the message
-					$this->plugin_msg[] = $plugin_data['Title'];
-					// Add a notice if there isn't one already
-					if(!has_action('network_admin_notices', array( &$this, 'deactivate_plugin_msg' ))) {
-						add_action( 'network_admin_notices', array( &$this, 'deactivate_plugin_msg' ) );
-					}
-					// remove the module from the ones we are going to activate
-					$key = array_search($plugin_file, $this->modules);
-					if($key !== false) {
-						unset( $this->modules[$key] );
-					}
-				}
-			}
-
-			// Load our remaining modules here
-			foreach( $this->modules as $module => $plugin ) {
-				if(ub_is_active_module( $module )) {
-					ub_load_single_module( $module );
+					$this->plugin_msg[$plugin_file] = $plugin_data['Title'];
 				}
 			}
 		}
@@ -221,7 +299,7 @@ if(!class_exists('UltimateBrandingAdmin')) {
 
 			wp_reset_vars( array('action', 'page') );
 
-			if(isset($_REQUEST['action'])) {
+			if(isset($_REQUEST['action']) && !empty($_REQUEST['action'])) {
 				$tab = (isset($_GET['tab'])) ? $_GET['tab'] : '';
 				if(empty($tab)) {
 					$tab = 'dashboard';
@@ -246,6 +324,13 @@ if(!class_exists('UltimateBrandingAdmin')) {
 																		}
 																		break;
 												}
+											} elseif( isset($_GET['action']) && $_GET['action'] == 'enableallmodules') {
+												check_admin_referer('enable-all-modules');
+												foreach($this->modules as $module => $value) {
+
+													$this->activate_module( $module );
+												}
+												wp_safe_redirect( remove_query_arg( array('module', '_wpnonce', 'action'), wp_get_referer() ) );
 											}
 											break;
 
@@ -462,6 +547,27 @@ if(!class_exists('UltimateBrandingAdmin')) {
 						<div style="width: 49%;" class="postbox-container">
 							<div class="meta-box-sortables ui-sortable" id="normal-sortables">
 
+								<?php
+									// See what plugins are active
+									$this->check_active_plugins();
+
+									if(!empty( $this->plugin_msg )) {
+								?>
+										<div class="postbox " id="">
+											<h3 class="hndle"><span><?php _e('Notifications','ub'); ?></span></h3>
+											<div class="inside">
+												<?php
+													_e('Please deactivate the following plugin(s) to make Ultimate Branding to work:','ub');
+													echo "<ul><li><strong>" . implode('</li><li>', $this->plugin_msg);
+													echo "</strong></li></ul>";
+												?>
+												<br class="clear">
+											</div>
+										</div>
+								<?php
+									}
+								?>
+
 								<div class="postbox " id="">
 									<h3 class="hndle"><span><?php _e('Branding','ub'); ?></span></h3>
 									<div class="inside">
@@ -525,11 +631,11 @@ if(!class_exists('UltimateBrandingAdmin')) {
 			<table class='widefat'>
 				<thead>
 					<th><?php _e('Available Modules', 'ub'); ?></th>
-					<th></th>
+					<th><a href='<?php echo wp_nonce_url("?page=" . $page. "&amp;action=enableallmodules", 'enable-all-modules'); ?>'><?php _e('Enable All','ub'); ?></a></th>
 				</thead>
 				<tfoot>
 					<th><?php _e('Available Modules', 'ub'); ?></th>
-					<th></th>
+					<th><a href='<?php echo wp_nonce_url("?page=" . $page. "&amp;action=enableallmodules", 'enable-all-modules'); ?>'><?php _e('Enable All','ub'); ?></a></th>
 				</tfoot>
 				<tbody>
 				<?php
@@ -545,6 +651,11 @@ if(!class_exists('UltimateBrandingAdmin')) {
 						foreach($this->modules as $module => $plugin) {
 
 							$module_data = get_file_data( ub_files_dir('modules/' . $module), $default_headers, 'plugin' );
+
+							// deactivate any conflisting plugins
+							if( in_array( $module, array_keys( $this->plugin_msg ) )) {
+								$this->deactivate_module( $module );
+							}
 
 							if(ub_is_active_module( $module )) {
 								?>
@@ -568,7 +679,9 @@ if(!class_exists('UltimateBrandingAdmin')) {
 										?>
 										</td>
 										<td>
+											<?php if( !in_array( $module, array_keys( $this->plugin_msg ) )) { ?>
 											<a href='<?php echo wp_nonce_url("?page=" . $page. "&amp;action=enable&amp;module=" . $module . "", 'enable-module-' . $module) ?>' class='enablelink'><?php _e('Enable', 'ub'); ?></a>
+											<?php } ?>
 										</td>
 									</tr>
 								<?php

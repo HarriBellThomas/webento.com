@@ -26,12 +26,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-add_action( 'wp_dashboard_setup', 'remove_wp_dashboard_widgets' );
+add_action( 'wp_dashboard_setup', 'ub_remove_wp_dashboard_widgets' );
 
-add_action('ultimatebranding_settings_menu_widgets','rwpwidgets_manage_output');
-add_filter('ultimatebranding_settings_menu_widgets_process', 'rwpwidgets_process_save');
+add_action('ultimatebranding_settings_menu_widgets','ub_rwpwidgets_manage_output');
+add_filter('ultimatebranding_settings_menu_widgets_process', 'ub_rwpwidgets_process_save');
 
-function rwpwidgets_process_save( $status ) {
+function ub_rwpwidgets_process_save( $status ) {
 
 	$active = array(); //get_site_option( 'rwp_active_dashboard_widgets', array() );
 
@@ -50,7 +50,7 @@ function rwpwidgets_process_save( $status ) {
 	}
 }
 
-function rwpwidgets_manage_output() {
+function ub_rwpwidgets_manage_output() {
 	global $wpdb, $current_site, $page;
 	global $wp_meta_boxes;
 
@@ -88,7 +88,7 @@ function rwpwidgets_manage_output() {
 <?php
 }
 
-function remove_wp_dashboard_widgets() {
+function ub_remove_wp_dashboard_widgets() {
 
 	global $wp_meta_boxes;
 

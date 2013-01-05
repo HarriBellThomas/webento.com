@@ -3,10 +3,10 @@ Contributors: vegasgeek
 Donate link: http://9seeds.com/donate/
 Tags: headers, genesis, genesiswp, studiopress
 Requires at least: 3.0
-Tested up to: 3.4
-Stable tag: 1.0.3
+Tested up to: 3.4.2
+Stable tag: 2.2
 
-This plugin adds WordPress Appearance -> Header functionality to upload a custom logo or header for your site using the Genesis Theme Framework.
+Adds WordPress Appearance -> Header functionality to upload a custom logo or header for your site using the Genesis Theme Framework.
 
 == Description ==
 
@@ -19,14 +19,35 @@ This plugin lets you use the WordPress Appearance -> Header functionality to upl
 1. On the 'Appearance' menu, click 'Headers'
 1. Upload a logo or header
 
+== Screenshots ==
+
+1. The settings panel can be found on the Appearance -> Headers tab.
 
 == Frequently Asked Questions ==
 
 = Are all Genesis Child Themes supported? =
 
-Almost! The plugin supports everything but 'Family Tree'. Also, some of the StudioPress plugins (like Prose and Lifestyle) have the header functionality built in, so the plugin isn't needed for those themes.
+Currently, all the standard Genesis Child Themes are suppored.
+
+= Will this plugin work for non-Genesis themes? =
+
+Nope.
 
 == Changelog ==
+
+= 2.2 =
+* Added support for version 2.x of the following themes: Agency, Education, Executive, Going Green, Mocha
+
+= 2.1 = 
+* Added support for all 1.x and 2.x Genesis child themes
+
+= 2.0.1 =
+* Removed Beta from version number - ugh
+
+= 2.0 =
+* Rewrote plugin
+* Added support for all standard Genesis child themes
+* Added standard / advanced settings to appearance -> headers tab
 
 = 1.0.3 =
 * Fixed issue with Outreach theme

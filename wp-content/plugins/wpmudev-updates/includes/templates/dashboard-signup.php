@@ -20,7 +20,7 @@ if ($default_username == 'admin')
 						if ($error == 'password') $err_message[] = __('Please enter a valid password with a minimum of 5 characters.', 'wpmudev');
 						if ($error == 'fail') $err_message[] = __('There was an unknown error. Couldn&#8217;t register you... Sorry!', 'wpmudev');
 					}
-					?><div class="registered_error"><p><i class="icon-warning-sign icon-large"></i>&nbsp;<ul><li><?php echo implode('</li><li>', $err_message); ?></li></ul></p></div><?php
+					?><div class="registered_error"><p><i class="icon-warning-sign icon-large"></i>&nbsp;<?php echo implode('<br>', $err_message); ?></p></div><?php
 				} ?>
 				<ol>
 					<li>
@@ -43,9 +43,9 @@ if ($default_username == 'admin')
 						<!-- output line below if validation passed -->
 						<section class="validation"><span class="icon-ok"></span></section>
 					</li>
-					<li>
+					<li class="submit-data">
 						<div class="cta-wrap">
-							<button type="submit" class="cta"><?php _e('Get your API key &raquo;', 'wpmudev') ?></button>
+							<button type="submit" class="wpmu-button full-width"><?php _e('Get your API key &raquo;', 'wpmudev') ?></button>
 							<p><?php _e('Already a member?', 'wpmudev') ?> <a href="#" id="already-member"><?php _e('Click here', 'wpmudev') ?></a>.</p>
 						</div>
 					</li>
@@ -63,7 +63,9 @@ if ($default_username == 'admin')
 			<?php if (isset($_GET['api_error'])) {
 				?><div class="registered_error"><p><i class="icon-warning-sign icon-large"></i>&nbsp;&nbsp;&nbsp;<?php _e('Invalid Username or Password. Please try again.', 'wpmudev'); ?><br /><a href="http://premium.wpmudev.org/wp-login.php?action=lostpassword" target="_blank"><?php _e('Forgot your password?', 'wpmudev'); ?></a></p></div><?php
 			} ?>
-			<?php if (isset($key_valid) && !$key_valid) { ?>
+			<?php if (isset($connection_error) && $connection_error) { ?>
+				<div class="registered_error"><p><i class="icon-warning-sign icon-large"></i> <?php _e('Your server had a problem connecting to WPMU DEV. Please try again.', 'wpmudev'); ?><br><?php _e('If this problem continues, please contact your host and ask:', 'wpmudev'); ?><br><em><?php _e('"Is php on my server properly configured to be able to contact http://premium.wpmudev.org/wdp-un.php with a GET HTTP request via fsockopen or CURL?"', 'wpmudev'); ?></em></p></div>
+			<?php } else if (isset($key_valid) && !$key_valid) { ?>
 				<div class="registered_error"><p><i class="icon-warning-sign icon-large"></i> <?php _e('Your API Key was invalid. Please try again.', 'wpmudev'); ?></p></div>
 			<?php } ?>
 				<ol>
@@ -80,9 +82,9 @@ if ($default_username == 'admin')
 						<!-- output line below if validation passed -->
 						<section class="validation"><span class="icon-ok"></span></section>
 					</li>
-					<li>
+					<li class="submit-data">
 						<div class="cta-wrap">
-							<button type="submit" class="cta"><?php _e('Login &raquo;', 'wpmudev') ?></button>
+							<button type="submit" class="wpmu-button full-width"><?php _e('Login &raquo;', 'wpmudev') ?></button>
 							<p><?php _e('Not a member yet?', 'wpmudev') ?> <a href="#" id="not-member"><?php _e('Click here', 'wpmudev') ?></a>.</p>
 						</div>
 					</li>

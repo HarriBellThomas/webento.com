@@ -5,6 +5,18 @@ Change Log:
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 
+1.6.4 - 2012-12-29
+----------------------------------------------------------------------
+- Update for file paths resolution, with optional legacy fallback.
+- Fix for user capabilities post filtering check.
+- Multisite Privacy settings conditional switch respecting.
+
+1.6.3 - 2012-12-13
+----------------------------------------------------------------------
+- User existence check and re-addition if necessary.
+- Making sure the template applying action runs last.
+- Verifying options existence before checking their values.
+
 1.6.2 - 2012-08-23
 ----------------------------------------------------------------------
 - Added blog ID reset (thanks, Moha!) with optional fallback switch.
@@ -88,4 +100,4 @@ templates in Blogs Directory list
 - Bug fix: admin page returning content before display
 - Bug fix: blog template admin email exported to new blogs
 
-36617-1345779654-au
+36617-1357168671-au

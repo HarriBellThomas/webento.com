@@ -3,6 +3,26 @@ Authors: Ivan Shaovchev, Andrew Billits, Andrey Shipilov (Incsub), S H Mohanjith
 
 == Changelog ==
 
+= 1.1.7.4 =
+* Fixed: Single password issues
+
+= 1.1.7.3 =
+* Fixed: warning missing argument 2 for wpdb:prepare()
+
+= 1.1.7.2 =
+* WordPress 3.5 compatibility
+* Fixed: Redirect path in login URL is bad
+
+= 1.1.7.1 =
+* Fixed: Cant login with "Anyone that visits must first provide this password" setting
+
+= 1.1.7.0 =
+* Fixed: redirect to URL wrong
+* More privacy improvements
+
+= 1.1.6.9 =
+* Fixed: User Privacy Choices Overridden By MultiSite Privacy Default Setting
+
 = 1.1.6.8 =
 * Domain Mapping Compatibility Fixes
 
@@ -88,4 +108,4 @@ Authors: Ivan Shaovchev, Andrew Billits, Andrey Shipilov (Incsub), S H Mohanjith
 = 1.0.0 =
 * Initial Release
 
-36617-1349924653-au
+36617-1357168671-au

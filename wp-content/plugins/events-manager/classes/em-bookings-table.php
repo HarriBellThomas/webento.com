@@ -202,8 +202,9 @@ class EM_Bookings_Table{
 				}
 			}elseif( $EM_Ticket !== false ){
 				//searching bookings with a specific ticket
-				$this->bookings = $EM_Ticket->get_bookings();
-				$this->bookings_count = (is_array($this->bookings->bookings)) ? count($this->bookings->bookings):0;
+				$args = array('ticket_id'=>$EM_Ticket->ticket_id, 'order'=>$this->order,'orderby'=>$this->orderby);
+				$this->bookings_count = EM_Bookings::count($args);
+				$this->bookings = EM_Bookings::get(array_merge($args, array('limit'=>$this->limit,'offset'=>$this->offset)));
 				$this->events[$EM_Ticket->event_id] = $EM_Ticket->get_event();
 			}elseif( $EM_Event !== false ){
 				//bookings for an event
@@ -258,8 +259,8 @@ class EM_Bookings_Table{
 				<p><?php _e('Modify what information is displayed in this booking table.','dbem') ?></p>
 				<div id="em-bookings-table-settings-form-cols">
 					<p>
-						<strong><?php _e('Collumns to show','dbem')?></strong><br />
-						<?php _e('Drag items to or from the left collumn to add or remove them.','dbem'); ?>
+						<strong><?php _e('Columns to show','dbem')?></strong><br />
+						<?php _e('Drag items to or from the left column to add or remove them.','dbem'); ?>
 					</p>
 					<ul id="em-bookings-cols-active" class="em-bookings-cols-sortable">
 						<?php foreach( $this->cols as $col_key ): ?>
@@ -291,7 +292,7 @@ class EM_Bookings_Table{
 				<?php endif; ?>
 				<?php do_action('em_bookings_table_export_options'); ?>
 				<div id="em-bookings-table-settings-form-cols">
-					<p><strong><?php _e('Collumns to export','dbem')?></strong></p>
+					<p><strong><?php _e('Columns to export','dbem')?></strong></p>
 					<ul id="em-bookings-export-cols-active" class="em-bookings-cols-sortable">
 						<?php foreach( $this->cols as $col_key ): ?>
 							<li class="ui-state-highlight">
@@ -413,7 +414,6 @@ class EM_Bookings_Table{
 						echo $bookings_nav;
 					}
 					?>
-					<div class="clear"></div>
 				</div>
 				<div class="clear"></div>
 				<div class='table-wrap'>

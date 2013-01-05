@@ -23,7 +23,7 @@
 * Plugin Name: AddThis Social Bookmarking Widget
 * Plugin URI: http://www.addthis.com
 * Description: Help your visitor promote your site! The AddThis Social Bookmarking Widget allows any visitor to bookmark your site easily with many popular services. Sign up for an AddThis.com account to see how your visitors are sharing your content--which services they're using for sharing, which content is shared the most, and more. It's all free--even the pretty charts and graphs.
-* Version: 2.5.1
+* Version: 3.0.2
 *
 * Author: The AddThis Team
 * Author URI: http://www.addthis.com/blog
@@ -46,8 +46,8 @@ function addthis_early(){
 
 
 define( 'addthis_style_default' , 'fb_tw_p1_sc');
-define( 'ADDTHIS_PLUGIN_VERSION' , '2.5.1');
-define( 'ADDTHIS_PRODUCT_VERSION' , 'wpp-2.5.1');
+define( 'ADDTHIS_PLUGIN_VERSION' , '3.0.2');
+define( 'ADDTHIS_PRODUCT_VERSION' , 'wpp-3.0.2');
 define( 'ADDTHIS_ATVERSION', '300');
 define( 'ADDTHIS_ATVERSION_MANUAL_UPDATE', -1);
 define( 'ADDTHIS_ATVERSION_AUTO_UPDATE', 0);
@@ -76,11 +76,11 @@ $addthis_styles = array(
                       'plus' => array('img'=>'sm-plus.gif', 'w'=>16, 'h'=>16)
                     );
 $addthis_options = get_option('addthis_settings');
-$atversion = array_key_exists('atversion_reverted', $addthis_options) && $addthis_options['atversion_reverted'] == 1 ? $addthis_options['atversion'] : ADDTHIS_ATVERSION;
+$atversion = is_array($addthis_options) && array_key_exists('atversion_reverted', $addthis_options) && $addthis_options['atversion_reverted'] == 1 ? $addthis_options['atversion'] : ADDTHIS_ATVERSION;
 
 $addthis_new_styles = array(
 
-    'fb_tw_p1_sc' => array( 'src' => '<div class="addthis_toolbox addthis_default_style " %s  ><a class="addthis_button_facebook_like" fb:like:layout="button_count"></a><a class="addthis_button_tweet"></a><a class="addthis_button_google_plusone" g:plusone:size="medium"></a><a class="addthis_counter addthis_pill_style"></a></div>' , 'img' => 'fb-tw-p1-sc.jpg' , 'name' => 'Like, Tweet, +1, Share', 'above' => '', 'below' => ''
+    'fb_tw_p1_sc' => array( 'src' => '<div class="addthis_toolbox addthis_default_style " %s  ><a class="addthis_button_facebook_like" fb:like:layout="button_count"></a><a class="addthis_button_tweet"></a><a class="addthis_button_google_plusone" g:plusone:size="medium"></a><a class="addthis_counter addthis_pill_style"></a></div>' , 'img' => 'horizontal_share_rect.png' , 'name' => 'Like, Tweet, +1, Share', 'above' => '', 'below' => ''
     ), // facebook tweet plus 1 share counter
     'large_toolbox' => array( 'src' =>  '<div class="addthis_toolbox addthis_default_style addthis_32x32_style" %s ><a class="addthis_button_preferred_1"></a><a class="addthis_button_preferred_2"></a><a class="addthis_button_preferred_3"></a><a class="addthis_button_preferred_4"></a><a class="addthis_button_compact"></a></div>', 'img' => 'toolbox-large.png', 'name' => 'Large Toolbox', 'above' => 'hidden ', 'below' => 'hidden'
     ), // 32x32
@@ -94,7 +94,7 @@ $addthis_new_styles = array(
     ), // facebook tweet share counter
     'simple_button' => array('src' => '<div class="addthis_toolbox addthis_default_style " %s><a href="//addthis.com/bookmark.php?v='.$atversion.'&amp;username=xa-4d2b47f81ddfbdce" class="addthis_button_compact">Share</a></div>', 'img' => 'share.jpg', 'name' => 'Share Button', 'above' => 'hidden ', 'below' => 'hidden', 'defaultHide' => true
     ), // Plus sign share
-    'button' => array( 'src' => '<div><a class="addthis_button" href="//addthis.com/bookmark.php?v='.$atversion.'" %s><img src="//cache.addthis.com/cachefly/static/btn/v2/lg-share-en.gif" width="125" height="16" alt="Bookmark and Share" style="border:0"/></a></div>', 'img' => 'button.jpg', 'name' => 'Classic Share Button', 'above' => 'hidden ', 'below' => 'hidden'
+    'button' => array( 'src' => '<div><a class="addthis_button" href="//addthis.com/bookmark.php?v='.$atversion.'" %s><img src="//cache.addthis.com/cachefly/static/btn/v2/lg-share-en.gif" width="125" height="16" alt="Bookmark and Share" style="border:0"/></a></div>', 'img' => 'horizontal_share.png', 'name' => 'Classic Share Button', 'above' => 'hidden ', 'below' => 'hidden'
     ), // classic
     'share_counter' => array( 'src' => '<div class="addthis_toolbox addthis_default_style " %s  ><a class="addthis_counter"></a></div>', 'img' => 'share_counter.png', 'name' => 'Share Counter', 'above' => 'hidden ', 'below' => 'hidden' , 'defaultHide' => true
     ),
@@ -282,7 +282,7 @@ function addthis_check_footer() {
 */
 function cuid()
 {
-    $base = home_url();
+    $base = get_option('home');
     $cuid = hash_hmac('md5', $base, 'addthis'); 
     return $cuid;
 } 
@@ -870,7 +870,8 @@ if ( isset($data['wpfooter']))
     $options['wpfooter'] = (bool) $data['wpfooter'];
 
 
-if (! isset($data['above']) ){
+if (! isset($data['enable_above']) ){
+    $options['above'] = 'none';
 }
 elseif ( isset ($data['show_above']) )
     $options['above'] = 'none';
@@ -900,7 +901,8 @@ elseif ($data['above'] == 'custom_string')
 
 }
 
-if ( ! isset($data['below'] )){
+if ( ! isset($data['enable_below'] )){
+     $options['below'] = 'none';
 }
 elseif ( isset ($data['show_below']) )
     $options['below'] = 'none';
@@ -977,6 +979,9 @@ if ( isset ($data['atversion']))
 //[atversion_update_status]=> 
 if ( isset ($data['atversion_update_status']))
     $options['atversion_update_status'] = sanitize_text_field($data['atversion_update_status']);
+
+if ( isset ($data['credential_validation_status']))
+    $options['credential_validation_status'] = sanitize_text_field($data['credential_validation_status']);
 
 if ( isset ($data['addthis_header_background']) && strlen($data['addthis_header_background']) != 0 )
 {
@@ -1558,6 +1563,46 @@ function addthis_output_script($return = false, $justConfig = false )
         return $script;
 }
 
+add_action('wp_ajax_validate_addthis_api_credentials', 'validate_addthis_api_credentials');
+/**
+ * AJAX action to test the AddThis credentials
+ */
+function validate_addthis_api_credentials()
+{
+    $ajax_response = array('profileerror' => 'true', 'profilemessage' => '',
+                           'credentialerror' => 'true', 'credentialmessage' => '');
+    if ($_POST['addthis_username'] && $_POST['addthis_password'] && $_POST['addthis_profile']) {
+        $url = 'https://api.addthis.com/analytics/1.0/pub/shares.json?'.
+            'username=' . urlencode($_POST['addthis_username']).
+            '&password=' . urlencode($_POST['addthis_password']).
+            '&pubid=' . urlencode($_POST['addthis_profile']);
+        $response = wp_remote_get($url);
+        $credential_error = '&#x2716; The username, password, and profile combination you entered is invalid.';
+        $profile_error = '&#x2716; Invalid AddThis profile ID';
+
+        if (!is_wp_error($response)) {
+            if ($response['response']['code'] == 200) {
+                $ajax_response['profileerror'] = 'false';
+                $ajax_response['credentialerror'] = 'false';
+            } else {
+                if ($response['response']['code'] != 401) {
+                    $ajax_response['credentialerror'] = 'false';
+                    if (strpos($response['body'], '"invalidParameterName":"pubid"') === FALSE) {
+                        $ajax_response['profileerror'] = 'false';
+                    } else {
+                        $ajax_response['profilemessage'] = $profile_error;
+                    }
+                }   else {
+                    $ajax_response['credentialmessage'] = $credential_error;
+                }
+            }
+        } else {
+            $ajax_response['credentialmessage'] = 'error';
+        }     
+    }
+    die('{"profileerror":"' . $ajax_response['profileerror'] . '","profilemessage":"' . $ajax_response['profilemessage'] . '",
+        "credentialerror":"' . $ajax_response['credentialerror'] . '","credentialmessage":"' . $ajax_response['credentialmessage'] . '"}');
+}
 /*
  * Merge the Add this settings with that given using JSON format
  * @param String $appendString - The string to build and return the script
@@ -1712,6 +1757,7 @@ function addthis_options_page_scripts()
     $script_location = apply_filters( 'at_files_uri',  plugins_url( '', basename(dirname(__FILE__)) ) ) . '/addthis/js/'.$script ;
     $script_location = apply_filters( 'addthis_files_uri',  plugins_url( '', basename(dirname(__FILE__)) ) ) . '/addthis/js/'.$script ;
     wp_enqueue_script( 'addthis_options_page_script',  $script_location , array('jquery-ui-tabs', 'thickbox'  ));  
+    wp_localize_script( 'addthis_options_page_script', 'addthis_option_params', array('wp_ajax_url'=> admin_url('admin-ajax.php'), 'addthis_validate_action' => 'validate_addthis_api_credentials') );
 
 }
 
@@ -1725,7 +1771,7 @@ function addthis_options_page_style()
 
 function addthis_admin_menu()
 {
-    $addthis = add_options_page('AddThis Plugin Options', 'AddThis', 'manage_options', basename(__FILE__), 'addthis_plugin_options_php4');
+    $addthis = add_options_page('AddThis Plugin Options', 'AddThis Share', 'manage_options', basename(__FILE__), 'addthis_plugin_options_php4');
     add_action('admin_print_scripts-' . $addthis, 'addthis_options_page_scripts');
     add_action('admin_print_styles-' . $addthis, 'addthis_options_page_style');
 }
@@ -1737,7 +1783,7 @@ function addthis_admin_menu()
         'style'     => addthis_style_default ,
         'location'  => 'below',
         'below'     => 'fb_tw_p1_sc',
-        'above'     => 'fb_tw_p1_sc',
+        'above'     => 'large_toolbox',
         'addthis_show_stats' => true,
         'addthis_append_data'=> true,
         'addthis_showonhome'  => true,
@@ -1772,7 +1818,8 @@ function addthis_admin_menu()
         'addthis_config_json' => '',
         'addthis_share_json' => '',
         'atversion' => ADDTHIS_ATVERSION,
-        'atversion_update_status' => 0
+        'atversion_update_status' => 0,
+        'credential_validation_status' => 0
     );
 
 function addthis_plugin_options_php4() {
@@ -1821,12 +1868,23 @@ function addthis_plugin_options_php4() {
     ?>
 
     <p><?php echo $addthis_addjs->getAtPluginPromoText();  ?></p>
+    <img alt='addthis' src="//cache.addthis.com/icons/v1/thumbs/32x32/more.png" class="header-img"/>
+    <span class="addthis-title">AddThis</span> <span class="addthis-plugin-name">Share</span>
     <div class="page-header" id="tabs">
-
-        <img alt='addthis' src="//cache.addthis.com/icons/v1/thumbs/32x32/more.png" class="header-img"/>
         <ul class="nav-tab-wrapper">
             <li><h2 class="nav-tab-wrapper"><a href="#tabs-1">Basic</a></h2></li>
             <li><h2 class="nav-tab-wrapper"><a href="#tabs-2">Advanced</a></h2></li>
+            <li style="float: right; border: none;padding-right:0px;"> 
+            <strong><?php _e("AddThis Profile ID:", 'addthis_trans_domain' ); ?></strong>
+            <input id="addthis_profile"  type="text" name="addthis_settings[addthis_profile]" value="<?php echo $profile; ?>" autofill='off' autocomplete='off'  />
+            <br />
+            <span id="addthis-profile-validation-message" style="float: right;color:red;font-size:10px"></span>
+                                                <?php
+                                                if ($credential_validation_status == 1) {
+                                                    echo '<span style="float: right;color:green;font-size:10px;">&#10004; Valid AddThis Profile ID</span>';
+                                                }
+                                                ?>
+            </li>
         </ul>
         <div class='clear'>&nbsp;</div> 
         
@@ -1834,6 +1892,7 @@ function addthis_plugin_options_php4() {
                         <?php echo $version_notification_content = _addthis_version_notification($atversion_update_status, $atversion);?>
                         <input type="hidden" value="<?php echo $atversion?>"  name="addthis_settings[atversion]" id="addthis_atversion_hidden" />
                         <input type="hidden" value="<?php echo $atversion_update_status?>"  name="addthis_settings[atversion_update_status]" id="addthis_atversion_update_status" />
+                        <input type="hidden" value="<?php echo $credential_validation_status?>"  name="addthis_settings[credential_validation_status]" id="addthis_credential_validation_status" />
 			<table class="form-table">
 				<tbody>
 				<?php _addthis_choose_icons('above', $options ); ?>
@@ -1843,23 +1902,34 @@ function addthis_plugin_options_php4() {
 			
 			<br/>
 			
-			<div style="margin-left:5px;">
-				<?php _e("<h3><a href='https://www.addthis.com/register?profile=wpp' target='_blank'>Register</a> for free in-depth analytics reports and better understand your site's social traffic.</h3>", 'addthis_trans_domain');?>
+			<div style="margin-left:5px;font-weight:bold">
+				<?php _e("<a href='https://www.addthis.com/register?profile=wpp' target='_blank'>Register</a> for free in-depth analytics reports and better understand your site's social traffic.", 'addthis_trans_domain');?>
 			</div>
-			<table class="form-table" style="width:400px;">
+			<table class="form-table" style="width:600px;">
 				<tbody>
 					<tr valign="top">
-						<td><?php _e("AddThis profile ID:", 'addthis_trans_domain' ); ?></td>
-						<td><input id="addthis_profile"  type="text" name="addthis_settings[addthis_profile]" value="<?php echo $profile; ?>" autofill='off' autocomplete='off'  /></td>
-					</tr>
-					<tr valign="top">
-						<td><?php _e("AddThis email / username:", 'addthis_trans_domain' ); ?></td>
+						<td width="200"><?php _e("AddThis email / username:", 'addthis_trans_domain' ); ?></td>
 						<td><input id="addthis_username"  type="text" name="addthis_settings[addthis_username]" value="<?php echo $username; ?>" autofill='off' autocomplete='off'  /></td>
 					</tr>
 					<tr id="password_row" >
 						<td><?php _e("AddThis password:", 'addthis_trans_domain' ); ?><br/><span style="font-size:10px">(required for displaying stats)</span></td>
 						<td><input id="addthis_password" type="password" name="addthis_settings[addthis_password]" value="<?php echo $password; ?>" autocomplete='off' autofill='off'  /></td>
 					</tr>
+                                        <tr>
+                                            <td style="height:32px">
+                                                
+                                            </td>
+                                            <td style="vertical-align:top;margin-top:0;padding-top:0;line-height:5px;font-size:10px">
+                                                <img class="addthis-admin-loader" style="display:none" src="<?php echo plugins_url('img/loader.gif', __FILE__)?>" />
+                                                <span class="addthis-admin-loader" style="display:none;color:gray">Connecting to AddThis profile <?php echo $profile; ?>..</span>
+                                                <span id="addthis-credential-validation-message" style="color:red"></span>
+                                                <?php
+                                                if ($credential_validation_status == 1) {
+                                                    echo '<span style="color:green">&#10004; Valid AddThis Credentials</span>';
+                                                }
+                                                ?>
+                                            </td>
+                                        </tr>
 				</tbody>
 			</table>
 			<div class='clear'>&nbsp;</div>  

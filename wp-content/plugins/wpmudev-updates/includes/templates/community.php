@@ -6,7 +6,7 @@
 					<span class="tag-upgrade"></span>
 					<h3 class="support-msg"><span class="wpmudev-logo-small"></span>&nbsp; <?php _e('members get full access to the biggest &amp; best WordPress community on the web.', 'wpmudev') ?></h3>
 					<a class="btn" href="<?php echo apply_filters('wpmudev_join_url', 'http://premium.wpmudev.org/join/'); ?>">
-						<button class="cta"><?php _e('Find out more &raquo;', 'wpmudev') ?></button>
+						<button class="wpmu-button"><?php _e('Find out more &raquo;', 'wpmudev') ?></button>
 					</a>
 					<?php if (!$this->get_apikey()) { ?> 
 					<p class="support-already-member"><a href="admin.php?page=wpmudev&clear_key=1"><?php _e('Already a member?', 'wpmudev') ?></a></p>
@@ -32,7 +32,7 @@
 		</table>
 	</div>
 </div>
-<div class="community-container grid_container">
+<div class="community-container grid_container wpmudev-dash">
 	
 	<?php if ($this->get_apikey() && $this->allowed_user()) { ?>
 	<div class="community-content">
@@ -74,7 +74,7 @@
 				<br class="clear" />
 				<span class="rep-points"><i><?php _e('You currently have ', 'wpmudev'); ?><span class="number-of-points"><?php echo number_format_i18n($profile['reputation']['overall']); ?></span><?php _e(' reputation points', 'wpmudev'); ?></i></span>
 				<br />
-				<a href="http://premium.wpmudev.org/forums/profile/<?php echo $profile['profile']['user_name']; ?>/reputation" target="_blank" class="button"><i class="icon-list-alt icon-large"></i><?php _e('VIEW REPUTATION REPORT', 'wpmudev'); ?></a>
+				<a href="http://premium.wpmudev.org/forums/profile/<?php echo $profile['profile']['user_name']; ?>/reputation" target="_blank" class="wpmu-button icon"><i class="icon-list-alt icon-large"></i><?php _e('VIEW REPUTATION REPORT', 'wpmudev'); ?></a>
 			<?php } ?>
 			</div>
 		
@@ -120,7 +120,7 @@
 		<h1><?php _e('Latest topics:', 'wpmudev'); ?></h1>
 		<?php $count = 1; if (@$profile['forum']['recent_threads']) foreach ($profile['forum']['recent_threads'] as $forum_id => $forum) { ?>
 		<ul>
-			<li><h1><?php echo $forum['title']; ?></h1><a href="<?php echo $this->support_url. '&forum=' . $forum_id; ?>" class="button"><i class="icon-comment icon-large"></i><?php _e('START A DISCUSSION', 'wpmudev'); ?></a>
+			<li><h1><?php echo $forum['title']; ?></h1><a href="<?php echo $this->support_url. '&forum=' . $forum_id; ?>" class="wpmu-button cta small"><i class="icon-comment icon-large"></i><?php _e('START A DISCUSSION', 'wpmudev'); ?></a>
 				<ul <?php echo (1<$count ? 'style="display:none"' : '');?> >
 					<li>
 						<table width="100%" cellpadding="0" cellspacing="0" border="0">

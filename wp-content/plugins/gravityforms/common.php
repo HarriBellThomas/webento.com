@@ -1,7 +1,7 @@
 <?php
 class GFCommon{
 
-    public static $version = "1.6.8.1";
+    public static $version = "1.6.11";
     public static $tab_index = 1;
 
     public static function get_selection_fields($form, $selected_field_id){
@@ -3389,7 +3389,9 @@ class GFCommon{
         }
 
 
-        return $input;
+        return apply_filters("gform_column_input_content_{$form_id}_{$field["id"]}_{$column_index}",
+            apply_filters("gform_column_input_content", $input, $input_info, $field, rgar($column, "text"), $value, $form_id),
+                                                                $input_info, $field, rgar($column, "text"), $value, $form_id);
     }
 
     public static function to_money($number, $currency_code=""){
@@ -4410,7 +4412,6 @@ class GFCommon{
         } else {
 
             $choices = array_merge($choices, $field['choices']);
-
         }
 
         if(empty($choices))

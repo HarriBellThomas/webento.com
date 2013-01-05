@@ -11,12 +11,9 @@ $wpmudev_video_pages = array(
 	'nav-menus' => array('menus'),
 	'themes' => array('change-theme'),
 	'profile' => array('change-password'),
-	'link-manager' => array('add-links'),
-	'link' => array('add-links'),
-	'edit-link_category' => array('link-categories'),
 	'edit-post_tag' => array('tags'),
 	'edit-category' => array('categories'),
-	'upload' => array('media-library', 'image-editor', 'image-editor-crop-and-scale', 'image-editor-rotate-flip-undo-redo'),
+	'upload' => array('media-library', 'image-editor'),
 	'media' => array('add-media'),
 	'edit-comments' => array('comments')
 );
@@ -34,10 +31,10 @@ function wpmudev_vids_help($old_help, $screen_id, $screen) {
 			if (isset($hidden[$video]))
 				continue;
 				
-			$contextual_help .= '<div class="postbox" style="width: 500px;float: left;margin-right: 10px;">
+			$contextual_help .= '<div class="postbox" style="width: 520px;float: left;margin-right: 10px;">
 				<h3 class="hndle"><span>' . esc_attr($wpmudev_vids->video_list[$video]) . '</span></h3>
 				<div class="inside">
-					<iframe src="' .(is_ssl() ? 'https': 'http'). '://premium.wpmudev.org/video/'.$video.'" frameborder="0" height="325" width="480"></iframe>
+					<iframe src="' .(is_ssl() ? 'https': 'http'). '://premium.wpmudev.org/video/'.$video.'" frameborder="0" width="500" height="281" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
 				</div>
 			</div>';
 		}

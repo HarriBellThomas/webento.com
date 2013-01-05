@@ -16,12 +16,12 @@ if(!$user_id) {
 $subscription = (int) $_REQUEST['subscription'];
 
 if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
-	
+
 	$gateway = M_get_class_for_gateway($_REQUEST['gateway']);
 	if($gateway && is_object($gateway) && $gateway->haspaymentform == true) {
 		$sub =  new M_Subscription( $subscription );
 		$pricing = $sub->get_pricingarray();
-		$coupon_code = (isset($_REQUEST['remove_coupon']) ? '' : $_REQUEST['coupon_code']);
+		$coupon_code = membership_get_current_coupon();
 
 		if(!empty($pricing) && !empty($coupon_code) ) {
 			$pricing = $sub->apply_coupon_pricing($coupon_code,$pricing);
@@ -33,7 +33,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 		<div class='fullwidth'>
 			<?php do_action('membership_payment_form', $sub, $pricing, $member->ID); ?>
 		</div>
-		<?php		
+		<?php
 	} else {
 		?>
 		<div class='fullwidth'>
@@ -43,8 +43,8 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 	}
 } else if($member->on_sub( $subscription )) {
 		$sub =  new M_Subscription( $subscription );
-		$coupon_code = (isset($_REQUEST['remove_coupon']) ? '' : $_REQUEST['coupon_code']);
-		$remove_coupon = sprintf('<input type="submit" name="remove_coupon" value="%s" href="#" id="membership_remove_coupon" />',__('Remove Coupon','membership'));
+		$coupon_code = membership_get_current_coupon();
+
 		if(!empty($pricing) && !empty($coupon_code) ) {
 			$pricing = $sub->apply_coupon_pricing($coupon_code,$pricing);
 		}
@@ -56,7 +56,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 			<p class='alreadybought'><?php echo __('You currently have a subscription for the <strong>', 'membership') . $sub->sub_name() . __('</strong> subscription. If you wish to sign up a different subscription then you can do below.','membership'); ?></p>
 
 			<table class='purchasetable'>
-				<?php $subs = $this->get_subscriptions();
+				<?php $subs = $this->get_public_subscriptions();
 
 						foreach($subs as $s) {
 							if($s->id == $subscription) {
@@ -101,7 +101,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 												}
 											}
 											echo $price;
-											if($sub->coupon_label) {
+											if(isset($sub->coupon_label)) {
 												echo sprintf('<p class="membership_coupon_label">%s</p>',$sub->coupon_label);
 											}
 										}
@@ -121,17 +121,6 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 						}
 				?>
 			</table>
-			<div class="membership-coupon">
-				<form method="post">
-					<?php if(empty($coupon_code)) : ?>
-					<label><?php echo __('Have a coupon code?','membership'); ?>
-					<input type="text" name="coupon_code" value="<?php echo (!empty($coupon_code) ? $_REQUEST['coupon_code'] : ''); ?>" /></label>
-					<input type="submit" name="apply_coupon" value="<?php _e('Apply','membership'); ?>"/>
-					<?php else: ?>
-						<?php echo $remove_coupon; ?>
-					<?php endif; ?>
-				</form>
-			</div>
 		</div>
 
 	<?php
@@ -139,8 +128,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 
 	$sub =  new M_Subscription( $subscription );
 	$pricing = $sub->get_pricingarray();
-	$coupon_code = (isset($_REQUEST['remove_coupon']) ? '' : $_REQUEST['coupon_code']);
-	$remove_coupon = sprintf('<input type="submit" name="remove_coupon" value="%s" href="#" id="membership_remove_coupon" />',__('Remove Coupon','membership'));
+	$coupon_code = membership_get_current_coupon();
 	if(!empty($pricing) && !empty($coupon_code) ) {
 		$pricing = $sub->apply_coupon_pricing($coupon_code,$pricing);
 	}
@@ -162,7 +150,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 
 						if(!empty($amount)) {
 							echo $amount;
-							if($sub->coupon_label) {
+							if(isset($sub->coupon_label) && !empty($sub->coupon_label)) {
 								echo sprintf('<p class="membership_coupon_label">%s</p>',$sub->coupon_label);
 							}
 						} else {
@@ -189,7 +177,7 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 								}
 							}
 							echo $price;
-							if($sub->coupon_label) {
+							if(isset($sub->coupon_label) && !empty($sub->coupon_label)) {
 								echo sprintf('<p class="membership_coupon_label">%s</p>',$sub->coupon_label);
 							}
 						}
@@ -204,17 +192,6 @@ if( isset($_REQUEST['gateway']) && isset($_REQUEST['extra_form']) ) {
 					</td>
 				</tr>
 			</table>
-			<div class="membership-coupon">
-				<form method="post">
-					<?php if(empty($coupon_code)) : ?>
-					<label><?php echo __('Have a coupon code?','membership'); ?>
-					<input type="text" name="coupon_code" value="<?php echo (!empty($coupon_code) ? $_REQUEST['coupon_code'] : ''); ?>" /></label>
-					<input type="submit" name="apply_coupon" value="<?php _e('Apply','membership'); ?>"/>
-					<?php else: ?>
-						<?php echo $remove_coupon; ?>
-					<?php endif; ?>
-				</form>
-			</div>
 		</div>
 	<?php
 }

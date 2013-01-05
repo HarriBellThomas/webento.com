@@ -47,8 +47,11 @@ class AgmMarkerReplacer {
 		$map = array_merge($map, $overrides);
 
 		$elid = 'map-' . md5(microtime() . rand());
-		$rpl = '<div class="agm_google_maps" id="' . $elid . '"></div>';
-		$rpl .= '<script type="text/javascript">_agmMaps[_agmMaps.length] = {selector: "#' . $elid . '", data: ' . json_encode($map) . '};</script>';
+		$content = apply_filters('agm_google_maps-shortcode-tag_content', '', $map);
+		$rpl = '<div class="agm_google_maps" id="' . $elid . '">' . $content . '</div>';
+		//$rpl .= '<script type="text/javascript">_agmMaps[_agmMaps.length] = {selector: "#' . $elid . '", data: ' . json_encode($map) . '};</script>';
+		$rpl .= '<script type="text/javascript">_agmMaps.push({selector: "#' . $elid . '", data: ' . json_encode($map) . '});</script>';
+		
 		return $rpl;
 	}
 
@@ -94,18 +97,18 @@ class AgmMarkerReplacer {
 	 */
 	function process_map_query_tag ($query, $overrides=array(), $overlay=false, $network=false) {
 		$method = $overlay ? 'create_overlay_tag' : 'create_tags';
-		if ('random' == $query) return $network ?
-			$this->$method($this->model->get_random_network_map(), $overrides)
-			:
-			$this->$method($this->model->get_random_map(), $overrides);
-		if ('all' == $query) return $network ?
-			$this->$method($this->model->get_all_network_maps(), $overrides)
-			:
-			$this->$method($this->model->get_all_maps(), $overrides);
-		return $network ?
-			$this->$method($this->model->get_custom_network_maps($query), $overrides)
-			:
-			$this->$method($this->model->get_custom_maps($query), $overrides)
+		if ('current_post' == $query) return $this->$method($this->model->get_current_post_maps(), $overrides);
+		if ('random' == $query) return $network 
+			? $this->$method($this->model->get_random_network_map(), $overrides)
+			: $this->$method($this->model->get_random_map(), $overrides)
+		;
+		if ('all' == $query) return $network 
+			? $this->$method($this->model->get_all_network_maps(), $overrides)
+			: $this->$method($this->model->get_all_maps(), $overrides)
+		;
+		return $network 
+			? $this->$method($this->model->get_custom_network_maps($query), $overrides)
+			: $this->$method($this->model->get_custom_maps($query), $overrides)
 		;
 	}
 

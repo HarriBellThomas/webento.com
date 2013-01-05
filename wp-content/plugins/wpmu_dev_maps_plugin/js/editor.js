@@ -27,7 +27,7 @@ var _mapHandler = false;
  */
 function requestMapList () {
 	var data = {
-		action: 'agm_list_maps'
+		"action": 'agm_list_maps'
 	};
 	$.post(ajaxurl, data, loadMaps);
 }
@@ -36,8 +36,11 @@ function requestMapList () {
  * Renders the HTML for list of maps from server JSON response.
  */
 function loadMaps (data) {
-	var html = '<ul>';
-	$.each(data, function (idx, el) {
+	var html = '<ul>',
+		current = data.maps ? data.maps.length : 0,
+		total = data.total ? parseInt(data.total, 10) : 0
+	;
+	$.each(data.maps, function (idx, el) {
 		html += '<li class="existing_map_item">' + 
 			'<div class="map_item_title">' + el.title + ' ' + '</div>' + 
 			'<input type="hidden" value="' + el.id + '" />' + 
@@ -51,10 +54,62 @@ function loadMaps (data) {
 		'</li>';
 	});
 	html += '</ul>';
-	//if (!data.length) html = '<div class="agm_info_box"><div class="agm_less_important">' + l10nEditor.no_existing_maps + '</div></div>';
-		
+
+	var $paging = $("#agm-paging_bar")
+		$load_next = $("#agm-load_next_maps"),
+		$load_prev = $("#agm-load_prev_maps"),
+		incr = $paging.length ? parseInt($paging.attr("data-increment"), 10) : 0,
+		next_increment = incr + 1,
+		prev_increment = incr - 1
+	;
 	$('#maps_existing_result').html(html);
-	if (!data.length) $('#maps_new_switch').click();
+
+	if (total > current) {
+		$('#maps_existing_result').append(
+			'<div id="agm-paging_bar" data-increment="' + incr + '" />'
+		);
+		$paging = $("#agm-paging_bar");
+
+		if (prev_increment >= 0) {
+			$paging.append(
+				'<a href="#" id="agm-load_prev_maps">' + l10nEditor.load_prev_maps + '</a>'
+			);
+			$load_prev = $("#agm-load_prev_maps");
+			$load_prev
+				.unbind("click")
+				.bind("click", function () {
+					$paging.attr("data-increment", prev_increment);
+					$.post(ajaxurl, {
+						"action": 'agm_list_maps',
+						"increment": prev_increment
+					}, loadMaps);
+					return false;
+				})
+			;
+		}
+		$paging.append(
+			'<a href="#" id="agm-load_next_maps">' + l10nEditor.load_next_maps + '</a>'
+		);
+		$load_next = $("#agm-load_next_maps");
+
+		if (current) {
+			$load_next
+				.unbind("click")
+				.bind("click", function () {
+					$paging.attr("data-increment", next_increment);
+					$.post(ajaxurl, {
+						"action": 'agm_list_maps',
+						"increment": next_increment
+					}, loadMaps);
+					return false;
+				})
+			;
+		} else {
+			$load_next.unbind("click").remove();
+		}
+	}
+		
+	if (!current && !total) $('#maps_new_switch').click();
 }
 
 /**
@@ -203,14 +258,14 @@ if (!mbuttons_container.length) return;
 
 mbuttons_container.append('' + 
 	'<a onclick="return openMapEditor();" title="' + l10nEditor.add_map + '" class="thickbox" id="add_map" href="#TB_inline?width=640&height=594&inlineId=map_container">' +
-		'<img onclick="return false;" alt="' + l10nEditor.add_map + '" src="' + _agm_root_url + '/img/system/globe-button.gif">' +
+		'<img onclick="return false;" alt="' + l10nEditor.add_map + '" src="' + _agm.root_url + '/img/system/globe-button.gif">' +
 	'</a>'
 );
 
 // Create the needed editor container HTML
 $('body').append(
 	'<div id="map_container" style="display:none">' + 
-	(_agm_is_multisite ? '' : '<p class="agm_less_important">For more detailed instructions on how to use refer to <a target="_blank" href="http://premium.wpmudev.org/project/wordpress-google-maps-plugin/installation/">WPMU DEV Maps Installation and Use instructions</a>.</p>') +
+	(_agm.is_multisite ? '' : '<p class="agm_less_important">For more detailed instructions on how to use refer to <a target="_blank" href="http://premium.wpmudev.org/project/wordpress-google-maps-plugin/installation/">WPMU DEV Maps Installation and Use instructions</a>.</p>') +
 		'<a href="#" id="maps_existing_switch">' + l10nEditor.existing_map + '</a>' +
 		'<div id="maps_new_switch_container">' +
 			'<p><input type="button" class="button-secondary action" id="maps_new_switch" value="' + l10nEditor.new_map + '" /></p>' +
@@ -218,7 +273,7 @@ $('body').append(
 		'</div>' +
 		'<div class="agm_container" id="maps_existing">' +
 			'<h3>' + l10nEditor.existing_map + '</h3>' +
-			'<div id="maps_existing_result"><img src="' + _agm_root_url + '/img/system/loading.gif" />' + l10nEditor.loading + '</div>' +
+			'<div id="maps_existing_result"><img src="' + _agm.root_url + '/img/system/loading.gif" />' + l10nEditor.loading + '</div>' +
 			'<p id="maps_advanced_container"><input type="button" class="button-secondary action" id="maps_advanced_switch" value="' + l10nEditor.advanced + '" /></p>' +
 			'<p id="maps_advanced_mode_help_container" class="agm_less_important">' + l10nEditor.advanced_mode_activate_help + '</p>' +
 		'</div>' +

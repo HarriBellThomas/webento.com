@@ -77,7 +77,7 @@
 ------------------------------------------------------------ */
 #info_graphic {
 position: relative;
-height: 1100px;
+height: 900px;
 width: 880px;
 padding: 0 0 50px;
 margin: 0 auto;
@@ -928,7 +928,7 @@ h5 {
 	list-style-type: none;
 	margin: 0 0 5px 20px;
 	padding: 0 0 0 15px;
-	word-wrap: break-word;
+
 }
 
 .after-post ul li {
@@ -2200,5 +2200,43 @@ div.gform_wrapper .gform_footer {
 		padding: 0 20px;
 		text-align: center;
 	}
-
+	#info_graphic ol#process {
+	top: 0px;
+	}
+	#info_graphic ol#process li {
+	position: static;
+	}
+	#info_graphic ol#process li#process_objective {
+	display: none;
+	}
+	#info_graphic {
+	position: relative;
+	height: 650px;
+	background: none;
+	}
+	#info_graphic ol#process li#process_ideas {
+	width: 200px;
+	padding: 8px 0 0 80px;
+	background: url('/wp-content/themes/spnveconomy/images/home/process_icon_ideas.png') 0 0 no-repeat;
+	}
+	#info_graphic ol#process li#process_projects {
+	width: 200px;
+	padding: 8px 0 0 80px;
+	background: url('/wp-content/themes/spnveconomy/images/home/process_icon_projects.png') 0 0 no-repeat;
+	}
+	#info_graphic ol#process li#process_design-build {
+	width: 200px;
+	padding: 8px 0 0 80px;
+	background: url('/wp-content/themes/spnveconomy/images/home/process_icon_design.png') 0 0 no-repeat;
+	}
+	#info_graphic ol#process li#process_measure {
+	width: 200px;
+	padding: 8px 0 0 80px;
+	background: url('/wp-content/themes/spnveconomy/images/home/process_icon_measure.png') 0 0 no-repeat;
+	}
+	#info_graphic ol#process li#process_learn {
+	width: 200px;
+	padding: 8px 0 0 80px;
+	background: url('/wp-content/themes/spnveconomy/images/home/process_icon_learn.png') 0 0 no-repeat;
+	}
 }

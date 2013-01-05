@@ -16,3 +16,26 @@
 	</p>
 	</form>
 </div>
+
+<script type="text/javascript">
+(function ($) {
+
+$(function () {
+
+	// Set up contextual help inline triggers
+	$("[data-agm_contextual_trigger]").each(function () {
+		var $me = $(this),
+			$target = $($me.attr("data-agm_contextual_trigger"))
+		;
+		if (!$target.length) return false;
+		$me.on("click", function () {
+			$("#contextual-help-link").click();
+			$target.find("a").click();
+			$(window).scrollTop(0);
+			return false;
+		});
+	});
+});
+
+})(jQuery);
+</script>

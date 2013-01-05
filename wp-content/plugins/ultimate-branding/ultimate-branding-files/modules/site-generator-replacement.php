@@ -27,7 +27,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-class site_generator_replacement {
+class ub_site_generator_replacement {
 
 	var $site_generator_replacement_settings_page;
 	var $site_generator_replacement_settings_page_long;
@@ -46,7 +46,7 @@ class site_generator_replacement {
 		add_filter("get_the_generator_export", array(&$this, "site_generator_replacement_content"), 99, 2);
 	}
 
-	function site_generator_replacement() {
+	function ub_site_generator_replacement() {
 		$this->__construct();
 	}
 
@@ -149,7 +149,7 @@ class site_generator_replacement {
 
 }
 
-$ub_site_generator_replacement = new site_generator_replacement();
+$ub_site_generator_replacement = new ub_site_generator_replacement();
 
 
 

@@ -43,12 +43,12 @@ if( !function_exists( 'esc_textarea' ) ) {
 	}
 }
 
-class Admin_Footer_Text {
+class ub_Admin_Footer_Text {
 
 	var $admin_footer_text_default = '';
 	var $update_text_default = '';
 
-	function Admin_Footer_Text() {
+	function ub_Admin_Footer_Text() {
 		$this->__construct();
 	}
 
@@ -156,5 +156,5 @@ class Admin_Footer_Text {
 
 }
 
-$ub_adminfootertext = new Admin_Footer_Text();
+$ub_adminfootertext = new ub_Admin_Footer_Text();
 

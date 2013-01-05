@@ -3,7 +3,7 @@ if(!class_exists('membershipadmin')) {
 
 	class membershipadmin {
 
-		var $build = 12;
+		var $build = 13;
 		var $db;
 
 		//
@@ -225,6 +225,9 @@ if(!class_exists('membershipadmin')) {
 
 			do_action('membership_register_shortcodes');
 
+			add_action( 'wp_ajax_m_set_coupon', array(&$this, 'set_membership_coupon_cookie'));
+			add_action( 'wp_ajax_nopriv_m_set_coupon', array(&$this, 'set_membership_coupon_cookie'));
+
 		}
 
 		function show_membership_status_notice() {
@@ -330,6 +333,8 @@ if(!class_exists('membershipadmin')) {
 				}
 			}
 
+			do_action('membership-admin-add-shortcodes');
+
 			// Set the initialisation status
 			$initialised = true;
 
@@ -425,13 +430,14 @@ if(!class_exists('membershipadmin')) {
 			// Run the core header
 			$this->add_admin_header_core();
 
-			wp_enqueue_script( 'jquery-datepicker', membership_url( 'membershipincludes/js/datepicker/js/datepicker.min.js'), array('jquery', 'jquery-ui-core'), $this->build);
+			wp_enqueue_script( 'jquery-ui-datepicker' );
+			wp_enqueue_script( 'jquery-ui-timepicker', membership_url('membershipincludes/js/datepicker/js/jquery.timepicker.min.js'), array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker') , $this->build );
 
 			//only load languages for datepicker if not english (or it will show Chinese!)
 			if ($this->language != 'en')
-				wp_enqueue_script( 'jquery-datepicker-i18n', membership_url( 'membershipincludes/js/datepicker/js/datepicker-i18n.min.js'), array('jquery', 'jquery-ui-core', 'jquery-datepicker'), $this->build);
+				wp_enqueue_script( 'jquery-datepicker-i18n', membership_url( 'membershipincludes/js/datepicker/js/datepicker-i18n.min.js'), array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker'), $this->build);
 
-			wp_enqueue_style( 'jquery-datepicker-css', membership_url( 'membershipincludes/js/datepicker/css/ui-lightness/datepicker.css'), false, $this->build);
+			wp_enqueue_style( 'jquery-datepicker-css', '//ajax.googleapis.com/ajax/libs/jqueryui/1.8.19/themes/base/jquery-ui.css', false, $this->build);
 
 			// Queue scripts and localise
 			wp_enqueue_script('couponsjs', membership_url('membershipincludes/js/coupons.js'), array(), $this->build);
@@ -526,7 +532,7 @@ if(!class_exists('membershipadmin')) {
 
 		function build_signup_stats() {
 
-			$sql = $this->db->prepare( "SELECT YEAR(startdate) as year, MONTH(startdate)as month, DAY(startdate) as day, count(*) AS signedup FROM {$this->membership_relationships} WHERE startdate > DATE_SUB(CURDATE(), INTERVAL 10 DAY) GROUP BY YEAR(startdate), MONTH(startdate), DAY(startdate) ORDER BY startdate DESC" );
+			$sql = $this->db->prepare( "SELECT YEAR(startdate) as year, MONTH(startdate)as month, DAY(startdate) as day, count(*) AS signedup FROM {$this->membership_relationships} WHERE startdate > DATE_SUB(CURDATE(), INTERVAL %d DAY) GROUP BY YEAR(startdate), MONTH(startdate), DAY(startdate) ORDER BY startdate DESC", 10 );
 
 			$results = $this->db->get_results( $sql );
 
@@ -567,7 +573,7 @@ if(!class_exists('membershipadmin')) {
 
 		function build_levels_stats() {
 
-			$sql = $this->db->prepare( "SELECT l.id, l.level_title, count(m.rel_id) as users FROM {$this->membership_levels} as l, {$this->membership_relationships} as m WHERE l.id = m.level_id GROUP BY l.id, l.level_title ORDER BY users DESC" );
+			$sql = "SELECT l.id, l.level_title, count(m.rel_id) as users FROM {$this->membership_levels} as l, {$this->membership_relationships} as m WHERE l.id = m.level_id GROUP BY l.id, l.level_title ORDER BY users DESC";
 
 			$results = $this->db->get_results( $sql );
 
@@ -591,7 +597,7 @@ if(!class_exists('membershipadmin')) {
 
 		function build_subs_stats() {
 
-			$sql = $this->db->prepare( "SELECT s.id, s.sub_name, count(m.rel_id) as users FROM {$this->subscriptions} as s, {$this->membership_relationships} as m WHERE s.id = m.sub_id GROUP BY s.id, s.sub_name ORDER BY users DESC" );
+			$sql = "SELECT s.id, s.sub_name, count(m.rel_id) as users FROM {$this->subscriptions} as s, {$this->membership_relationships} as m WHERE s.id = m.sub_id GROUP BY s.id, s.sub_name ORDER BY users DESC";
 
 			$results = $this->db->get_results( $sql );
 
@@ -784,7 +790,7 @@ if(!class_exists('membershipadmin')) {
 				echo "<table style='width: 100%;'>";
 				echo "<tbody>";
 
-					$usercount = $this->db->get_var( $this->db->prepare("SELECT count(*) FROM {$this->db->users} INNER JOIN {$this->db->usermeta} ON {$this->db->users}.ID = {$this->db->usermeta}.user_id WHERE {$this->db->usermeta}.meta_key = '{$this->db->prefix}capabilities'") );
+					$usercount = $this->db->get_var( "SELECT count(*) FROM {$this->db->users} INNER JOIN {$this->db->usermeta} ON {$this->db->users}.ID = {$this->db->usermeta}.user_id WHERE {$this->db->usermeta}.meta_key = '{$this->db->prefix}capabilities'" );
 
 					echo "<tr>";
 						echo "<td>" . __('Total Users', 'membership') . "</td>";
@@ -1836,9 +1842,9 @@ if(!class_exists('membershipadmin')) {
 						<option value="bulkmovegateway"><?php _e('Move gateway','membership'); ?></option>
 					</optgroup>
 				</select>
-				<input type="submit" class="button-secondary action" id="doaction" name="doaction" value="<?php _e('Apply','membership'); ?>">
+				<input type="submit" class="button-secondary action" id="doaction" name="doaction" value="<?php _e('Apply','membership'); ?>" />
 
-				<select name="sub_op">
+				<select name="sub_op" style='float:none;'>
 					<option value=""><?php _e('Filter by subscription','membership'); ?></option>
 					<?php
 						$subs = $this->get_subscriptions();
@@ -1853,7 +1859,7 @@ if(!class_exists('membershipadmin')) {
 				</select>
 				<input type="submit" class="button-secondary action" id="doactionsub" name="doactionsub" value="<?php _e('Filter','membership'); ?>">
 
-				<select name="level_op">
+				<select name="level_op" style='float:none;'>
 					<option value=""><?php _e('Filter by level','membership'); ?></option>
 					<?php
 						$levels = $this->get_membership_levels();
@@ -1868,7 +1874,7 @@ if(!class_exists('membershipadmin')) {
 				</select>
 				<input type="submit" class="button-secondary action" id="doactionlevel" name="doactionlevel" value="<?php _e('Filter','membership'); ?>">
 
-				<select name="active_op">
+				<select name="active_op" style='float:none;'>
 					<option value=""><?php _e('Filter by status','membership'); ?></option>
 					<option value="yes" <?php if(isset($_GET['active_op']) && $_GET['active_op'] == 'yes') echo 'selected="selected"'; ?>><?php _e('Active','membership'); ?></option>
 					<option value="no" <?php if(isset($_GET['active_op']) && $_GET['active_op'] == 'no') echo 'selected="selected"'; ?>><?php _e('Inactive','membership'); ?></option>
@@ -2476,6 +2482,11 @@ if(!class_exists('membershipadmin')) {
 									</em>
 									</th>
 									<td>
+										<?php
+											if(!isset($M_options['enableincompletesignups'])) {
+												$M_options['enableincompletesignups'] = 'no';
+											}
+										?>
 										<input type='checkbox' name='enableincompletesignups' id='enableincompletesignups' value='yes' <?php checked('yes', $M_options['enableincompletesignups']); ?> />
 									</td>
 								</tr>
@@ -2538,6 +2549,9 @@ if(!class_exists('membershipadmin')) {
 									</th>
 									<td>
 										<?php
+										if(!isset($M_options['registration_page'])) {
+											$M_options['registration_page'] = '';
+										}
 										$pages = wp_dropdown_pages(array('post_type' => 'page', 'selected' => $M_options['registration_page'], 'name' => 'registration_page', 'show_option_none' => __('None', 'membership'), 'sort_column'=> 'menu_order, post_title', 'echo' => 0));
 										echo $pages;
 										?>
@@ -2585,6 +2599,9 @@ if(!class_exists('membershipadmin')) {
 									</th>
 									<td>
 										<?php
+										if(!isset($M_options['registrationcompleted_page'])) {
+											$M_options['registrationcompleted_page'] = '';
+										}
 										$pages = wp_dropdown_pages(array('post_type' => 'page', 'selected' => $M_options['registrationcompleted_page'], 'name' => 'registrationcompleted_page', 'show_option_none' => __('Select a page', 'membership'), 'sort_column'=> 'menu_order, post_title', 'echo' => 0));
 										echo $pages;
 										?>
@@ -2614,6 +2631,9 @@ if(!class_exists('membershipadmin')) {
 									</th>
 									<td>
 										<?php
+										if(!isset($M_options['account_page'])) {
+											$M_options['account_page'] = '';
+										}
 										$pages = wp_dropdown_pages(array('post_type' => 'page', 'selected' => $M_options['account_page'], 'name' => 'account_page', 'show_option_none' => __('Select a page', 'membership'), 'sort_column'=> 'menu_order, post_title', 'echo' => 0));
 										echo $pages;
 										?>
@@ -2643,6 +2663,9 @@ if(!class_exists('membershipadmin')) {
 									</th>
 									<td>
 										<?php
+										if(!isset($M_options['subscriptions_page'])) {
+											$M_options['subscriptions_page'] = '';
+										}
 										$pages = wp_dropdown_pages(array('post_type' => 'page', 'selected' => $M_options['subscriptions_page'], 'name' => 'subscriptions_page', 'show_option_none' => __('Select a page', 'membership'), 'sort_column'=> 'menu_order, post_title', 'echo' => 0));
 										echo $pages;
 										?>
@@ -2672,6 +2695,9 @@ if(!class_exists('membershipadmin')) {
 									</th>
 									<td>
 										<?php
+										if(!isset($M_options['nocontent_page'])) {
+											$M_options['nocontent_page'] = '';
+										}
 										$pages = wp_dropdown_pages(array('post_type' => 'page', 'selected' => $M_options['nocontent_page'], 'name' => 'nocontent_page', 'show_option_none' => __('Select a page', 'membership'), 'sort_column'=> 'menu_order, post_title', 'echo' => 0));
 										echo $pages;
 										?>
@@ -2731,13 +2757,6 @@ if(!class_exists('membershipadmin')) {
 						<h3 class="hndle" style='cursor:auto;'><span><?php _e('Downloads / Media protection','membership'); ?></span></h3>
 						<div class="inside">
 
-							<?php
-									if ( current_user_can('manage_options') && !get_option('permalink_structure') ) {
-								      echo '<div class="error"><p>'.__('You must enable Pretty Permalinks to use this feature - <a href="options-permalink.php">Enable now &raquo;</a>', 'membership').'</p></div>';
-									}
-
-							?>
-
 							<p class='description'><?php _e('Downloads and media files can be protected by remapping their perceived location.','membership'); ?></p>
 							<p class='description'><?php _e('Note: If a user determines a files actual location on your server, there is very little we can do to prevent its download, so please be careful about giving out URLs.','membership'); ?></p>
 
@@ -2767,7 +2786,12 @@ if(!class_exists('membershipadmin')) {
 										<?php echo $this->_tips->add_tip( __('This is the URL that the user will see. You can change the end part to something unique.','membership') ); ?>
 									</th>
 									<td>
-										<?php esc_html_e(trailingslashit(get_option('home')));  ?>&nbsp;<input type='text' name='masked_url' id='masked_url' value='<?php esc_attr_e($M_options['masked_url']);  ?>' />&nbsp;/
+										<?php
+											if(!isset($M_options['masked_url'])) {
+												$M_options['masked_url'] = '';
+											}
+											esc_html_e(trailingslashit(get_option('home')));  ?>&nbsp;<input type='text' name='masked_url' id='masked_url' value='<?php esc_attr_e($M_options['masked_url']);
+										?>' />&nbsp;/
 									</td>
 								</tr>
 
@@ -2891,6 +2915,9 @@ if(!class_exists('membershipadmin')) {
 									<td>
 										<?php
 										$args = array("textarea_name" => "shortcodemessage");
+										if(!isset($M_options['shortcodemessage'])) {
+											$M_options['shortcodemessage'] = '';
+										}
 										wp_editor( stripslashes($M_options['shortcodemessage']), "shortcodemessage", $args );
 										/*
 										?>
@@ -2958,6 +2985,9 @@ if(!class_exists('membershipadmin')) {
 									<td>
 										<?php
 										$args = array("textarea_name" => "moretagmessage");
+										if(!isset($M_options['moretagmessage'])) {
+											$M_options['moretagmessage'] = '';
+										}
 										wp_editor( stripslashes($M_options['moretagmessage']), "moretagmessage", $args );
 										/*
 										?>
@@ -3343,6 +3373,13 @@ if(!class_exists('membershipadmin')) {
 					$menus = apply_filters('membership_options_menus', $menus);
 				?>
 
+				<?php
+						if ( current_user_can('manage_options') && !get_option('permalink_structure') ) {
+					      echo '<div class="error"><p>'.__('You must enable Pretty Permalinks for Membership to function correctly - <a href="options-permalink.php">Enable now &raquo;</a>', 'membership').'</p></div>';
+						}
+
+				?>
+
 				<h3 class="nav-tab-wrapper">
 					<?php
 						foreach($menus as $key => $menu) {
@@ -3592,9 +3629,12 @@ if(!class_exists('membershipadmin')) {
 									<h3><?php _e('Custom shortcode protected content message','membership'); ?></h3>
 									<p class='description'><?php _e('If you want a protected content message to be displayed for this level then you can enter it here.','membership'); ?></p>
 									<?php
-									$args = array("textarea_name" => "level_protectedcontent", "textarea_rows" => 10);
+									$args = array("textarea_name" => "level_protectedcontent", "textarea_rows" => 20);
 									if(!empty($mlevel)) {
 										$level_protectedcontent = $mlevel->get_meta( 'level_protectedcontent' );
+									}
+									if(empty($level_protectedcontent)) {
+										$level_protectedcontent = '';
 									}
 									wp_editor( stripslashes($level_protectedcontent), "level_protectedcontent", $args );
 									?>
@@ -4151,9 +4191,19 @@ if(!class_exists('membershipadmin')) {
 								<label for='sub_name'><?php _e('Subscription description','membership'); ?></label>
 								<?php
 								$args = array("textarea_name" => "sub_description", "textarea_rows" => 5);
+
+								if(!isset($sub->sub_description)) {
+									$sub->sub_description = '';
+								}
+
 								wp_editor( stripslashes($sub->sub_description), "sub_description", $args );
 								?>
 								<br/>
+								<?php
+								if(!isset($sub->sub_pricetext)) {
+									$sub->sub_pricetext = '';
+								}
+								?>
 								<label for='sub_pricetext'><?php _e('Subscription price text','membership'); ?><?php echo $this->_tips->add_tip( __('The text you want to show as the price on the subscription form. E.G. Only $25 per month.','membership') ); ?></label>
 								<input class='wide' type='text' name='sub_pricetext' id='sub_pricetext' value='<?php echo esc_attr(stripslashes($sub->sub_pricetext)); ?>' />
 								<?php do_action('membership_subscription_form_after_details', $sub->id); ?>
@@ -5155,14 +5205,14 @@ if(!class_exists('membershipadmin')) {
 		function get_communications( $type = 'all') {
 
 			switch($type) {
-				case 'active':		$sql = $this->db->prepare( "SELECT * FROM {$this->communications} WHERE active = 1 ORDER BY periodstamp ASC" );
+				case 'active':		$sql = "SELECT * FROM {$this->communications} WHERE active = 1 ORDER BY periodstamp ASC";
 									break;
 
-				case 'inactive':	$sql = $this->db->prepare( "SELECT * FROM {$this->communications} WHERE active = 0 ORDER BY periodstamp ASC" );
+				case 'inactive':	$sql = "SELECT * FROM {$this->communications} WHERE active = 0 ORDER BY periodstamp ASC";
 									break;
 
 				case 'all':
-				default:			$sql = $this->db->prepare( "SELECT * FROM {$this->communications} ORDER BY periodstamp ASC" );
+				default:			$sql = "SELECT * FROM {$this->communications} ORDER BY periodstamp ASC";
 									break;
 			}
 
@@ -5663,7 +5713,7 @@ if(!class_exists('membershipadmin')) {
 		}
 
 		function get_pings() {
-			$sql = $this->db->prepare( "SELECT * FROM {$this->pings} ORDER BY id ASC" );
+			$sql = "SELECT * FROM {$this->pings} ORDER BY id ASC";
 
 			$results = $this->db->get_results( $sql );
 
@@ -6120,9 +6170,9 @@ if(!class_exists('membershipadmin')) {
 
 		function update_levelcounts() {
 
-			$sql = $this->db->prepare( "SELECT level_id, count(*) AS number FROM {$this->membership_relationships} WHERE level_id != 0 GROUP BY level_id" );
+			$sql = $this->db->prepare( "SELECT level_id, count(*) AS number FROM {$this->membership_relationships} WHERE level_id != %d GROUP BY level_id", 0 );
 
-			$this->db->query( $this->db->prepare( "UPDATE {$this->membership_levels} SET level_count = 0") );
+			$this->db->query( $this->db->prepare( "UPDATE {$this->membership_levels} SET level_count = %d", 0) );
 
 			$levels = $this->db->get_results($sql);
 			if($levels) {
@@ -6135,9 +6185,9 @@ if(!class_exists('membershipadmin')) {
 
 		function update_subcounts() {
 
-			$sql = $this->db->prepare( "SELECT sub_id, count(*) AS number FROM {$this->membership_relationships} WHERE sub_id != 0 GROUP BY sub_id" );
+			$sql = $this->db->prepare( "SELECT sub_id, count(*) AS number FROM {$this->membership_relationships} WHERE sub_id != %d GROUP BY sub_id", 0 );
 
-			$this->db->query( $this->db->prepare( "UPDATE {$this->subscriptions} SET sub_count = 0") );
+			$this->db->query( $this->db->prepare( "UPDATE {$this->subscriptions} SET sub_count = %d", 0) );
 
 			$subs = $this->db->get_results($sql);
 			if($subs) {
@@ -6181,7 +6231,7 @@ if(!class_exists('membershipadmin')) {
 
 			}
 
-			$sql = $this->db->prepare( "SELECT * FROM {$this->membership_levels}");
+			$sql = "SELECT * FROM {$this->membership_levels}";
 
 			if(!empty($where)) {
 				$sql .= " WHERE " . implode(' AND ', $where);
@@ -6197,6 +6247,30 @@ if(!class_exists('membershipadmin')) {
 		}
 
 		//subscriptions
+		
+		function get_public_subscriptions() {
+
+			$where = array();
+			$orderby = array();
+
+			$where[] = "sub_public = 1";
+			$where[] = "sub_active = 1";
+
+			$orderby[] = 'id ASC';
+
+			$sql = "SELECT * FROM {$this->subscriptions}";
+
+			if(!empty($where)) {
+				$sql .= " WHERE " . implode(' AND ', $where);
+			}
+
+			if(!empty($orderby)) {
+				$sql .= " ORDER BY " . implode(', ', $orderby);
+			}
+
+			return $this->db->get_results($sql);
+
+		}
 
 		function get_subscriptions($filter = false) {
 
@@ -6237,7 +6311,7 @@ if(!class_exists('membershipadmin')) {
 
 			}
 
-			$sql = $this->db->prepare( "SELECT * FROM {$this->subscriptions}");
+			$sql = "SELECT * FROM {$this->subscriptions}";
 
 			if(!empty($where)) {
 				$sql .= " WHERE " . implode(' AND ', $where);
@@ -6280,13 +6354,13 @@ if(!class_exists('membershipadmin')) {
 
 			}
 
-			$sql = $this->db->prepare( "SELECT s.id as sub_id, ml.id as level_id, s.*, ml.*, sl.level_order FROM {$this->subscriptions} AS s, {$this->subscriptions_levels} AS sl, {$this->membership_levels} AS ml");
+			$sql = "SELECT s.id as sub_id, ml.id as level_id, s.*, ml.*, sl.level_order FROM {$this->subscriptions} AS s, {$this->subscriptions_levels} AS sl, {$this->membership_levels} AS ml";
 
 			if(!empty($where)) {
 				$sql .= " WHERE " . implode(' AND ', $where);
 			}
 
-			$sql .= $this->db->prepare( " AND s.id = sl.sub_id AND sl.level_id = ml.id ORDER BY s.id ASC, sl.level_order ASC " );
+			$sql .= " AND s.id = sl.sub_id AND sl.level_id = ml.id ORDER BY s.id ASC, sl.level_order ASC ";
 
 			return $this->db->get_results($sql);
 
@@ -6347,11 +6421,11 @@ if(!class_exists('membershipadmin')) {
 			$member = new M_Membership($id);
 
 			if($member->is_member()) {
-				$key = get_usermeta($id, '_membership_key');
+				$key = get_user_meta($id, '_membership_key');
 
 				if(empty($key)) {
 					$key = md5($id . $profileuser->user_pass . time());
-					update_usermeta($id, '_membership_key', $key);
+					update_user_meta($id, '_membership_key', $key);
 				}
 
 				?>
@@ -6807,12 +6881,15 @@ if(!class_exists('membershipadmin')) {
 
 		function get_coupons( $filter = false ) {
 
-			$sql = $this->db->prepare( "SELECT * FROM {$this->coupons} " );
+			global $blog_id;
+
+			$sql = "SELECT * FROM {$this->coupons}";
 
 			if(!is_network_admin()) {
 				// We are on a single site admin interface
-				$sql .= $this->db->prepare( "WHERE site_id = %d", $this->db->blogid );
+				$sql .= $this->db->prepare( " WHERE site_id = %d", $blog_id );
 			}
+
 			return $this->db->get_results( $sql );
 
 		}
@@ -7178,7 +7255,7 @@ if(!class_exists('membershipadmin')) {
 								<?php
 							}
 						} else { ?>
-							<tr style='background-color: <?php echo $bgcolor; ?>'>
+							<tr>
 								<td colspan="8"><?php _e('No coupons yet.', 'psts') ?></td>
 							</tr>
 						<?php
@@ -7237,7 +7314,7 @@ if(!class_exists('membershipadmin')) {
 
 			global $M_options;
 
-			include_once(ABSPATH . WPINC . '/registration.php');
+			//include_once(ABSPATH . WPINC . '/registration.php');
 
 			$error = array();
 
@@ -7257,37 +7334,37 @@ if(!class_exists('membershipadmin')) {
 
 			if(empty($error)) {
 				// Pre - error reporting check for final add user
-				$user_id = wp_create_user( sanitize_user($_POST['user_login']), $_POST['password'], $_POST['email'] );
+				$user = wp_create_user( sanitize_user($_POST['user_login']), $_POST['password'], $_POST['email'] );
 
-				if(is_wp_error($user_id) && method_exists($userid, 'get_error_message')) {
-					$error[] = $userid->get_error_message();
+				if(is_wp_error($user) && method_exists($user, 'get_error_message')) {
+					$error[] = $user->get_error_message();
 				} else {
-					$member = new M_Membership( $user_id );
+					$member = new M_Membership( $user );
 					if(empty($M_options['enableincompletesignups']) || $M_options['enableincompletesignups'] != 'yes') {
 						$member->deactivate();
 					}
-					
+
 					$creds = array(
 						'user_login' => $_POST['user_login'],
 						'user_password' => $_POST['password'],
 						'remember' => true
 					);
-					$is_ssl = ($_SERVER['https'] == 'on' ? true : false);
+					$is_ssl = (isset($_SERVER['https']) && $_SERVER['https'] == 'on' ? true : false);
 					$user = wp_signon( $creds, $is_ssl );
 
-					if ( is_wp_error($user) && method_exists($userid, 'get_error_message') )
+					if ( is_wp_error($user) && method_exists($user, 'get_error_message') )
 						$error[] = $user->get_error_message();
 
 					if( has_action('membership_susbcription_form_registration_notification') ) {
-						do_action('membership_susbcription_form_registration_notification', $user_id, $_POST['password']);
+						do_action('membership_susbcription_form_registration_notification', $user->ID, $_POST['password']);
 					} else {
-						wp_new_user_notification($user_id, $_POST['password']);
+						wp_new_user_notification($user->ID, $_POST['password']);
 					}
 
 				}
 			}
 
-			do_action( 'membership_subscription_form_registration_process', $error, $user_id );
+			do_action( 'membership_subscription_form_registration_process', $error, $user->ID );
 
 			if(!empty($error)) {
 				//sendback error
@@ -7295,7 +7372,7 @@ if(!class_exists('membershipadmin')) {
 			} else {
 				// everything seems fine (so far), so we have our queued user so let's
 				// move to picking a subscription - so send back the form.
-				echo $this->popover_sendpayment_form( $user_id );
+				echo $this->popover_sendpayment_form( $user->ID );
 			}
 
 			exit;
@@ -7357,9 +7434,9 @@ if(!class_exists('membershipadmin')) {
 
 			exit;
 		}
-		
+
 		function popover_extra_payment_form( $user_id = false ) {
-			
+
 			$content = '';
 			$content = apply_filters('membership_popover_extraform_before_content', $content );
 			ob_start();
@@ -7375,7 +7452,7 @@ if(!class_exists('membershipadmin')) {
 			echo $content;
 
 			exit;
-			
+
 		}
 
 		function create_defaults() {
@@ -7521,6 +7598,29 @@ if(!class_exists('membershipadmin')) {
 			}
 
 			return $shortcodes;
+
+		}
+
+		function start_membership_session() {
+			if (session_id() == "")
+      			session_start();
+		}
+
+		function set_membership_coupon_cookie() {
+
+			if(!defined('DOING_AJAX') || DOING_AJAX == FALSE )
+				die('NOT DOING AJAX?');
+
+			$this->start_membership_session();
+
+			if(isset($_POST['coupon_code'])) {
+				$_SESSION['m_coupon_code'] = esc_attr($_POST['coupon_code']);
+				include membership_dir('membershipincludes/includes/coupon.form.php');
+				die();
+			} else {
+				die(0);
+			}
+
 
 		}
 

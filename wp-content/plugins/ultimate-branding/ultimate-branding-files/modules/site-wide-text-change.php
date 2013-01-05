@@ -37,7 +37,7 @@ require_once( 'site-wide-text-change-files/sitewidetextincludes/classes/function
 /**
  * Plugin main class
  **/
-class Site_Wide_Text_Change {
+class ub_Site_Wide_Text_Change {
 
 	/**
 	 * Current version of the plugin
@@ -57,7 +57,7 @@ class Site_Wide_Text_Change {
 	/**
 	 * PHP 4 constructor
 	 **/
-	function Site_Wide_Text_Change() {
+	function ub_Site_Wide_Text_Change() {
 		$this->__construct();
 	}
 
@@ -244,11 +244,11 @@ class Site_Wide_Text_Change {
 					$save[addslashes($key)]['replace'] = $table['replace'];
 
 					if($table['ignorecase'] == '1') {
-						$op['domain-' . $table['domain']]['find'][] = '/' . stripslashes($table['find']) . '/i';
+						$op['domain-' . $table['domain']]['find'][] = '/' . str_replace('/','\/', stripslashes($table['find'])) . '/i';
 					} else {
 						$op['domain-' . $table['domain']]['find'][] = '/' . stripslashes($table['find']) . '/';
 					}
-					$op['domain-' . $table['domain']]['replace'][] = stripslashes($table['replace']);
+					$op['domain-' . $table['domain']]['replace'][] = str_replace('/','\/', stripslashes($table['replace']));
 
 				}
 
@@ -409,5 +409,5 @@ class Site_Wide_Text_Change {
 
 }
 
-$swtc = new Site_Wide_Text_Change();
+$ub_swtc = new ub_Site_Wide_Text_Change();
 

@@ -2,9 +2,9 @@
 /**
  * Handles all Admin access functionality.
  */
-class Wdcab_AdminPages {
+class ub_Wdcab_AdminPages {
 
-	function Wdcab_AdminPages () {
+	function ub_Wdcab_AdminPages () {
 		$this->__construct();
 	}
 
@@ -48,7 +48,7 @@ class Wdcab_AdminPages {
 	function register_settings () {
 		global $wp_version;
 		$version = preg_replace('/-.*$/', '', $wp_version);
-		$form = new Wdcab_AdminFormRenderer;
+		$form = new ub_Wdcab_AdminFormRenderer;
 
 		register_setting('wdcab', 'wdcab');
 		add_settings_section('wdcab_settings', __('Settings', 'ub'), create_function('', ''), 'wdcab_options');

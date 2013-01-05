@@ -9,16 +9,16 @@ Author URI: http://premium.wpmudev.org/
 WDP ID: 171
 */
 
-add_action( 'admin_menu', 'remove_permalinks_menu_item' );
+add_action( 'admin_menu', 'ub_remove_permalinks_menu_item' );
 
-function remove_permalinks_menu_item() {
+function ub_remove_permalinks_menu_item() {
 	global $submenu;
 	unset( $submenu['options-general.php'][40] );
 }
 
-add_action('ultimatebranding_settings_menu_permalinks','rpm_manage_output');
+add_action('ultimatebranding_settings_menu_permalinks','ub_rpm_manage_output');
 
-function rpm_manage_output() {
+function ub_rpm_manage_output() {
 	global $wpdb, $current_site, $page;
 
 	?>

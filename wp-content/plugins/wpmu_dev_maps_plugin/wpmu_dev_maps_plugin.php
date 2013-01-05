@@ -3,7 +3,7 @@
 Plugin Name: Google Maps
 Plugin URI: http://premium.wpmudev.org/project/wordpress-google-maps-plugin
 Description: Easily embed, customize, and use Google maps on your WordPress site - in posts, pages or as an easy to use widget, display local images and let your site visitors get directions in seconds.
-Version: 2.5.6
+Version: 2.6.3
 Text Domain: agm_google_maps
 Author: Ve Bailovity (Incsub)
 Author URI: http://premium.wpmudev.org
@@ -75,6 +75,7 @@ AgmPluginInstaller::check();
 
 add_action('widgets_init', create_function('', "register_widget('AgmMapsWidget');"));
 
+if (is_admin()) require_once AGM_PLUGIN_BASE_DIR . '/lib/class_agm_admin_help.php';
 require_once AGM_PLUGIN_BASE_DIR . '/lib/class_agm_plugins_handler.php';
 AgmPluginsHandler::init();
 

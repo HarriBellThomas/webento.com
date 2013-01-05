@@ -16,14 +16,6 @@ if ( isset($_GET['action']) && $_GET['action'] == 'update' ) {
 $data = $this->get_updates(); //load up the data
 
 $allow_auto = true;
-if ( $this->get_apikey() && $this->allowed_user() && ($data['membership'] == 'full' || is_numeric($data['membership'])) && isset($data['downloads']) && $data['downloads'] != 'enabled' ) {
-	?><div class="error fade"><p><?php _e('You have reached your maximum enabled sites for automatic updates. You may <a href="http://premium.wpmudev.org/wp-admin/profile.php?page=wdpun">change which sites are enabled or upgrade to a higher membership level here &raquo;</a>', 'wpmudev'); ?></p></div><?php
-	$allow_auto = false;
-}
-if (!$this->get_apikey()) { ?>
-	<div class="error fade"><p><?php printf(__('Please <a href="%s">create a free account or enter your details</a> to enable automatic updates.', 'wpmudev'), $this->dashboard_url); ?></p></div>
-<?php }
-
 if (!$this->allowed_user()) {
 	$allow_auto = false;
 }
@@ -55,6 +47,14 @@ echo implode( "\n", $tabhtml );
 <div class="grid_container">
 
 <?php
+if ( $this->get_apikey() && $this->allowed_user() && ($data['membership'] == 'full' || is_numeric($data['membership'])) && isset($data['downloads']) && $data['downloads'] != 'enabled' ) {
+	?><div class="info_error"><p><i class="icon-info-sign"></i>&nbsp;<?php _e('You have reached your maximum enabled sites for automatic updates. You may <a href="http://premium.wpmudev.org/wp-admin/profile.php?page=wdpun">change which sites are enabled or upgrade to a higher membership level here &raquo;</a>', 'wpmudev'); ?></p></div><?php
+	$allow_auto = false;
+}
+if (!$this->get_apikey()) { ?>
+	<div class="info_error"><p><i class="icon-info-sign"></i>&nbsp;<?php printf(__('Please <a href="%s">create a free account or enter your details</a> to enable automatic updates.', 'wpmudev'), $this->dashboard_url); ?></p></div>
+<?php }
+
 switch( $tab ) {
 	//---------------------------------------------------//
 	case "available":
@@ -126,7 +126,7 @@ switch( $tab ) {
 		<?php
 		$form_fields = array();
 		$rows = '';
-		if (is_array($projects['plugin']) && count($projects['plugin']) > 0) {
+		if (isset($projects['plugin']) && is_array($projects['plugin']) && count($projects['plugin']) > 0) {
 			$class = (isset($class) && 'alternate' == $class) ? '' : 'alternate';
 			foreach ($projects['plugin'] as $project_id => $project) {
 				$local_version = $project['local_version'];
@@ -197,7 +197,7 @@ switch( $tab ) {
 		<?php
 		$form_fields = array();
 		$rows = '';
-		if (is_array($projects['theme']) && count($projects['theme']) > 0) {
+		if (isset($projects['theme']) && is_array($projects['theme']) && count($projects['theme']) > 0) {
 			$class = (isset($class) && 'alternate' == $class) ? '' : 'alternate';
 			foreach ($projects['theme'] as $project_id => $project) {
 				$local_version = $project['local_version'];
@@ -336,7 +336,7 @@ switch( $tab ) {
 			<tbody id='the-list'>
 			";
 		
-		if (is_array($projects['plugin']) && count($projects['plugin']) > 0) {
+		if (isset($projects['plugin']) && is_array($projects['plugin']) && count($projects['plugin']) > 0) {
 			$class = (isset($class) && 'alternate' == $class) ? '' : 'alternate';
 			foreach ($projects['plugin'] as $project_id => $project) {
 				$local_version = $project['local_version'];
@@ -389,7 +389,7 @@ switch( $tab ) {
 			<tbody id='the-list'>
 			";
 		
-		if (is_array($projects['theme']) && count($projects['theme']) > 0) {
+		if (isset($projects['theme']) && is_array($projects['theme']) && count($projects['theme']) > 0) {
 			$class = (isset($class) && 'alternate' == $class) ? '' : 'alternate';
 			foreach ($projects['theme'] as $project_id => $project) {
 				$local_version = $project['local_version'];

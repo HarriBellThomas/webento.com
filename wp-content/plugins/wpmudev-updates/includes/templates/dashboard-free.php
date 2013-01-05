@@ -1,4 +1,4 @@
-<section id="profile" class="grid_container free-user clearfix">
+<section id="profile" class="grid_container free-user clearfix wpmudev-dash">
 	<section class="contents clearfix">
 		<section class="profile-left">
 			<section class="profile-user">
@@ -36,7 +36,7 @@
 					</a>
 				</li>
 			<?php } ?>
-				<li><button data-href="<?php echo esc_url($this->plugins_url); ?>" class="cta"><?php _e('View More &raquo;', 'wpmudev'); ?></button></li>
+				<li><button data-href="<?php echo esc_url($this->plugins_url); ?>" class="wpmu-button full-width small"><?php _e('View More &raquo;', 'wpmudev'); ?></button></li>
 			</ul>
 		</section>
 		<section class="product-group">
@@ -50,7 +50,7 @@
 					</a>
 				</li>
 			<?php } ?>
-				<li><button data-href="<?php echo esc_url($this->themes_url); ?>" class="cta"><?php _e('View More &raquo;', 'wpmudev'); ?></button></li>
+				<li><button data-href="<?php echo esc_url($this->themes_url); ?>" class="wpmu-button full-width small"><?php _e('View More &raquo;', 'wpmudev'); ?></button></li>
 			</ul>
 		</section>
 	</section>
@@ -66,8 +66,7 @@
 				<li class="support"><span class="promo-icn"></span><?php _e('Spectacularly fast WordPress support service', 'wpmudev'); ?></li>
 				<li class="community"><span class="promo-icn"></span><?php _e('Amazing community of WordPress professionals', 'wpmudev'); ?></li>
 			</ul>
-			<a class="btn" href="<?php echo apply_filters('wpmudev_join_url', 'http://premium.wpmudev.org/join/'); ?>">
-				<button class="cta"><?php _e('Find out more &raquo;', 'wpmudev'); ?></button>
+			<a class="wpmu-button" href="<?php echo apply_filters('wpmudev_join_url', 'http://premium.wpmudev.org/join/'); ?>"><?php _e('Find out more &raquo;', 'wpmudev'); ?>
 			</a>
 		</section>
 	</section>

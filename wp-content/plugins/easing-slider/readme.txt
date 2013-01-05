@@ -1,10 +1,10 @@
 === Easing Slider  ===
 Homepage: http://easingslider.matthewruddy.com
 Contributors: MatthewRuddy
-Tags: slider, slideshows, easing, plugin, jquery, content, featured, images, wordpress
+Tags: slider, slides, slideshow, slideshows, easing, plugin, jquery, content, featured, images
 Requires at least: 2.9.2
-Tested up to: 3.3
-Stable tag: 1.2
+Tested up to: 3.4.2
+Stable tag: 1.2.1
 
 The Easing Slider is an image slider plugin for WordPress which uses the jQuery Easing plugin.
 
@@ -13,8 +13,6 @@ The Easing Slider is an image slider plugin for WordPress which uses the jQuery 
 <a href="http://rivaslider.com/">Need more features? unlimited slideshows, unlimited images, video support? Get the Riva Slider Pro!</a>
 
 The Easing Slider comes with various options that allow you to choose different sources to get the images from and also multiple styling options so that you"ll never have to edit any files directly & with ease. Create your own unique elegant slider.
-
-<a href="http://easingslider.matthewruddy.com">Live Demo</a>
 
 <h4>Choose between images sourced from:</h4>
 - Custom fields from a particular category
@@ -29,6 +27,8 @@ The Easing Slider comes with various options that allow you to choose different 
 - 7 different types of preloading icons (or use none)
 - Padding & border settings
 - And much more.
+
+<a href="http://easingslider.matthewruddy.com">Check out our website for more information.</a>
 
 
 == Installation ==
@@ -100,6 +100,10 @@ This (most likely) is due to one of two potential problems:
 <h4>For more information please email me at info@matthewruddy.com</h4>
 
 == Changelog ==
+
+= 1.2.1 =
+* Fixed: jQuery re-registering has been removed. Wordpress version of jQuery now used.
+* Added: Notification for forthcoming major update.
 
 = 1.2 =
 * Changed: Adverts from Premium Slider to Riva Slider Pro.

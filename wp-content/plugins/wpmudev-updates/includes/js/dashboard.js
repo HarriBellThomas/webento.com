@@ -103,7 +103,7 @@ jQuery(function($) { // DOM READY WRAPPER
 	}
 
 	// <button class="cta" data-href="..."  /> clicks
-	$("button.cta[data-href]").on("click", function () {
+	$("button.wpmu-button[data-href]").on("click", function () {
 		var href = $(this).attr("data-href");
 		if (href) window.location = href;
 		return false;

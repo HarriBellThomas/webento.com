@@ -33,6 +33,7 @@ class EM_Object {
 			'offset'=>0,
 			'page'=>1,//basically, if greater than 0, calculates offset at end
 			'recurrence'=>0,
+			'recurrences'=>null,
 			'recurring'=>false,
 			'month'=>'',
 			'year'=>'',
@@ -151,6 +152,7 @@ class EM_Object {
 		$scope = $args['scope'];//undefined variable warnings in ZDE, could just delete this (but dont pls!)
 		$recurring = $args['recurring'];
 		$recurrence = $args['recurrence'];
+		$recurrences = $args['recurrences'];
 		$category = $args['category'];
 		$tag = $args['tag'];
 		$location = $args['location'];
@@ -170,6 +172,9 @@ class EM_Object {
 		}elseif( $recurrence > 0 ){
 			$conditions['recurrence'] = "`recurrence_id`=$recurrence";
 		}else{
+		    if( $recurrences !== null ){
+		    	$conditions['recurrences'] = $recurrences ? "(`recurrence_id` > 0 )":"(`recurrence_id` IS NULL OR `recurrence_id`=0 )";
+		    }
 			$conditions['recurring'] = "(`recurrence`!=1 OR `recurrence` IS NULL)";			
 		}
 		//Dates - first check 'month', and 'year', and adjust scope if needed
@@ -314,7 +319,7 @@ class EM_Object {
 			//we can accept country codes or names
 			if( in_array($args['country'], $countries) ){
 				//we have a country name, 
-				$conditions['country'] = "location_country='".array_search($args['country'])."'";	
+				$conditions['country'] = "location_country='".array_search($args['country'], $countries)."'";	
 			}elseif( array_key_exists($args['country'], $countries) ){
 				//we have a country code
 				$conditions['country'] = "location_country='".$args['country']."'";					
@@ -771,14 +776,15 @@ class EM_Object {
 		if( $is_owner && (current_user_can($owner_capability) || (!empty($user) && $user->has_cap($owner_capability))) ){
 			//user owns the object and can therefore manage it
 			$can_manage = true;
-		}elseif( array_key_exists($owner_capability, $em_capabilities_array) ){
+		}elseif( $owner_capability && array_key_exists($owner_capability, $em_capabilities_array) ){
 			//currently user is not able to manage as they aren't the owner
 			$error_msg = $em_capabilities_array[$owner_capability];
 		}
 		//admins have special rights
+		if( !$admin_capability ) $admin_capability = $owner_capability;
 		if( current_user_can($admin_capability) || (!empty($user) && $user->has_cap($admin_capability)) ){
 			$can_manage = true;
-		}elseif( array_key_exists($admin_capability, $em_capabilities_array) ){
+		}elseif( $admin_capability && array_key_exists($admin_capability, $em_capabilities_array) ){
 			$error_msg = $em_capabilities_array[$admin_capability];
 		}
 		
@@ -798,7 +804,7 @@ class EM_Object {
 	}
 	
 	function ms_global_switch_back(){
-		if( EM_MS_GLOBAL && !is_main_site() ){
+		if( EM_MS_GLOBAL ){
 			restore_current_blog();
 		}
 	}
@@ -1012,6 +1018,7 @@ class EM_Object {
 	 * @return string
 	 */
 	function json_encode($array){
+	    $array = apply_filters('em_object_json_encode_pre',$array);
 		if( function_exists("json_encode") ){
 			$return = json_encode($array);
 		}else{

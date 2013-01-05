@@ -2,8 +2,8 @@
 /*
 Plugin Name: Easing Slider
 Plugin URI: http://easingslider.matthewruddy.com
-Description: Easing Slider is an image slider which uses the jQuery Easing Plugin. It comes with many different transition and styling settings so you'll never have to edit any of the CSS files directly. Images are got from custom fields or Easing Slider's own 'custom images' panel where you can specify particular images via their URL.
-Version: 1.2
+Description: Easing Slider is an image slider which uses the jQuery Easing Plugin. It comes with many different transition and styling settings so you'll never have to edit any of the CSS files directly. <strong>Some major updates are coming to Easing Slider very soon. Please read <a href="http://www.easingslider.matthewruddy.com/update-information">this page</a> before upgrading to 2.0+.</strong>
+Version: 1.2.1
 Author: Matthew Ruddy
 Author URI: http://rivaslider.com/
 License: This plugin is licensed under the GNU General Public License.
@@ -24,6 +24,15 @@ if (isset($_GET['page']) && $_GET['page'] == 'easing-slider/easingslider.php') {
 add_action('admin_print_scripts', 'my_admin_scripts');
 add_action('admin_print_styles', 'my_admin_styles');
 }
+
+// Adds new version options
+function easing_init() {
+    if ( !get_option('easingslider_version') ) {
+        add_option('easingslider_version', '1.2.1');
+        add_option('easingslider_upgrade_message', 'true');
+    }
+}
+add_action( 'admin_init', 'easing_init' );
 
 function easing_head() {
   $width = get_option('width');
@@ -46,8 +55,7 @@ function easing_head() {
 <script type="text/javascript">
 jQuery.noConflict();
 jQuery(document).ready( function($){	
-	//var buttons = { previous:$('#lofslidecontent45 .lof-previous') , next:$('#lofslidecontent45 .lof-next') };
-	var buttons = { previous:$('a.lof-previous') , next:$('a.lof-next') };
+	var buttons = { previous:$('#lofslidecontent45 .lof-previous') , next:$('#lofslidecontent45 .lof-next') };
 	$obj = $('#lofslidecontent45')
 	.lofJSidernews( { interval : <?php echo $interval; ?>,
 	<?php if($transition=='slide') echo "easing : 'easeInOutExpo'";
@@ -81,16 +89,16 @@ function add_scripts() {
 $scripturl = WP_PLUGIN_URL .'/easing-slider/js/';
 
 if(get_option('jquery') == 'true') {
-if ( !is_admin() ) {
-wp_deregister_script('jquery');
-wp_register_script('jquery', $scripturl.'jquery.js', '', '1.7.1');
-wp_enqueue_script('jquery');
-}
+    if ( !is_admin() ) {
+        //wp_deregister_script('jquery');
+        //wp_register_script('jquery', $scripturl.'jquery.js', '', '1.4.2');
+        wp_enqueue_script('jquery');
+    }
 }
 
 wp_register_script('easing', $scripturl.'jquery.easing.js', '', '1.3');
 wp_enqueue_script('easing');
-wp_register_script('script', $scripturl.'script.js', '', '1.2');
+wp_register_script('script', $scripturl.'script.js', '', '1.2.1');
 wp_enqueue_script('script');
 
 }
@@ -98,7 +106,7 @@ wp_enqueue_script('script');
 function add_styles() {
 $sliderstyle = WP_PLUGIN_URL .'/easing-slider/css/slider.css';
 
-wp_register_style('slider', $sliderstyle, '', '1.2');
+wp_register_style('slider', $sliderstyle, '', '1.2.1');
 wp_enqueue_style('slider');
 
 }
@@ -182,11 +190,11 @@ function easing_slider() {
 	$imgpadding = $padbottom; } ?>
   <!-- Easing Slider -->
     <div class="lof-container" style="height:<?php echo $height; ?>px;padding-right:<?php echo $padright; ?>px;padding-top:<?php echo $paddingtop; ?>px;padding-left:<?php echo $padleft;?>px;padding-bottom:<?php echo $imgpadding;?>px;">
-      <div class="lof-slidecontent" id="lofslidecontent45" style="border:0.35em solid #<?php echo $bcolour; ?>;max-width:<?php //echo $width; ?>90%;width:<?php echo $width; ?>px;height:<?php echo $height; ?>px; box-shadow:0px 0px 1px #000;">
+      <div class="lof-slidecontent" id="lofslidecontent45" style="border:<?php echo $bwidth;?>px solid #<?php echo $bcolour; ?>;width:<?php echo $width; ?>px;height:<?php echo $height; ?>px;">
         <div class="preload" style="<?php if($transition=='fade') echo 'padding-top:1px\9;'; ?>background:url(<?php echo WP_PLUGIN_URL; ?>/easing-slider/images/<?php if($preload=='indicator') echo 'indicator'; if($preload=='none') echo ''; if($preload=='arrows') echo 'arrows';  if($preload=='bar') echo 'bar'; if($preload=='bigflower') echo 'bigflower'; if($preload=='bounceball') echo 'bounceball'; if($preload=='indicatorlight') echo 'indicatorlight'; if($preload=='pik') echo 'pik'; if($preload=='snake') echo 'snake'; ?>.gif) no-repeat center center #<?php if($bgcolour=='') echo 'fff'; else echo $bgcolour; ?>;">
 
         </div>
-            <div class="lof-main-outer" style="background: #<?php echo $bgcolour; ?>;width:<?php //echo $width; ?>100%;height:<?php //echo $height; ?>100%;">
+            <div class="lof-main-outer" style="background: #<?php echo $bgcolour; ?>;width:<?php echo $width; ?>px;height:<?php echo $height; ?>px;">
                 <ul class="lof-main-wapper">
               <?php
   	
@@ -207,49 +215,36 @@ function easing_slider() {
         <?php }endwhile; ?>
         
   <?php } else if(get_option('source') == 'custom') {
-  ?>
-  <script type="text/javascript">
-  	
-	jQuery(document).ready(function(){
-		jQuery('.slider_img').width(jQuery('#lofslidecontent45').width());
-	});
-  	
-  	jQuery(window).resize(function() {
-		jQuery('.slider_img').width(jQuery('#lofslidecontent45').width());
-		jQuery('ul.lof-main-wapper').width(jQuery('#lofslidecontent45').width()*jQuery("ul.lof-main-wapper li").length);
-	});
   
-  </script>
-  <?php
-  if ($sImg1) { ?>
-		<li><?php if($sImglink1!='') echo '<a href="'. $sImglink1 .'">'; ?><img class="slider_img" src="<?php echo $sImg1; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink1!='') echo '</a>'; ?></li><?php }
+	if ($sImg1) { ?>
+		<li><?php if($sImglink1!='') echo '<a href="'. $sImglink1 .'">'; ?><img src="<?php echo $sImg1; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink1!='') echo '</a>'; ?></li><?php }
 
 	if ($sImg2) { ?>
-		<li><?php if($sImglink2!='') echo '<a href="'. $sImglink2 .'">'; ?><img class="slider_img" src="<?php echo $sImg2; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink2!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink2!='') echo '<a href="'. $sImglink2 .'">'; ?><img src="<?php echo $sImg2; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink2!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg3) { ?>
-		<li><?php if($sImglink3!='') echo '<a href="'. $sImglink3 .'">'; ?><img class="slider_img" src="<?php echo $sImg3; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink3!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink3!='') echo '<a href="'. $sImglink3 .'">'; ?><img src="<?php echo $sImg3; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink3!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg4) { ?>
-		<li><?php if($sImglink4!='') echo '<a href="'. $sImglink4 .'">'; ?><img class="slider_img" src="<?php echo $sImg4; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink4!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink4!='') echo '<a href="'. $sImglink4 .'">'; ?><img src="<?php echo $sImg4; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink4!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg5) { ?>
-		<li><?php if($sImglink5!='') echo '<a href="'. $sImglink5 .'">'; ?><img class="slider_img" src="<?php echo $sImg5; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink5!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink5!='') echo '<a href="'. $sImglink5 .'">'; ?><img src="<?php echo $sImg5; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink5!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg6) { ?>
-		<li><?php if($sImglink6!='') echo '<a href="'. $sImglink6 .'">'; ?><img class="slider_img" src="<?php echo $sImg6; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink6!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink6!='') echo '<a href="'. $sImglink6 .'">'; ?><img src="<?php echo $sImg6; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink6!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg7) { ?>
-		<li><?php if($sImglink7!='') echo '<a href="'. $sImglink7 .'">'; ?><img class="slider_img" src="<?php echo $sImg7; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink7!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink7!='') echo '<a href="'. $sImglink7 .'">'; ?><img src="<?php echo $sImg7; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink7!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg8) { ?>
-		<li><?php if($sImglink8!='') echo '<a href="'. $sImglink8 .'">'; ?><img class="slider_img" src="<?php echo $sImg8; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink8!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink8!='') echo '<a href="'. $sImglink8 .'">'; ?><img src="<?php echo $sImg8; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink8!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg9) { ?>
-		<li><?php if($sImglink9!='') echo '<a href="'. $sImglink9 .'">'; ?><img class="slider_img" src="<?php echo $sImg9; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink9!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink9!='') echo '<a href="'. $sImglink9 .'">'; ?><img src="<?php echo $sImg9; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink9!='') echo '</a>'; ?></li><?php }
 		
 	if ($sImg10) { ?>
-		<li><?php if($sImglink10!='') echo '<a href="'. $sImglink10 .'">'; ?><img class="slider_img" src="<?php echo $sImg10; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink10!='') echo '</a>'; ?></li><?php }
+		<li><?php if($sImglink10!='') echo '<a href="'. $sImglink10 .'">'; ?><img src="<?php echo $sImg10; ?>" style="width:<?php echo $width; ?>px;" alt="<?php echo $images; ?>" /><?php if($sImglink10!='') echo '</a>'; ?></li><?php }
 		
 		}
 		
@@ -258,20 +253,11 @@ function easing_slider() {
 
 	if ($buttons=='');
 	else { ?>
-            <!--  <div onclick="return false" class="lof-previous" style="
+              <div onclick="return false" class="lof-previous" style="
 	background:url(<?php if($prev=='') echo WP_PLUGIN_URL.'/easing-slider/images/b_prev.png'; if($prev!='') echo $prev; ?>) no-repeat left center;"></div>
-			
-     <div onclick="return false" class="lof-next" style="
-	background:url(<?php if($next=='') echo WP_PLUGIN_URL.'/easing-slider/images/b_next.png'; if($next!='') echo $next; ?>) no-repeat right center;"></div> -->
-	
-	<?php /*
-	<span class="lof-next">
-       <a href="#" onclick="return false"><img style="border:none" src="<?php if($next=='') echo WP_PLUGIN_URL.'/easing-slider/images/b_next.png'; if($next!='') echo $next; ?>"  alt="" /></a>
-    </span>
-	*/?>
-	
-	
-	<?php }
+              <div onclick="return false" class="lof-next" style="
+	background:url(<?php if($next=='') echo WP_PLUGIN_URL.'/easing-slider/images/b_next.png'; if($next!='') echo $next; ?>) no-repeat right center;"></div> <?php }
+
 	?></div><?php
 
 
@@ -352,6 +338,8 @@ return $output_string;
 add_shortcode('easingslider', 'easing_slider_short');
 
 function set_easing_options() {
+    add_option('easingslider_version', '1.2.1');
+    add_option('easingslider_upgrade_message', 'true');
   add_option('sImg1','','');
 	add_option('sImg2','','');
 	add_option('sImg3','','');
@@ -405,6 +393,8 @@ function set_easing_options() {
 }
 
 function unset_easing_options() {
+    delete_option('easingslider_version');
+    delete_option('easingslider_upgrade_message');
 	delete_option('sImg1');
 	delete_option('sImg2');
 	delete_option('sImg3');
@@ -513,7 +503,7 @@ function admin_easing() {
 	$permalink = get_option('permalink');
 	$jquery = get_option('jquery');
 
-if ('process' == $_POST['options']) {
+if ( isset( $_POST['options'] ) && 'process' == $_POST['options']) {
 	update_option('sImg1',$_REQUEST['sImg1']);
 	update_option('sImg2',$_REQUEST['sImg2']);
 	update_option('sImg3',$_REQUEST['sImg3']);
@@ -618,10 +608,20 @@ if ('process' == $_POST['options']) {
 
 
 	?><div class="wrap"><div id="icon-plugins" class="icon32"></div><h2>Easing Slider</h2>
-	<!--
-	<a href="http://rivaslider.com/"><img src="<?php echo WP_PLUGIN_URL.'/easing-slider/images/advert.jpg'; ?>"/></a> -->
+	
+	<a href="http://rivaslider.com/"><img src="<?php echo WP_PLUGIN_URL.'/easing-slider/images/advert.jpg'; ?>"/></a>
 
-	<?php if ( $_REQUEST['submit'] ) echo '<div id="message" class="updated" style="width:750px;"><p><strong>Slider Options Updated.</strong></p></div>'; ?>
+    <?php
+    // Delete upgrade notice when 'Dismiss' is pressed.
+    if ( isset( $_GET['dismiss'] ) && $_GET['dismiss'] )
+        delete_option( 'easingslider_upgrade_message' );
+    ?>
+
+    <?php if ( get_option( 'easingslider_upgrade_message' ) ) { ?>
+        <div class="message updated" style="width: 860px;"><p><b>NOTE:</b> A major plugin update is on the way, coming very soon. <a href="http://www.easingslider.matthewruddy.com/update-information">Please read this post</a> before upgrading! Thank you. <a href="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>&amp;dismiss=true" class="button-secondary" style="float: right; margin-top: -3px;">Dismiss</a></p></div>
+    <?php } ?>
+
+	<?php if ( isset( $_REQUEST['submit'] ) && $_REQUEST['submit'] ) echo '<div id="message" class="updated" style="width:750px;"><p><strong>Slider Options Updated.</strong></p></div>'; ?>
 
 
 	<form method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>&updated=true">

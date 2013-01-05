@@ -199,6 +199,7 @@ class Agm_Bp_Pm_UserPages {
 	function show_all_users_on_map () {
 		$member_ids = array();
 		$limit = apply_filters('agm_google_maps-bp_profile_map-user_limit', AGM_BP_PROFILE_MAP_USER_LIMIT);
+		$overrides = apply_filters('agm_google_maps-bp_profile_map-all_users_overrides', array());
 
 		// Get member ids
 		if (bp_has_members(array('per_page' => $limit))) while (bp_members()) {
@@ -207,7 +208,7 @@ class Agm_Bp_Pm_UserPages {
 		}
 		bp_rewind_members();
 
-		echo $this->show_users_on_map($member_ids);
+		echo $this->show_users_on_map($member_ids, $overrides);
 	}
 
 	/**
@@ -276,6 +277,8 @@ class Agm_Bp_Pm_UserPages {
 			'field' => $address_field,
 			'user_id' => $user_id,
 		));
+		// Allows using multiple Xprofile fields for address construction.
+		$address = apply_filters('agm_google_maps-bp_profile_map-user_address', $address, $user_id);
 		return $address ? $address : false;
 	}
 
@@ -326,12 +329,12 @@ class Agm_Bp_Pm_UserPages {
 	public static function get_location_body ($user_id, $address) {
 		$name = bp_core_get_user_displayname($user_id);
 		$url = bp_core_get_user_domain($user_id);
-		return "
+		return apply_filters('agm_google_maps-bp_profile_map-location_markup', "
 <div>
-	<p><a href='{$url}' title='{$name}'>{$name}</a></p>
-	<p>{$address}</p>
+	<p class='agm-bp-profiles_map-user_link-container'><a class='agm-bp-profiles_map-user_link' href='{$url}' title='{$name}'>{$name}</a></p>
+	<p class='agm-bp-profiles_map-user_address'>{$address}</p>
 </div>
-		";
+		");
 	}
 
 }
@@ -352,6 +355,25 @@ function agm_bp_profiles_map ($overrides=array(), $limit=false) {
 
 // Set initial user limit to 1k. Overridable in wp-config.php
 if (!defined('AGM_BP_PROFILE_MAP_USER_LIMIT')) define('AGM_BP_PROFILE_MAP_USER_LIMIT', 1000, true);
+
+// Allow simple-case address overrides in a define. Overridable in wp-config.php
+if (defined('AGM_BP_PROFILE_MAP_USE_ADDRESS_FIELDS') && AGM_BP_PROFILE_MAP_USE_ADDRESS_FIELDS) {
+	function agm_bp_profiles_map_address_override ($old_address, $user_id) {
+		$src = explode(',', AGM_BP_PROFILE_MAP_USE_ADDRESS_FIELDS);
+		if (!$src) return $old_address;
+
+		$data = array();
+		foreach ($src as $val) {
+			$data[] = bp_get_profile_field_data(array(
+				'field' => trim($val), // Field name or ID
+				'user_id' => $user_id,
+			));
+		}
+		$address = trim(join(", ", array_filter($data)));
+		return $address ? $address : $old_address;
+	}
+	add_filter("agm_google_maps-bp_profile_map-user_address", "agm_bp_profiles_map_address_override", 10, 2);
+}
 
 if (is_admin()) Agm_Bp_Pm_AdminPages::serve();
 else Agm_Bp_Pm_UserPages::serve();

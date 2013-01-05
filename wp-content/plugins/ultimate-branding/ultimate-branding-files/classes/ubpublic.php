@@ -19,7 +19,7 @@ if(!class_exists('UltimateBrandingPublic')) {
 
 		function __construct() {
 
-			add_action( 'plugins_loaded', array(&$this, 'deactivate_existing_plugins' ) );	// Check other plugins
+			add_action( 'plugins_loaded', array(&$this, 'load_modules' ) );
 
 		}
 
@@ -30,27 +30,7 @@ if(!class_exists('UltimateBrandingPublic')) {
 		/**
 		 *	Check plugins those will be used if they are active or not
 		 */
-		function deactivate_existing_plugins() {
-			// We may be calling this function before admin files loaded, therefore let's be sure required file is loaded
-			include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-
-			$plugins = get_plugins(); // All installed plugins
-
-			foreach( $plugins as $plugin_file => $plugin_data ) {
-				if ( is_plugin_active( $plugin_file ) && in_array( $plugin_file, $this->modules ) ) {
-					// Add the title to the message
-					$this->plugin_msg[] = $plugin_data['Title'];
-					// Add a notice if there isn't one already
-					if(!has_action('network_admin_notices', array( &$this, 'deactivate_plugin_msg' ))) {
-						add_action( 'network_admin_notices', array( &$this, 'deactivate_plugin_msg' ) );
-					}
-					// remove the module from the ones we are going to activate
-					$key = array_search($plugin_file, $this->modules);
-					if($key !== false) {
-						unset( $this->modules[$key] );
-					}
-				}
-			}
+		function load_modules() {
 
 			// Load our remaining modules here
 			foreach( $this->modules as $module => $plugin ) {

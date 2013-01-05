@@ -4,14 +4,14 @@ Plugin Name: WPMU DEV Videos
 Plugin URI: http://premium.wpmudev.org/project/unbranded-video-tutorials
 Description: A simple way to integrate WPMU DEV's over 40 unbranded support videos into your websites. Simply activate this plugin, then configure where and how you want to display the video tutorials.
 Author: Aaron Edwards (Incsub)
-Version: 1.0.6
+Version: 1.1.3
 Author URI: http://premium.wpmudev.org/
 Network: true
 WDP ID: 248
 */
 
 /*
-Copyright 2007-2011 Incsub (http://incsub.com)
+Copyright 2007-2012 Incsub (http://incsub.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (Version 2 - GPLv2) as published by
@@ -33,7 +33,7 @@ class WPMUDEV_Videos {
 	//---Config---------------------------------------------------------------//
 	//------------------------------------------------------------------------//
 
-	var $version = '1.0.6';
+	var $version = '1.1.3';
 	var $api_url = 'http://premium.wpmudev.org/video-api-register.php';
 	var $video_list;
 	var $video_cats;
@@ -59,7 +59,6 @@ class WPMUDEV_Videos {
 			'add-image-from-media-library' => __('Adding an Image From Media Library', 'wpmudev_vids'),
 			'add-image-from-pc' => __('Adding an Image From Your Computer', 'wpmudev_vids'),
 			'add-image-from-url' => __('Adding an Image From a URL', 'wpmudev_vids'),
-			'add-links' => __('Adding Links', 'wpmudev_vids'),
 			'add-media' => __('Adding Media', 'wpmudev_vids'),
 			'add-new-page' => __('Adding New Pages', 'wpmudev_vids'),
 			'add-new-post' => __('Adding New Posts', 'wpmudev_vids'),
@@ -75,10 +74,7 @@ class WPMUDEV_Videos {
 			'excerpt' => __('Excerpts', 'wpmudev_vids'),
 			'featured-image' => __('Featured Images', 'wpmudev_vids'),
 			'hyperlinks' => __('Hyperlinks', 'wpmudev_vids'),
-			'image-editor-crop-and-scale' => __('Image Editor - Cropping and Scaling', 'wpmudev_vids'),
-			'image-editor-rotate-flip-undo-redo' => __('Image Editor - Flip, Undo, Redo', 'wpmudev_vids'),
 			'image-editor' => __('Image Editor', 'wpmudev_vids'),
-			'link-categories' => __('Link Categories', 'wpmudev_vids'),
 			'lists' => __('Lists', 'wpmudev_vids'),
 			'media-library' => __('Media Library', 'wpmudev_vids'),
 			'oEmbed' => __('oEmbed', 'wpmudev_vids'),
@@ -109,13 +105,11 @@ class WPMUDEV_Videos {
 			'images' => array('name' => __('Working With Images', 'wpmudev_vids'),
 												'list' => array('add-image-from-pc', 'add-image-from-media-library', 'add-image-from-url', 'edit-image', 'replace-image', 'delete-image', 'featured-image')),
 			'media' => array('name' => __('Media Library', 'wpmudev_vids'),
-												'list' => array('media-library', 'add-media', 'image-editor', 'image-editor-crop-and-scale', 'image-editor-rotate-flip-undo-redo')),
+												'list' => array('media-library', 'add-media', 'image-editor')),
 			'appearance' => array('name' => __('Appearance', 'wpmudev_vids'),
 														'list' => array('change-theme', 'widgets', 'menus')),
 			'organizing' => array('name' => __('Organizing Content', 'wpmudev_vids'),
 														'list' => array('categories', 'tags')),
-			'links' => array('name' => __('Managing Links', 'wpmudev_vids'),
-														'list' => array('add-links', 'link-categories')),
 			'Comments' => array('name' => __('Managing Comments', 'wpmudev_vids'),
 														'list' => array('comments'))
 		);
@@ -169,25 +163,29 @@ class WPMUDEV_Videos {
 	}
 
 	function handle_shortcode($atts) {
-		extract( shortcode_atts( array( 'video' => false, 'group' => false, 'show_title' => true  ), $atts ) );
+		extract( shortcode_atts( array( 'video' => false, 'group' => false, 'show_title' => true, 'width' => 500, 'height' => false ), $atts ) );
+		
+		if (!$height)
+			$height = ceil(($width * 9) / 16);
 		
 		if ($group && isset($this->video_cats[$group])) {
 			$output = $show_title ? '<h3 class="wpmudev_video_group_title">'.$this->video_cats[$group]['name'].'</h3>' : '';
 			foreach ($this->video_cats[$group]['list'] as $video) {
-				$output .= '<p class="wpmudev_video">' . (is_ssl() ? '<iframe src="https://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" height="325" width="480"></iframe>' : '<iframe src="http://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" height="325" width="480"></iframe>') . '</p>';
+				$output .= '<p class="wpmudev_video">' . (is_ssl() ? '<iframe src="https://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" width="'.$width.'" height="'.$height.'" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>' : '<iframe src="http://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" width="'.$width.'" height="'.$height.'" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>') . '</p>';
 			}
 			return '<div class="wpmudev_video_group">'.$output.'</div>';
 		}
 		
 		if ($video && isset($this->video_list[$video]))
-			return '<p class="wpmudev_video">' . (is_ssl() ? '<iframe src="https://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" height="325" width="480"></iframe>' : '<iframe src="http://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" height="325" width="480"></iframe>') . '</p>';
+			return '<p class="wpmudev_video">' . (is_ssl() ? '<iframe src="https://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" width="'.$width.'" height="'.$height.'" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>' : '<iframe src="http://premium.wpmudev.org/video/' . urlencode($video) . '" frameborder="0" width="'.$width.'" height="'.$height.'" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>') . '</p>';
 		else
 			return '';
 	}
 	
 	function is_mapped() {
-		if (is_multisite() && class_exists('domain_map')) {
-			if (get_site_option('map_admindomain') != 'original')
+		if ( !defined('WPMUDEV_VIDS_IGNORE_MAPPING') && is_multisite() && class_exists('domain_map') ) {
+			$options = get_site_option('domain_mapping', array());
+			if ($options['map_admindomain'] != 'original')
 				return true;
 		}
 		return false;
@@ -288,7 +286,7 @@ class WPMUDEV_Videos {
 		<div class="postbox">
 			<h3 class='hndle'><span><?php _e('Shortcodes', 'wpmudev_vids') ?></span></h3>
 			<div class="inside">
-				<p><?php _e('These shortcodes allow you to easiliy embed video tutorials in posts and pages on your sites. Simply type or paste them into your post or page content where you would like them to appear. Also properly handles SSL protected pages.', 'wpmudev_vids') ?></p>
+				<p><?php _e('These shortcodes allow you to easiliy embed video tutorials in posts and pages on your sites. Simply type or paste them into your post or page content where you would like them to appear. Also properly handles SSL protected pages. You may also pass "width" and/or "height" arguments to customize the size of the videos.', 'wpmudev_vids') ?></p>
 				<table class="form-table">
 					<?php foreach ($this->video_list as $url => $label) { ?>
 					<tr>
@@ -341,10 +339,10 @@ class WPMUDEV_Videos {
 		<div id="poststuff" class="metabox-holder">
 			
 			<?php if (isset($_GET['vid']) && isset($this->video_list[$_GET['vid']])) { ?>			
-			<div class="postbox" style="width: 500px;">
+			<div class="postbox">
 				<h3 class='hndle'><span><?php esc_attr_e($this->video_list[$_GET['vid']]); ?></span></h3>
 				<div class="inside">
-					<iframe src="<?php echo is_ssl() ? 'https' : 'http'; ?>://premium.wpmudev.org/video/<?php echo urlencode($_GET['vid']); ?>?autoplay=1" frameborder="0" height="325" width="480"></iframe>
+					<iframe style="display:block;margin:0 auto;box-shadow:30px 0 50px -30px #222, -30px 0 50px -30px #222;" src="<?php echo is_ssl() ? 'https' : 'http'; ?>://premium.wpmudev.org/video/<?php echo urlencode($_GET['vid']); ?>?autoplay=1" frameborder="0" width="600" height="338" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
 				</div>
 			</div>
 			<?php } ?>
@@ -394,15 +392,5 @@ class WPMUDEV_Videos {
 global $wpmudev_vids;
 $wpmudev_vids = new WPMUDEV_Videos();
 
-///////////////////////////////////////////////////////////////////////////
-/* -------------------- Update Notifications Notice -------------------- */
-if ( !function_exists( 'wdp_un_check' ) ) {
-  add_action( 'admin_notices', 'wdp_un_check', 5 );
-  add_action( 'network_admin_notices', 'wdp_un_check', 5 );
-  function wdp_un_check() {
-    if ( !class_exists( 'WPMUDEV_Update_Notifications' ) && current_user_can( 'update_plugins' ) )
-      echo '<div class="error fade"><p>' . __('Please install the latest version of <a href="http://premium.wpmudev.org/project/update-notifications/" title="Download Now &raquo;">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href="http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/">More information &raquo;</a>', 'wpmudev') . '</a></p></div>';
-  }
-}
-/* --------------------------------------------------------------------- */
+include_once( dirname( __FILE__ ) . '/includes/wpmudev-dash-notification.php' );
 ?>

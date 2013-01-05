@@ -10,6 +10,11 @@
 		$('#chat_tab_pane').tabs({cookie: { name: 'chat_tab_pane', expires: 30 } });
 		
 		$('#chat_background_color_panel').farbtastic('#chat_background_color').hide();
+
+		$('#chat_background_row_area_color_panel').farbtastic('#chat_background_row_area_color').hide();
+		$('#chat_background_row_color_panel').farbtastic('#chat_background_row_color').hide();
+		$('#chat_row_border_color_panel').farbtastic('#chat_row_border_color').hide();
+
 		$('#chat_background_highlighted_color_panel').farbtastic('#chat_background_highlighted_color').hide();
 		$('#chat_date_color_panel').farbtastic('#chat_date_color').hide();
 		$('#chat_name_color_panel').farbtastic('#chat_name_color').hide();

@@ -38,7 +38,7 @@ class Agm_Locale_AdminPages {
 	}
 	
 	private function _get_options ($key='language') {
-		$opts = apply_filters('agm_google_maps-options-bp_profile_maps', get_option('agm_google_maps'));
+		$opts = apply_filters('agm_google_maps-options-locale', get_option('agm_google_maps'));
 		return @$opts['locale-' . $key];
 	}
 }
@@ -112,7 +112,7 @@ class Agm_Locale_PublicPages {
 	}
 
 	private function _get_options ($key='language') {
-		$opts = apply_filters('agm_google_maps-options-bp_profile_maps', get_option('agm_google_maps'));
+		$opts = apply_filters('agm_google_maps-options-locale', get_option('agm_google_maps'));
 		return @$opts['locale-' . $key];
 	}
 	

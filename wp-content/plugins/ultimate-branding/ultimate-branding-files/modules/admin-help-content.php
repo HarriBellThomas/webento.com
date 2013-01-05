@@ -49,7 +49,7 @@ if( !function_exists( 'esc_textarea' ) ) {
 /**
  * Main help panel handler.
  */
-class Ahc_AdminHelpContent {
+class ub_Ahc_AdminHelpContent {
 
 	private $_help;
 	private $_default_text = 'You can change the content in this Help drop-down by going to Branding > Help Content.';
@@ -67,7 +67,7 @@ class Ahc_AdminHelpContent {
 
 	}
 
-	function Ahc_AdminHelpContent() {
+	function ub_Ahc_AdminHelpContent() {
 		$this->__construct();
 	}
 
@@ -338,5 +338,5 @@ EoAhcTabsJs;
 	}
 }
 
-$ub_Ahc_AdminHelpContent = new Ahc_AdminHelpContent();
+$ub_Ahc_AdminHelpContent = new ub_Ahc_AdminHelpContent();
 

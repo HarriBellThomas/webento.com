@@ -4,7 +4,7 @@ Plugin Name: Custom Multisite Favicons
 Plugin URI:
 Description: Change the Favicon for the network
 Author: Barry (Incsub), Philip John (Incsub)
-Version: 1.0
+Version: 1.0.1
 Author URI:
 Network: true
 
@@ -39,7 +39,10 @@ class ub_favicons {
 		add_filter( 'ultimatebranding_settings_menu_images_process', array( &$this, 'process' ) );
 
 		add_action('admin_head', array(&$this, 'admin_head') );
-		add_action('wp_head', array(&$this, 'wp_head') );
+		add_action('admin_head', array(&$this, 'global_head') );
+		add_action('wp_head', array(&$this, 'global_head') );
+
+		add_action('wp_before_admin_bar_render', array(&$this, 'change_blavatar_icon') );
 
 	}
 
@@ -208,18 +211,22 @@ class ub_favicons {
 		$uploaddir = ub_wp_upload_dir();
 		$uploadurl = ub_wp_upload_url();
 
+		$uploadurl = preg_replace( array('/http:/i', '/https:/i'), '', $uploadurl );
+
 		if ( file_exists( $uploaddir . '/ultimate-branding/includes/favicon/favicon.png' ) ) {
 			$site_ico = $uploadurl . '/ultimate-branding/includes/favicon/favicon.png';
 
 			echo '<style type="text/css">
 			#header-logo { background-image: url(' . $site_ico . '); }
 			#wp-admin-bar-wp-logo > .ab-item .ab-icon { background-image: url(' . $site_ico . '); background-position: 0; }
+			#wp-admin-bar-wp-logo:hover > .ab-item .ab-icon { background-image: url(' . $site_ico . '); background-position: 0 !Important; }
+			#wp-admin-bar-wp-logo.hover > .ab-item .ab-icon { background-image: url(' . $site_ico . '); background-position: 0 !Important; }
 			</style>';
 		}
 
 	}
 
-	function wp_head() {
+	function global_head() {
 
 		$uploaddir = ub_wp_upload_dir();
 		$uploadurl = ub_wp_upload_url();
@@ -237,9 +244,58 @@ class ub_favicons {
 		}
 
 		if ( $favicon_dir && file_exists( $favicon_dir ) ) {
+			$favicon_url = preg_replace( array('/http:/i', '/https:/i'), '', $favicon_url );
+
 			echo '<link rel="shortcut icon" href="' . $favicon_url . '" />';
 		}
 
+	}
+
+	function change_blavatar_icon() {
+		global $wp_admin_bar;
+
+		foreach ( (array) $wp_admin_bar->user->blogs as $blog ) {
+			// Our new blavatar
+			if(is_multisite() && function_exists('is_plugin_active_for_network') && is_plugin_active_for_network('ultimate-branding/ultimate-branding.php')) {
+				$favicon_url = get_site_option( 'ub_favicon_url', false );
+			} else {
+				if( function_exists('switch_to_blog') ) {
+					switch_to_blog( $blog->userblog_id );
+				}
+				$favicon_url = get_option( 'ub_favicon_url', false );
+				if( function_exists('restore_current_blog') ) {
+					restore_current_blog();
+				}
+			}
+
+			if(empty($favicon_url)) {
+				$blue_wp_logo_url = includes_url('images/wpmini-blue.png');
+				$blavatar = '<img src="' . esc_url($blue_wp_logo_url) . '" alt="' . esc_attr__( 'Blavatar' ) . '" width="16" height="16" class="blavatar"/>';
+			} else {
+				$favicon_url = preg_replace( array('/http:/i', '/https:/i'), '', $favicon_url );
+				$blavatar = '<img src="' . esc_url($favicon_url) . '" alt="' . esc_attr__( 'Blavatar' ) . '" width="16" height="16" class="blavatar"/>';
+			}
+
+			$blogname = empty( $blog->blogname ) ? $blog->domain : $blog->blogname;
+			$menu_id  = 'blog-' . $blog->userblog_id;
+
+			// Get the information for our menu item
+			$oldnode = $wp_admin_bar->get_node( 'blog-' . $blog->userblog_id );
+			// Remove it
+			$wp_admin_bar->remove_node( 'blog-' . $blog->userblog_id );
+			// Update and add it back in again
+			$wp_admin_bar->add_menu( array(
+				'parent'    => 'my-sites-list',
+				'id'        => 'blog-' . $blog->userblog_id,
+				'title'     => $blavatar . $blogname,
+				'href'      => get_admin_url( $blog->userblog_id ),
+			) );
+
+			//print_r( $wp_admin_bar->get_node( 'blog-' . $blog->userblog_id ) );
+
+		}
+
+		//print_r($wp_admin_bar);
 	}
 
 

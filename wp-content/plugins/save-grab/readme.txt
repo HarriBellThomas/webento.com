@@ -3,7 +3,7 @@ Contributors: neobie
 Donate link: http://digitalmemo.neobie.net/grab-save
 Tags: download, grab, image, picture, remote, save, upload
 Requires at least: 2.8
-Tested up to: 3.3
+Tested up to: 3.5
 Stable tag: trunk
 
 This plugin allow you to grab and save the image from remote url into your own wordpress media library.
@@ -19,6 +19,9 @@ After grabbing the image, wordpress will prompt you either to "insert into post"
 Simpy install from your wordpress plugin page and activate it. Usage: the Grab & Save tab is located at the "Add an image"
 
 == Changelog ==
+
+= 1.0.3 =
+ * Compatible up to Wordpress 3.5
 
 = 1.0.2 =
  * Compatible up to Wordpress 3.3

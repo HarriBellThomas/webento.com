@@ -98,7 +98,7 @@ class M_Posts extends M_Rule {
 
 		global $wpdb;
 
-		$sql = $wpdb->prepare( "SELECT id FROM " . membership_db_prefix($wpdb, 'urlgroups') . " WHERE groupname = %s", '_posts-' . $this->level_id );
+		$sql = $wpdb->prepare( "SELECT id FROM " . membership_db_prefix($wpdb, 'urlgroups') . " WHERE groupname = %s ORDER BY id DESC LIMIT 0,1", '_posts-' . $this->level_id );
 
 		$results = $wpdb->get_var( $sql );
 
@@ -435,7 +435,7 @@ class M_Pages extends M_Rule {
 
 		global $wpdb;
 
-		$sql = $wpdb->prepare( "SELECT id FROM " . membership_db_prefix($wpdb, 'urlgroups') . " WHERE groupname = %s", '_pages-' . $this->level_id );
+		$sql = $wpdb->prepare( "SELECT id FROM " . membership_db_prefix($wpdb, 'urlgroups') . " WHERE groupname = %s ORDER BY id DESC LIMIT 0,1", '_pages-' . $this->level_id );
 
 		$results = $wpdb->get_var( $sql );
 
@@ -823,7 +823,7 @@ class M_Categories extends M_Rule {
 
 		//print_r($wp_query);
 
-		if(!in_array($wp_query->query_vars['post_type'], array('post','')) || !empty($wp_query->query_vars['pagename'])) {
+		if((isset($wp_query->query_vars['post_type']) && !in_array($wp_query->query_vars['post_type'], array('post',''))) || !empty($wp_query->query_vars['pagename'])) {
 			return;
 		}
 
@@ -837,7 +837,7 @@ class M_Categories extends M_Rule {
 
 	function add_unviewable_posts($wp_query) {
 
-		if(in_array($wp_query->query_vars['post_type'], array('page')) || !empty($wp_query->query_vars['pagename'])) {
+		if( (isset($wp_query->query_vars['post_type']) && in_array($wp_query->query_vars['post_type'], array('page'))) || !empty($wp_query->query_vars['pagename'])) {
 			return;
 		}
 
@@ -905,7 +905,7 @@ class M_More extends M_Rule {
 
 		$this->data = $data;
 
-		if($M_options['moretagdefault'] == 'no' ) {
+		if(isset($M_options['moretagdefault']) && $M_options['moretagdefault'] == 'no' ) {
 
 			// remove the filters - otherwise we don't need to do anything
 			if(isset($wp_filter['the_content_more_link'][99])) {
@@ -950,7 +950,7 @@ class M_More extends M_Rule {
 
 		$this->data = $data;
 
-		if($M_options['moretagdefault'] != 'no' ) {
+		if(isset($M_options['moretagdefault']) && $M_options['moretagdefault'] != 'no' ) {
 			// add the filters - otherwise we don't need to do anything
 			add_filter('the_content_more_link', array(&$this, 'show_moretag_protection'), 99, 2);
 			add_filter('the_content', array(&$this, 'replace_moretag_content'), 1);
@@ -1112,7 +1112,7 @@ class M_Downloads extends M_Rule {
 
 						} else {
 							?>
-							<tr valign="middle" class="alternate" id="post-<?php echo $category->term_id; ?>">
+							<tr valign="middle" class="alternate" id="group-nogroup">
 								<td class="column-name" colspan='2'>
 									<?php echo __('You have no download groups set, please visit the membership options page to set them up.','membership'); ?>
 								</td>
@@ -1416,7 +1416,12 @@ class M_Blogcreation extends M_Rule {
 		<div class='level-operation' id='main-blogcreation'>
 			<h2 class='sidebar-name'><?php _e('Blog Creation', 'membership');?><span><a href='#remove' id='remove-blogcreation' class='removelink' title='<?php _e("Remove Blog Creation from this rules area.",'membership'); ?>'><?php _e('Remove','membership'); ?></a></span></h2>
 			<div class='inner-operation'>
-				<p><strong><?php _e('Positive : ','membership'); ?></strong><?php _e('User can create ','membership'); ?><input type='text' name='blogcreation[number]' value='<?php echo esc_attr($data['number']); ?>' /><?php _e(' blogs.','membership'); ?><br/><em><?php _e('Leave blanks for unlimited blogs.','membership'); ?></em></p>
+				<?php
+					if(!isset($data['number'])) {
+						$data['number'] = '';
+					}
+				?>
+				<p><strong><?php _e('Positive : ','membership'); ?></strong><?php _e('User can create ','membership'); ?><input type='text' name='blogcreation[number]' value='<?php echo esc_attr($data['number']); ?>' /><?php _e(' blogs.','membership'); ?><br/><em><?php _e('Leave blank for unlimited blogs.','membership'); ?></em></p>
 				<p><strong><?php _e('Negative : ','membership'); ?></strong><?php _e('User is unable to create any blogs.','membership'); ?></p>
 				<input type='hidden' name='blogcreation[]' value='yes' />
 			</div>

@@ -126,11 +126,11 @@ class twocheckout extends M_Gateway {
 		<table class="form-table">
 		<tbody>
 		  <tr valign="top">
-		  <th scope="row" colspan="2"><div class="updated below-h2"><p><?php _e('In order for recurring payments to log properly you must enable your global instant notifications url pointing to '.home_url('paymentreturn/' . esc_attr($this->gateway)).' ', 'membership') ?></p></div></th>
+		  	<th scope="row" colspan="2"><div class="updated below-h2"><p><?php _e('In order for recurring payments to log properly you must enable your global instant notifications url pointing to '.home_url('paymentreturn/' . esc_attr($this->gateway)).' ', 'membership') ?></p></div></th>
 		  </tr>
 		  <tr valign="top">
-		  <th scope="row"><?php _e('2Checkout Username', 'membership') ?></th>
-		  <td><input type="text" name="twocheckout_username" value="<?php esc_attr_e(get_option( $this->gateway . "_twocheckout_username" )); ?>" />
+		  	<th scope="row"><?php _e('2Checkout Username', 'membership') ?></th>
+		  	<td><input type="text" name="twocheckout_username" value="<?php esc_attr_e(get_option( $this->gateway . "_twocheckout_username" )); ?>" />
 		  </td>
 		  </tr>
 		  <tr valign="top">
@@ -165,6 +165,53 @@ class twocheckout extends M_Gateway {
 		  <br />
 		  </td>
 		  </tr>
+		  
+		<tr valign="top">
+			<th scope="row"><?php _e('2Checkout Language', 'membership') ?></th>
+			<td>
+				<select name="twocheckout_lang">
+					<?php $lang = get_option($this->gateway.'_twocheckout_lang'); ?>
+					<option value="en" <?php selected($lang,'en'); ?>><?php _e('English','membership') ?></option>
+					<option value="zh" <?php selected($lang,'zh'); ?>><?php _e('Chinese','membership') ?></option>
+					<option value="da" <?php selected($lang,'da'); ?>><?php _e('Danish','membership') ?></option>
+					<option value="fr" <?php selected($lang,'fr'); ?>><?php _e('French','membership') ?></option>
+					<option value="gr" <?php selected($lang,'gr'); ?>><?php _e('German','membership') ?></option>
+					<option value="el" <?php selected($lang,'el'); ?>><?php _e('Greek','membership') ?></option>
+					<option value="it" <?php selected($lang,'it'); ?>><?php _e('Italian','membership') ?></option>
+					<option value="jp" <?php selected($lang,'jp'); ?>><?php _e('Japanese','membership') ?></option>
+					<option value="no" <?php selected($lang,'no'); ?>><?php _e('Norwegian','membership') ?></option>
+					<option value="pt" <?php selected($lang,'pt'); ?>><?php _e('Portuguese','membership') ?></option>
+					<option value="sl" <?php selected($lang,'sl'); ?>><?php _e('Slovenian','membership') ?></option>
+					<option value="es_ib" <?php selected($lang,'es_ib'); ?>><?php _e('Spanish','membership') ?></option>
+					<option value="es_la" <?php selected($lang,'es_la'); ?>><?php _e('Spanish (Latin America)','membership') ?></option>
+					<option value="sv" <?php selected($lang,'sv'); ?>><?php _e('Swedish','membership') ?></option>
+				</select>
+				<br />
+			</td>
+		</tr>
+		  
+		  <tr valign="top">
+		  <th scope="row"><?php _e('Skip Order Review Page', 'membership') ?></th>
+		  <td><select name="twocheckout_skip_landing">
+		  <?php $skip = get_option($this->gateway.'_twocheckout_skip_landing'); ?>
+		  <option value="1" <?php selected($skip,'1'); ?>><?php _e('Yes','membership') ?></option>
+		  <option value="0" <?php selected($skip,'0'); ?>><?php _e('No','membership') ?></option>
+		  </select>
+		  <br />
+		  </td>
+		  </tr>
+		  
+		  <tr valign="top">
+		  <th scope="row"><?php _e('Checkout Style', 'membership') ?></th>
+		  <td><select name="twocheckout_checkout_type">
+		  <?php $checkout_type = get_option($this->gateway.'_twocheckout_checkout_type'); ?>
+		  <option value="multi" <?php selected($checkout_type,'multi'); ?>><?php _e('Multi Page Checkout','membership') ?></option>
+		  <option value="single" <?php selected($checkout_type,'single'); ?>><?php _e('Single Page Checkout','membership') ?></option>
+		  </select>
+		  <br />
+		  </td>
+		  </tr>
+		  
 		  <tr valign="top">
 		  <th scope="row"><?php _e('Subscription button', 'membership') ?></th>
 		  <?php
@@ -178,7 +225,30 @@ class twocheckout extends M_Gateway {
 		</table>
 		<?php
 	}
+	
+	
+	function update() {
 
+		if(isset($_POST['twocheckout_sid'])) {
+			update_option( $this->gateway . "_twocheckout_username", $_POST[ 'twocheckout_username' ] );
+			if (isset($_POST[ 'twocheckout_password' ]) && !empty($_POST[ 'twocheckout_password' ])) {
+				update_option( $this->gateway . "_twocheckout_password", $_POST[ 'twocheckout_password' ] );
+			}
+			update_option( $this->gateway . "_twocheckout_sid", $_POST[ 'twocheckout_sid' ] );
+			update_option( $this->gateway . "_twocheckout_secret_word", $_POST[ 'twocheckout_secret_word' ] );
+			update_option( $this->gateway . "_currency", $_POST[ 'currency' ] );
+			update_option( $this->gateway . "_twocheckout_status", $_POST[ 'twocheckout_status' ] );
+			update_option( $this->gateway . "_twocheckout_button", $_POST[ 'twocheckout_button' ] );
+			update_option( $this->gateway . "_twocheckout_lang", $_POST[ 'twocheckout_lang' ] );
+			update_option( $this->gateway . "_twocheckout_skip_landing", $_POST[ 'twocheckout_skip_landing' ] );
+			update_option( $this->gateway . "_twocheckout_checkout_type", $_POST[ 'twocheckout_checkout_type' ] );
+		}
+
+		// default action is to return true
+		return true;
+
+	}
+	
 	function build_custom($user_id, $sub_id, $amount) {
 		$custom = '';
 
@@ -294,7 +364,7 @@ class twocheckout extends M_Gateway {
 		}
 	}
 
-	function single_button($pricing, $subscription, $user_id) {
+	function single_sub_button($pricing, $subscription, $user_id, $repeat = false) {
 
 		global $M_options, $M_membership_url;
 
@@ -303,69 +373,51 @@ class twocheckout extends M_Gateway {
 		}
 
 		// Fetch product_id
-		$product_id = $this->get_product_id($subscription, $pricing);
+		//$product_id = $this->get_product_id($subscription, $pricing);
 
 		$form = '';
+		
+		if (get_option( $this->gateway . '_twocheckout_checkout_type') == 'multi') {
+			$endpoint = 'https://www.2checkout.com/checkout/purchase';
+		} else {
+			$endpoint = 'https://www.2checkout.com/checkout/spurchase';
+		}
+		$form .= sprintf('<form action="%s" method="post">',$endpoint);
 
-		if ($product_id != 0) {
-
-			$form .= '<form action="https://www.2checkout.com/cgi-bin/sbuyers/purchase.2c" method="post">';
-
-			if (get_option( $this->gateway . "_twocheckout_status" ) != 'live') {
-				$form .= '<input type="hidden" name="demo" value="Y">';
-			}
-
-			$form .= '<input type="hidden" name="sid" value="' . esc_attr(get_option( $this->gateway . "_twocheckout_sid" )) . '">';
-			$form .= '<input type="hidden" name="product_id" value="' . $product_id . '">';
-			$form .= '<input type="hidden" name="quantity" value="1">';
-			$form .= '<input type="hidden" name="fixed" value="Y">';
-			$form .= '<input type="hidden" name="merchant_order_id" value="'.$product_id.':'.$user_id.'" />';
-			$form .= '<input type="hidden" name="user_id" value="'.$user_id.'">';
-			$form .= '<input type="hidden" name="currency" value="'.$M_options['paymentcurrency'].'">';
-
-			$button = get_option( $this->gateway . "_twocheckout_button", $M_membership_url . 'membershipincludes/images/2co_logo_64.png' );
-
-			$form .= '<input type="image" name="submit" border="0" src="' . $button . '" alt="Pay via 2Checkout">';
-			$form .= '</form>';
+		if (get_option( $this->gateway . "_twocheckout_status" ) != 'live') {
+			$form .= '<input type="hidden" name="demo" value="Y">';
 		}
 
-		return $form;
-	}
-
-	function single_sub_button($pricing, $subscription, $user_id, $norepeat = false) {
-
-		global $M_options, $M_membership_url;
-
-		if(empty($M_options['paymentcurrency'])) {
-			$M_options['paymentcurrency'] = 'USD';
+		$form .= '<input type="hidden" name="sid" value="' . esc_attr(get_option( $this->gateway . "_twocheckout_sid" )) . '">';
+		$form .= '<input type="hidden" name="mode" value="2CO" />';
+		$form .= '<input type="hidden" name="li_1_type" value="product" />';
+		$form .= '<input type="hidden" name="li_1_name" value="'.$subscription->sub_name().'" />';
+		$form .= '<input type="hidden" name="li_1_price" value="'.number_format($pricing[0]['amount'], 2).'" />';
+		$form .= '<input type="hidden" name="li_1_tangible" value="N" />';
+		$form .= '<input type="hidden" name="li_1_product_id" value="'.$subscription->id.'" />';
+		$form .= '<input type="hidden" name="li_1_description" value="'.$subscription->sub_description().'" />';
+		if($repeat) {
+			$form .= '<input type="hidden" name="li_1_recurrence" value="'.$this->convert_duration($pricing[0]['period'], $pricing[0]['unit']).'" />';
+			$form .= '<input type="hidden" name="li_1_duration" value="Forever" />';
 		}
+		$form .= '<input type="hidden" name="merchant_order_id" value="'.$subscription->id.':'.$user_id.'" />';
+		$form .= '<input type="hidden" name="skip_landing" value="'.esc_attr(get_option($this->gateway.'_twocheckout_skip_landing')).'" />';
+		$form .= '<input type="hidden" name="lang" value="'.esc_attr(get_option( $this->gateway . "_twocheckout_lang" )).'" />';
+		$form .= '<input type="hidden" name="user_id" value="'.$user_id.'">';
+		
+		$user_data = get_userdata($user_id);
+		if($user_data)
+			$form .= '<input type="hidden" name="email" value="'.$user_data->data->user_email.'" />';
+			
+		$form .= '<input type="hidden" name="currency" value="'.$M_options['paymentcurrency'].'">';
+		$form .= '<input type="hidden" name="return_url" value="'.trailingslashit(get_option('home')) . 'paymentreturn/' . esc_attr($this->gateway).'" />';
+		$form .= '<input type="hidden" name="return_method" value="1" />';
+		//$form .= '<input type="hidden" name="return_url" value="'.M_get_registrationcompleted_permalink().'" />';
 
-		// Fetch product_id
-		$product_id = $this->get_product_id($subscription, $pricing);
+		$button = get_option( $this->gateway . "_twocheckout_button", $M_membership_url . 'membershipincludes/images/2co_logo_64.png' );
 
-		$form = '';
-
-		if ($product_id != 0) {
-
-			$form .= '<form action="https://www.2checkout.com/cgi-bin/sbuyers/purchase.2c" method="post">';
-
-			if (get_option( $this->gateway . "_twocheckout_status" ) != 'live') {
-				$form .= '<input type="hidden" name="demo" value="Y">';
-			}
-
-			$form .= '<input type="hidden" name="sid" value="' . esc_attr(get_option( $this->gateway . "_twocheckout_sid" )) . '">';
-			$form .= '<input type="hidden" name="product_id" value="' . $product_id . '" />';
-			$form .= '<input type="hidden" name="quantity" value="1" />';
-			$form .= '<input type="hidden" name="fixed" value="Y" />';
-			$form .= '<input type="hidden" name="merchant_order_id" value="'.$product_id.':'.$user_id.'" />';
-			$form .= '<input type="hidden" name="user_id" value="'.$user_id.'">';
-			$form .= '<input type="hidden" name="currency" value="'.$M_options['paymentcurrency'].'">';
-
-			$button = get_option( $this->gateway . "_twocheckout_button", $M_membership_url . 'membershipincludes/images/2co_logo_64.png' );
-
-			$form .= '<input type="image" name="submit" border="0" src="' . $button . '" alt="Pay via 2Checkout">';
-			$form .= '</form>';
-		}
+		$form .= '<input type="image" name="submit" border="0" src="' . $button . '" alt="Pay via 2Checkout">';
+		$form .= '</form>';
 
 		return $form;
 
@@ -384,27 +436,33 @@ class twocheckout extends M_Gateway {
 
 		$form = '';
 
-		if ($product_id != 0) {
+		$form .= '<form action="https://www.2checkout.com/checkout/spurchase" method="post">';
 
-			$form .= '<form action="https://www.2checkout.com/cgi-bin/sbuyers/purchase.2c" method="post">';
-
-			if (get_option( $this->gateway . "_twocheckout_status" ) != 'live') {
-				$form .= '<input type="hidden" name="demo" value="Y">';
-			}
-
-			$form .= '<input type="hidden" name="sid" value="' . esc_attr(get_option( $this->gateway . "_twocheckout_sid" )) . '">';
-			$form .= '<input type="hidden" name="product_id" value="' . $product_id . '">';
-			$form .= '<input type="hidden" name="quantity" value="1">';
-			$form .= '<input type="hidden" name="fixed" value="Y">';
-			$form .= '<input type="hidden" name="merchant_order_id" value="'.$product_id.':'.$user_id.'" />';
-			$form .= '<input type="hidden" name="user_id" value="'.$user_id.'">';
-			$form .= '<input type="hidden" name="currency" value="'.$M_options['paymentcurrency'].'">';
-
-			$button = get_option( $this->gateway . "_twocheckout_button", $M_membership_url . 'membershipincludes/images/2co_logo_64.png' );
-
-			$form .= '<input type="image" name="submit" border="0" src="' . $button . '" alt="Pay via 2Checkout">';
-			$form .= '</form>';
+		if (get_option( $this->gateway . "_twocheckout_status" ) != 'live') {
+			$form .= '<input type="hidden" name="demo" value="Y">';
 		}
+
+		$form .= '<input type="hidden" name="sid" value="' . esc_attr(get_option( $this->gateway . "_twocheckout_sid" )) . '">';
+		$form .= '<input type="hidden" name="li_0_type" value="product" />';
+		$form .= '<input type="hidden" name="li_0_name" value="'.$subscription->sub_name().'" />';
+		$form .= '<input type="hidden" name="li_0_price" value="'.number_format($pricing[0]['amount'], 2).'" />';
+		$form .= '<input type="hidden" name="li_0_tangible" value="N" />';
+		$form .= '<input type="hidden" name="li_0_product_id" value="'.$subscription->id.'" />';
+		$form .= '<input type="hidden" name="li_0_description" value="'.$subscription->sub_description().'" />';
+		//$form .= '<input type="hidden" name="li_0_recurrence" value="'.$this->convert_duration($pricing[0]['period'], $pricing[0]['unit']).'" />';
+		//$form .= '<input type="hidden" name="li_0_duration" value="Forever" />';
+		$form .= '<input type="hidden" name="merchant_order_id" value="'.$subscription->id.':'.$user_id.'" />';
+		$form .= '<input type="hidden" name="skip_landing" value="'.esc_attr(get_option($this->gateway.'_twocheckout_skip_landing')).'" />';
+		$form .= '<input type="hidden" name="lang" value="'.esc_attr(get_option( $this->gateway . "_twocheckout_lang" )).'" />';
+		$form .= '<input type="hidden" name="user_id" value="'.$user_id.'">';
+		$form .= '<input type="hidden" name="currency" value="'.$M_options['paymentcurrency'].'">';
+
+		$button = get_option( $this->gateway . "_twocheckout_button", $M_membership_url . 'membershipincludes/images/2co_logo_64.png' );
+
+		$form .= '<input type="image" name="submit" border="0" src="' . $button . '" alt="Pay via 2Checkout">';
+		$form .= '</form>';
+
+		return $form;
 
 	}
 
@@ -426,14 +484,16 @@ class twocheckout extends M_Gateway {
 					// A basic price or a single subscription
 					if(in_array($pricing[0]['type'], array('indefinite','finite'))) {
 						// one-off payment
-						return $this->single_sub_button($pricing, $subscription, $user_id, true);
+						return $this->single_sub_button($pricing, $subscription, $user_id, false);
 					} else {
 						// simple subscription
-						return $this->single_sub_button($pricing, $subscription, $user_id);
+						return $this->single_sub_button($pricing, $subscription, $user_id, true);
 					}
 				} else {
 					// something much more complex
-					return $this->complex_sub_button($pricing, $subscription, $user_id);
+					// Complex buttons currently not supported by 2CO
+					//return $this->complex_sub_button($pricing, $subscription, $user_id);
+					
 				}
 			}
 
@@ -462,25 +522,6 @@ class twocheckout extends M_Gateway {
 		echo "</form>";
 	}
 
-	function update() {
-
-		if(isset($_POST['twocheckout_sid'])) {
-			update_option( $this->gateway . "_twocheckout_username", $_POST[ 'twocheckout_username' ] );
-			if (isset($_POST[ 'twocheckout_password' ]) && !empty($_POST[ 'twocheckout_password' ])) {
-				update_option( $this->gateway . "_twocheckout_password", $_POST[ 'twocheckout_password' ] );
-			}
-			update_option( $this->gateway . "_twocheckout_sid", $_POST[ 'twocheckout_sid' ] );
-			update_option( $this->gateway . "_twocheckout_secret_word", $_POST[ 'twocheckout_secret_word' ] );
-			update_option( $this->gateway . "_currency", $_POST[ 'currency' ] );
-			update_option( $this->gateway . "_twocheckout_status", $_POST[ 'twocheckout_status' ] );
-			update_option( $this->gateway . "_twocheckout_button", $_POST[ 'twocheckout_button' ] );
-		}
-
-		// default action is to return true
-		return true;
-
-	}
-
 	// Return stuff
 	function handle_2checkout_return() {
 				
@@ -489,11 +530,10 @@ class twocheckout extends M_Gateway {
 		if (isset($_REQUEST['key'])) {
 			$total = $_REQUEST['total'];
 
-			$product_id = false;
+			$sub_id = false;
 			$user_id = false;
 
-			$product_id = $_REQUEST['merchant_product_id'];
-			list($tmp, $user_id) = explode(':', $_REQUEST['merchant_order_id']);
+			list($sub_id, $user_id) = explode(':', $_REQUEST['merchant_order_id']);
 			
 			if (esc_attr(get_option( $this->gateway . "_twocheckout_status" )) == 'test') {
 				$hash = strtoupper(md5(esc_attr(get_option( $this->gateway . "_twocheckout_secret_word" )) . esc_attr(get_option( $this->gateway . "_twocheckout_sid" )) . 1 . $total));
@@ -501,46 +541,46 @@ class twocheckout extends M_Gateway {
 				$hash = strtoupper(md5(esc_attr(get_option( $this->gateway . "_twocheckout_secret_word" )) . esc_attr(get_option( $this->gateway . "_twocheckout_sid" )) . $_REQUEST['order_number'] . $total));
 			}
 
-			if ($product_id && $user_id && $_REQUEST['key'] == $hash && $_REQUEST['credit_card_processed'] == 'Y') {
+			if ($sub_id && $user_id && $_REQUEST['key'] == $hash && $_REQUEST['credit_card_processed'] == 'Y') {
 				
-				$this->record_transaction($user_id, $product_id, $_REQUEST['total'], $_REQUEST['currency'], $timestamp, $_REQUEST['order_number'], 'Processed', '');
+				$this->record_transaction($user_id, $sub_id, $_REQUEST['total'], $_REQUEST['currency'], $timestamp, $_REQUEST['order_number'], 'Processed', '');
 
 				// Added for affiliate system link
-				do_action('membership_payment_processed', $user_id, $product_id, $_REQUEST['total'], $_REQUEST['currency'], $_REQUEST['order_number']);
+				do_action('membership_payment_processed', $user_id, $sub_id, $_REQUEST['total'], $_REQUEST['currency'], $_REQUEST['order_number']);
 
 				$member = new M_Membership($user_id);
 				if($member) {
-					$member->create_subscription($product_id, $this->gateway);
+					$member->create_subscription($sub_id, $this->gateway);
 				}
 				
-				do_action('membership_payment_subscr_signup', $user_id, $product_id);
+				do_action('membership_payment_subscr_signup', $user_id, $sub_id);
 				wp_redirect(get_option('home'));
 				exit();
 			}
 		} else if (isset($_REQUEST['message_type'])) {
 			$md5_hash = strtoupper(md5("{$_REQUEST['sale_id']}".esc_attr(get_option( $this->gateway . "_twocheckout_sid" ))."{$_REQUEST['invoice_id']}".esc_attr(get_option( $this->gateway . "_twocheckout_secret_word" ))));
 
-			$product_id = false;
+			$sub_id = false;
 			$user_id = false;
 
-			$product_id = $_REQUEST['item_id_1'];
-			list($tmp, $user_id) = explode(':', $_REQUEST['vendor_order_id']);
+			//$product_id = $_REQUEST['item_id_1'];
+			list($sub_id, $user_id) = explode(':', $_REQUEST['vendor_order_id']);
 						
 			if ($md5_hash == $_REQUEST['md5_hash']) {
 				switch ($_REQUEST['message_type']) {
 					case 'RECURRING_INSTALLMENT_SUCCESS':
 					
-					if(!$this->duplicate_transaction($user_id, $product_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $timestamp, $_POST['invoice_id'], 'Processed', '')) {
-						$this->record_transaction($user_id, $product_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $timestamp, $_POST['invoice_id'], 'Processed', '');
+					if(!$this->duplicate_transaction($user_id, $sub_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $timestamp, $_POST['invoice_id'], 'Processed', '')) {
+						$this->record_transaction($user_id, $sub_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $timestamp, $_POST['invoice_id'], 'Processed', '');
 						$member = new M_Membership($user_id);
 						if($member) {
 							remove_action( 'membership_expire_subscription', 'membership_record_user_expire', 10, 2 );
 							remove_action( 'membership_add_subscription', 'membership_record_user_subscribe', 10, 4 );
-							$member->expire_subscription($product_id);
-							$member->create_subscription($product_id, $this->gateway);
+							$member->expire_subscription($sub_id);
+							$member->create_subscription($sub_id, $this->gateway);
 						}
 						// Added for affiliate system link
-						do_action('membership_payment_processed', $user_id, $product_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $_POST['invoice_id']);
+						do_action('membership_payment_processed', $user_id, $sub_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $_POST['invoice_id']);
 					}
 						break;
 					case 'FRAUD_STATUS_CHANGED':
@@ -549,10 +589,10 @@ class twocheckout extends M_Gateway {
 						break;
 					case 'ORDER_CREATED':
 					case 'RECURRING_RESTARTED':
-						$this->record_transaction($user_id, $product_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $timestamp, $_POST['invoice_id'], 'Processed', '');
+						$this->record_transaction($user_id, $sub_id, $_REQUEST['item_rec_list_amount_1'], $_REQUEST['list_currency'], $timestamp, $_POST['invoice_id'], 'Processed', '');
 						$member = new M_Membership($user_id);
 						if($member) {
-							$member->create_subscription($product_id, $this->gateway);
+							$member->create_subscription($sub_id, $this->gateway);
 						}
 						break;
 					case 'RECURRING_STOPPED':
@@ -561,20 +601,26 @@ class twocheckout extends M_Gateway {
 					default:
 						$member = new M_Membership($user_id);
 						if($member) {
-							$member->mark_for_expire($product_id);
+							$member->mark_for_expire($sub_id);
 						}
-						do_action('membership_payment_subscr_cancel', $user_id, $product_id);
+						do_action('membership_payment_subscr_cancel', $user_id, $sub_id);
 						break;
 				}
+			} else {
+				// MD5 Hash Failed
+				header('Status: 403 Forbidden');
+				echo 'Error: Unexpected Security Value. Verification is not possible.';
+				exit();
 			}
+			
 			echo  "OK";
 			exit();
-		}/* else {
+		} else {
 			// Did not find expected POST variables. Possible access attempt from a non PayPal site.
-			header('Status: 404 Not Found');
+			header('Status: 400 Bad Request');
 			echo 'Error: Missing POST variables. Identification is not possible.';
-			exit;
-		}*/
+			exit();
+		}
 	}
 
 }

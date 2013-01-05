@@ -6,7 +6,7 @@ define('DM_COMPATIBILITY', 'yes');
 global $wpdb;
 
 // No if statement needed as the code was the same for both VHOST and non VHOST installations
-if(defined('DM_COMPATIBILITY')) {
+if(defined('DM_COMPATIBILITY') && DM_COMPATIBILITY == 'yes' ) {
 	if(!empty($wpdb->base_prefix)) {
 		$wpdb->dmtable = $wpdb->base_prefix . 'domain_mapping';
 	} else {
@@ -29,12 +29,12 @@ $wpdb->suppress_errors();
 
 $using_domain = $wpdb->escape( preg_replace( "/^www\./", "", $_SERVER[ 'HTTP_HOST' ] ) );
 
-$mapped_id = $wpdb->get_var( "SELECT blog_id FROM {$wpdb->dmtable} WHERE domain = '{$using_domain}' LIMIT 1 /* domain mapping */" );
+$mapped_id = $wpdb->get_var( $wpdb->prepare( "SELECT blog_id FROM {$wpdb->dmtable} WHERE domain = %s LIMIT 1 /* domain mapping */", $using_domain ) );
 
 $wpdb->suppress_errors( false );
 
-if( $mapped_id ) {
-	$current_blog = $wpdb->get_row("SELECT * FROM {$wpdb->blogs} WHERE blog_id = '{$mapped_id}' LIMIT 1 /* domain mapping */");
+if( !empty($mapped_id) ) {
+	$current_blog = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->blogs} WHERE blog_id = %d LIMIT 1 /* domain mapping */", $mapped_id) );
 	$current_blog->domain = $using_domain;
 
 	$blog_id = $mapped_id;
@@ -42,7 +42,11 @@ if( $mapped_id ) {
 
 	define( 'COOKIE_DOMAIN', $using_domain );
 
-	$current_site = $wpdb->get_row( "SELECT * from {$wpdb->site} WHERE id = '{$current_blog->site_id}' LIMIT 0,1 /* domain mapping */" );
+	$current_site = $wpdb->get_row( $wpdb->prepare( "SELECT * from {$wpdb->site} WHERE id = %d LIMIT 0,1 /* domain mapping */", $current_blog->site_id ) );
+	// Add in the blog id
+	$current_site->blog_id = $wpdb->get_var( $wpdb->prepare("SELECT blog_id FROM {$wpdb->blogs} WHERE domain = %s AND path = %s", $current_site->domain, $current_site->path) );
+
+	$current_site = get_current_site_name( $current_site );
 
 	$current_blog->path = $current_site->path;
 

@@ -4,7 +4,7 @@ Plugin Name: Grab & Save
 Plugin URI: http://digitalmemo.neobie.net/grab-save
 Author: Lim Kai Yang
 Author URI: http://digitalmemo.neobie.net
-Version: 1.0.2
+Version: 1.0.3
 Description: This plugin allows you to fetch the remote image and save to your local wordpress.
 */
 
@@ -15,7 +15,14 @@ class GrabAndSave {
 	function GrabAndSave(){$this->__construct();}
 		
 	function __construct(){
-		if ( basename($_SERVER['PHP_SELF']) != "media-upload.php" ) return;
+		global $wp_version;
+		
+		if ($wp_version < 3.5) {
+			if ( basename($_SERVER['PHP_SELF']) != "media-upload.php" ) return;
+		} else {
+			if ( basename($_SERVER['PHP_SELF']) != "media-upload.php" && basename($_SERVER['PHP_SELF']) != "post.php" && basename($_SERVER['PHP_SELF']) != "post-new.php") return;
+		}
+		
 		add_filter("media_upload_tabs",array(&$this,"build_tab"));
 		add_action("media_upload_grabAndSave", array(&$this, "menu_handle"));
 	}
@@ -53,7 +60,7 @@ class GrabAndSave {
 
 	
 	function build_tab($tabs) {
-		$newtab = array('grabAndSave' => __('Grab &amp; Save', 'grabAndSave'));
+		$newtab = array('grabAndSave' => __('Grab & Save', 'grabAndSave'));
 		return $this->array_insert($tabs, $newtab, 2);
 		//return array_merge($tabs,$newtab);
 	}

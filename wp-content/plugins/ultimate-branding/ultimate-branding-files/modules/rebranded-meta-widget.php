@@ -31,20 +31,20 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //---Hook-----------------------------------------------------------------//
 //------------------------------------------------------------------------//
 
-add_action('widgets_init', 'rmw_register');
+add_action('widgets_init', 'ub_rmw_register');
 
-add_action('ultimatebranding_settings_menu_widgets','rmw_manage_output');
+add_action('ultimatebranding_settings_menu_widgets','ub_rmw_manage_output');
 
 //------------------------------------------------------------------------//
 //---Functions------------------------------------------------------------//
 //------------------------------------------------------------------------//
 
-function rmw_register() {
+function ub_rmw_register() {
   unregister_widget( 'WP_Widget_Meta' );
-	register_widget( 'WP_Widget_Rebranded_Meta' );
+	register_widget( 'ub_WP_Widget_Rebranded_Meta' );
 }
 
-function rmw_manage_output() {
+function ub_rmw_manage_output() {
 	global $wpdb, $current_site, $page;
 
 	?>
@@ -62,9 +62,9 @@ function rmw_manage_output() {
 <?php
 }
 
-class WP_Widget_Rebranded_Meta extends WP_Widget {
+class ub_WP_Widget_Rebranded_Meta extends WP_Widget {
 
-	function WP_Widget_Rebranded_Meta() {
+	function ub_WP_Widget_Rebranded_Meta() {
 		$widget_ops = array('classname' => 'widget_meta', 'description' => __( "Log in/out, admin, feed and powered-by links", 'ub' ) );
 		$this->WP_Widget('meta', __('Meta'), $widget_ops);
 	}

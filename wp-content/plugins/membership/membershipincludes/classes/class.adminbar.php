@@ -74,7 +74,7 @@ if(!class_exists('M_Adminbar')) {
 
 			}
 
-			$sql = $this->db->prepare( "SELECT * FROM {$this->membership_levels}");
+			$sql = $this->db->prepare( "SELECT * FROM {$this->membership_levels}",null);
 
 			if(!empty($where)) {
 				$sql .= " WHERE " . implode(' AND ', $where);
@@ -105,7 +105,7 @@ if(!class_exists('M_Adminbar')) {
 				'title'     => $title,
 				'href'      => $linkurl,
 				'meta'      => array(
-					'class'     => $class,
+					'class'     => '',
 					'title'     => $metatitle,
 				),
 			) );

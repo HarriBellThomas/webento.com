@@ -45,10 +45,22 @@ class AgmUserMaps {
 	 * Introduces plugins_url() as root variable (global).
 	 */
 	function js_plugin_url () {
+		/*
 		printf(
 			'<script type="text/javascript">var _agm_root_url="%s"; var _agm_ajax_url="%s"</script>',
 			AGM_PLUGIN_URL, admin_url('admin-ajax.php')
 		);
+		*/
+		$defaults = array(
+			'ajax_url' => admin_url('admin-ajax.php'),
+			'root_url' => AGM_PLUGIN_URL,
+			'is_multisite' => (int)is_multisite(),
+			'libraries' => array('panoramio'),
+		);
+		$vars = apply_filters('agm_google_maps-javascript-data_object',
+			apply_filters('agm_google_maps-javascript-data_object-user', $defaults)
+		);
+		echo '<script type="text/javascript">var _agm = ' . json_encode($vars) . ';</script>';
 	}
 
 	/**
@@ -107,10 +119,12 @@ class AgmUserMaps {
 			$map = $this->model->get_map($map_id);
 			if ($address) {
 				if ($address != $map['markers'][0]['title']) {
+					if (isset($fields['discard_old']) && $fields['discard_old']) $this->model->delete_map(array('id' => $map_id));
 					$map_id = $this->model->autocreate_map($post_id, $latitude, $longitude, $address);
 				}
 			} else if ($latitude && $longitude) {
 				if ($latitude != $map['markers'][0]['position'][0] || $longitude != $map['markers'][0]['position'][1]) {
+					if (isset($fields['discard_old']) && $fields['discard_old']) $this->model->delete_map(array('id' => $map_id));
 					$map_id = $this->model->autocreate_map($post_id, $latitude, $longitude, $address);
 				}
 			}
@@ -119,10 +133,18 @@ class AgmUserMaps {
 		if (!$map_id) return $body;
 
 		if ($options['autoshow_map']) {
+			$shortcode_attributes = apply_filters('agm_google_maps-autogen_map-shortcode_attributes', array(
+				'id' => $map_id,
+			));
+			$tmp = array();
+			foreach ($shortcode_attributes as $key=>$value) {
+				$tmp[] = $key . '="' . $value . '"';
+			}
+			$shortcode = '[map ' . join(' ', $tmp) . ']';
 			if ('top' == $options['map_position']) {
-				$body = "[map id=\"{$map_id}\"]\n" . $body;
+				$body = "{$shortcode}\n" . $body;
 			} else {
-				$body .= "\n[map id=\"{$map_id}\"]";
+				$body .= "\n{$shortcode}";
 			}
 		}
 		return $body;
